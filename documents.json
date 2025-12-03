@@ -1,0 +1,34 @@
+{
+	"documents": [
+		{
+			"name": "Glossary",
+			"category": "ROS 2",
+			"location": "categories/ros2/ros2.glossary.md"
+		},
+		{
+			"name": "Communication Stack",
+			"category": "ROS 2",
+			"location": "categories/ros2/ros2.communication.stack.md"
+		},
+		{
+			"name": "Hyperparameters Guide",
+			"category": "Deep Learning",
+			"location": "categories/dl/hyperparameters_guide_v2.md"
+		},
+		{
+			"name": "Neural Network Types",
+			"category": "Deep Learning",
+			"location": "categories/dl/neural_network_types_with_examples.md"
+		},
+		{
+			"name": "PEFT with LoRA",
+			"category": "Deep Learning",
+			"location": "categories/dl/peft_with_lora.md"
+		},
+		{
+			"name": "Transfer Learning",
+			"category": "Deep Learning",
+			"location": "categories/dl/transfer_learning.md"
+		}
+	]
+}
