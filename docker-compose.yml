@@ -1,0 +1,27 @@
+services:
+  docbro:
+    profiles:
+      - default
+      - full
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docbro:1.0
+    container_name: docbro
+    hostname: docbro
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "8765:8765"
+    networks:
+      logus2k_network:
+        ipv4_address: 172.20.0.110
+    volumes:
+      - ./documents.json:/app/documents.json:ro
+
+networks:
+  logus2k_network:
+    external: true
