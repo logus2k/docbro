@@ -21,6 +21,41 @@
 			"location": "categories/dl/transfer_learning.md"
 		},
 		{
+			"name": "Activation Functions",
+			"category": "Generative AI",
+			"location": "categories/genai/activation_functions.md"
+		},
+		{
+			"name": "Matrix Shapes and Transposes",
+			"category": "Generative AI",
+			"location": "categories/genai/matrix_shapes_transposes.md"
+		},
+		{
+			"name": "NLTK Features",
+			"category": "Generative AI",
+			"location": "categories/genai/nltk_features.md"
+		},
+		{
+			"name": "NumPy vs PyTorch",
+			"category": "Generative AI",
+			"location": "categories/genai/numpy_vs_pytorch.md"
+		},
+		{
+			"name": "Representation Techniques",
+			"category": "Generative AI",
+			"location": "categories/genai/representation_techniques.md"
+		},
+		{
+			"name": "Sequence Models Evolution",
+			"category": "Generative AI",
+			"location": "categories/genai/sequence_models_evolution.md"
+		},		
+		{
+			"name": "What is a Robot",
+			"category": "ROS 2",
+			"location": "categories/ros2/what_is_a_robot.md"
+		},		
+		{
 			"name": "Glossary",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.glossary.md"
@@ -29,6 +64,11 @@
 			"name": "Communication Stack",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.communication.stack.md"
+		},
+		{
+			"name": "Communication Flow",
+			"category": "ROS 2",
+			"location": "categories/ros2/ros2.communication.flow.md"
 		}
 	]
 }

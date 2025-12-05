@@ -1,24 +1,11 @@
-# -------------------------
-# Stage 1: Build environment
-# -------------------------
-FROM node:25.2-alpine3.22 AS builder
+FROM caddy:2.10.2-alpine
 
-# Install serve globally
-RUN npm install -g serve
+# Copy static site files
+COPY index.html /usr/share/caddy/
+COPY styles/ /usr/share/caddy/styles/
+COPY script/ /usr/share/caddy/script/
 
-# -------------------------
-# Stage 2: Alpine runtime
-# -------------------------
-FROM node:25.2-alpine3.22
-
-# Copy node_modules from builder
-COPY --from=builder /usr/local/lib/node_modules /usr/local/lib/node_modules
-
-# Copy your static site
-WORKDIR /app
-COPY . .
+# Caddy configuration
+COPY Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 8765
-
-# Run serve's main JavaScript file directly with node
-ENTRYPOINT ["node", "/usr/local/lib/node_modules/serve/build/main.js", "-s", ".", "-l", "8765"]

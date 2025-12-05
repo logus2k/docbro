@@ -1,42 +1,150 @@
-# **Glossary of ROS 2 Terms**
+# **ROS 2 Communication Glossary**
 
-This glossary covers essential terminology related to ROS 2’s communication stack, DDS, RMW implementations, discovery, QoS, and middleware behavior.
+A structured glossary of terms relevant to ROS 2 communications, DDS middleware, RMW implementations, discovery, QoS, and node structure.
 
 ---
 
-## **ROS 2 Abstractions**
+## **Core ROS Terminology**
+
+### **ROS — Robot Operating System**
+
+A framework for building modular, distributed robotic systems.
+ROS 2 provides:
+
+* a message-passing communication system
+* tools for debugging, logging, and visualization
+* a component lifecycle
+* abstraction over different middleware implementations
+
+ROS itself is *not* an operating system; it sits on top of Linux/macOS/Windows.
+
+---
+
+### **ROS 2**
+
+The second generation of ROS — redesigned with:
+
+* a DDS-based communication layer
+* real-time capabilities
+* support for multi-platform, multi-robot, and high-performance systems
+* modular middleware via the RMW abstraction layer
+
+---
 
 ### **ROS Node**
 
-A process containing publishers, subscribers, services, actions, and other ROS interfaces. Nodes communicate through the middleware, not through direct sockets.
+A running process participating in the ROS graph, containing:
 
-### **RCL (ROS Client Library)**
+* publishers
+* subscribers
+* services
+* action servers/clients
+* parameters
 
-The language-specific API used by developers:
+Nodes never communicate directly; everything flows through the middleware.
 
-* `rclcpp` (C++)
-* `rclpy` (Python)
+---
 
-All DDS details are hidden behind RCL → RMW.
+### **ROS Graph**
+
+The conceptual network of:
+
+* nodes
+* topics
+* services
+* actions
+
+Introspection tools (e.g., `ros2 node list`, `ros2 topic list`) query this graph via the underlying DDS discovery.
+
+---
+
+### **Message**
+
+A structured data type published and subscribed over topics. Defined in `.msg` files and translated to language-specific classes.
+
+---
+
+### **Service**
+
+A synchronous request–reply communication pattern in ROS 2. Implemented over DDS Request/Reply.
+
+---
+
+### **Action**
+
+An asynchronous long-running goal interface built on top of services + topics. Used for tasks like navigation, manipulation, etc.
+
+---
+
+## **ROS Client Libraries**
+
+### **RCL – ROS Client Library**
+
+The language-agnostic ROS interface layer.
+`rclcpp` and `rclpy` wrap this API.
+
+Responsibilities:
+
+* creating nodes
+* configuring QoS profiles
+* interacting with RMW
+* managing message lifecycles
+
+---
+
+### **rclcpp**
+
+C++ client library providing high-performance ROS 2 interfaces.
+
+### **rclpy**
+
+Python client library for ROS 2, wrapping RCL in Pythonic APIs.
+
+---
+
+### **Executor**
+
+The component responsible for:
+
+* spinning callbacks
+* scheduling execution
+* managing callback queues
+
+Executors tie together node activity and underlying DDS events.
+
+---
+
+### **Callback Group**
+
+A mechanism to control concurrency of callbacks. Useful for threading, composition, and deterministic execution.
 
 ---
 
 ## **Middleware Abstraction Layer**
 
-### **RMW – ROS Middleware Interface**
+### **RMW — ROS Middleware Interface**
 
-A thin abstraction layer that bridges RCL with the actual middleware implementation. It defines a uniform API so that ROS 2 can switch middleware without changing user code.
+A stable C API that sits between RCL and the underlying DDS.
+Purpose:
+
+* isolate ROS from specific DDS vendors
+* allow switching middleware at runtime
+* enable vendor-specific enhancements under a unified interface
+
+---
 
 ### **RMW Implementation**
 
-A plugin implementing the RMW API for a specific middleware. Examples:
+A specific backend plugin that implements the RMW API for a given DDS library.
 
-* `rmw_fastrtps_cpp` – Fast DDS
-* `rmw_cyclonedds_cpp` – Eclipse Cyclone DDS
-* `rmw_connextdds` – RTI Connext
-* `rmw_gurumdds_cpp` – GurumDDS (commercial)
+Examples:
 
-Selected via environment variable:
+* `rmw_fastrtps_cpp` — Fast DDS
+* `rmw_cyclonedds_cpp` — Cyclone DDS
+* `rmw_connextdds` — RTI Connext
+* `rmw_gurumdds_cpp` — GurumDDS
+
+Selected via:
 
 ```bash
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -44,182 +152,159 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 ---
 
-## **DDS (Data Distribution Service)**
+## **DDS and RTPS Concepts**
 
-### **DDS**
+### **DDS — Data Distribution Service**
 
-A standardized publish–subscribe middleware for distributed systems, defined by the Object Management Group (OMG). ROS 2 uses DDS because it supports real-time behavior, QoS policies, and scalable discovery.
+A standardized publish–subscribe middleware used as ROS 2’s transport layer.
+DDS provides:
 
-DDS is responsible for:
+* discovery
+* serialization
+* reliability
+* liveliness tracking
+* QoS policy enforcement
+* real-time communication
+* scalable distributed messaging
 
-* endpoint discovery
-* matching publishers to subscribers
-* reliability (if enabled)
-* deadline & latency constraints
-* durability (persistent data)
-* message serialization
-* transport (UDP, shared memory)
+Defined by the OMG (Object Management Group).
 
-### **DDS Vendor / DDS Implementation**
+---
 
-A concrete implementation of the DDS standard. Each has its own performance characteristics, features, and behaviors:
+### **DDS Vendor / Implementation**
 
-* **Fast DDS** (default in ROS 2)
-* **Cyclone DDS** (lightweight, reliable)
+A concrete implementation of the DDS specification.
+
+Common ROS-compatible implementations:
+
+* **Fast DDS** (eProsima) – default in ROS 2
+* **Cyclone DDS** (Eclipse Foundation)
 * **RTI Connext DDS** (commercial)
 * **GurumDDS** (commercial)
 
+Each differs in performance, discovery stability, configurability, and platform compatibility.
+
 ---
 
-## **RTPS and Transport**
+### **RTPS — Real-Time Publish-Subscribe Protocol (DDSI-RTPS)**
 
-### **RTPS – Real-Time Publish-Subscribe Protocol (DDSI-RTPS)**
+The standardized wire protocol that DDS vendors use to communicate.
+Defines:
 
-The standardized *wire protocol* used by many DDS implementations. RTPS defines:
-
-* packet formats
+* network packet structure
 * discovery announcements
-* how participants, readers, and writers communicate
+* DATA / HEARTBEAT messages
+* matching rules for endpoints
 
-RTPS runs over:
+Runs over:
 
-* UDPv4 / UDPv6 (most common)
-* shared memory (for intra-host)
-
-### **Transport Layer**
-
-Where messages physically travel:
-
-* UDP multicast
+* UDP multicast (primary)
 * UDP unicast
-* Shared memory
-* Loopback interface
-  Transport behavior strongly affects discovery reliability.
+* shared memory (intra-host)
 
 ---
 
-## **DDS Entities & Discovery**
+### **Domain / DDS Domain / ROS Domain**
+
+A communication namespace.
+Only nodes sharing the same domain can discover each other.
+
+Configured through:
+
+```bash
+export ROS_DOMAIN_ID=N
+```
+
+Allows multiple independent ROS systems on the same network.
+
+---
 
 ### **Participant**
 
-A DDS process (ROS node infrastructure) that joins a domain and participates in discovery.
-
-### **Publisher / Writer**
-
-DDS "Writer" corresponds to a ROS publisher. Responsible for sending samples.
-
-### **Subscriber / Reader**
-
-DDS "Reader" corresponds to a ROS subscriber. Responsible for receiving samples.
-
-### **Topic**
-
-The *data channel* identified by name + type + QoS. A matching publisher and subscriber must agree on all of these.
-
-### **Discovery**
-
-The mechanism by which DDS participants learn about other participants, their topics, QoS, and endpoints.
-
-Types of discovery:
-
-* **Participant discovery** (who exists)
-* **Endpoint discovery** (what topics exist)
-
-Fast-DDS and CycloneDDS differ significantly in discovery performance.
+A DDS entity representing an entire process within a domain.
+A ROS node creates at least one participant.
 
 ---
 
-## **QoS (Quality of Service)**
+### **Writer / DataWriter**
 
-DDS QoS policies define communication behavior. ROS 2 exposes these through QoS profiles.
+DDS entity representing a publisher endpoint.
+Responsible for:
 
-Key QoS terms:
+* serializing outgoing data
+* enforcing QoS
+* sending RTPS messages
+
+---
+
+### **Reader / DataReader**
+
+DDS entity representing a subscriber endpoint.
+Responsible for:
+
+* receiving data
+* deserializing
+* applying QoS rules
+* delivering samples to RMW
+
+---
+
+### **Topic (DDS layer)**
+
+Defined by:
+
+* name
+* data type
+* QoS
+
+A ROS topic name maps to a DDS topic name via ROS naming conventions and namespace rules.
+
+---
+
+## **Quality of Service (QoS)**
+
+QoS influences how data is delivered.
 
 ### **Reliability**
 
-* **Best effort** – no guarantees
-* **Reliable** – ensures delivery
+* *best_effort* – may drop samples
+* *reliable* – retry and guarantee delivery
 
 ### **Durability**
 
-Controls whether late-joining subscribers get past messages.
+Controls sample persistence:
 
-### **Deadline**
-
-Maximum interval between expected messages.
-
-### **Liveliness**
-
-How publishers announce that they are still alive.
+* *volatile* – no history
+* *transient_local* – late subscribers receive last sample
 
 ### **History**
 
-How many past messages a reader/writer stores.
+How many past samples to store:
 
-QoS mismatches can cause nodes to fail to connect even if names match.
+* *keep_last*
+* *keep_all*
 
----
+### **Deadline**
 
-## **Domains**
+Maximum allowed time between samples. Missed deadlines trigger events.
 
-### **ROS Domain / DDS Domain**
+### **Liveliness**
 
-A communication isolation mechanism. Only nodes in the same domain can see each other.
+Ensures publishers signal that they are still alive.
 
-Selected via:
+### **Lifespan**
 
-```bash
-export ROS_DOMAIN_ID=<number>
-```
+How long a message remains valid before being discarded.
 
-Useful for multi-robot or multi-process separation.
-
----
-
-## **Fast DDS (formerly Fast RTPS)**
-
-### **Fast DDS**
-
-Open-source DDS implementation by eProsima. Default for ROS 2 distros such as Jazzy.
-
-Pros:
-
-* Feature-rich
-* Good QoS support
-* Widely used in ROS
-
-Cons:
-
-* Shared memory and multicast can fail on WSL2, VPNs, Docker, or restrictive networks
-* Sometimes more complex to configure
-
-### **Fast DDS Shared Memory Transport**
-
-High-performance local communication using `/dev/shm`.
-Broken in some virtualized environments (WSL2, containers).
+QoS mismatches prevent publishers and subscribers from matching.
 
 ---
 
-## **Cyclone DDS**
-
-### **Cyclone DDS**
-
-Open-source DDS implementation by Eclipse Foundation. Known for:
-
-* Simple, stable behavior
-* Strong compatibility with restricted or virtualized environments
-* Good performance in practice
-* Light footprint
-
-Often works “out of the box” when Fast-DDS fails.
-
----
-
-## **ROS 2 Daemon**
+## **ROS 2 CLI Support**
 
 ### **`ros2 daemon`**
 
-A background process used by ROS CLI tools to speed up discovery queries.
+A background service used by CLI tools (`ros2 topic`, `ros2 node`, etc.) to accelerate graph queries.
 
 Commands:
 
@@ -227,11 +312,59 @@ Commands:
 * `ros2 daemon stop`
 * `ros2 daemon status`
 
-A frozen daemon is usually caused by middleware initialization failures (very common with Fast-DDS on WSL2).
+A frozen daemon usually indicates middleware issues (e.g., Fast DDS failing under WSL2).
 
 ---
 
-## **RMW Selection Workflow**
+## **Middleware Implementations in Detail**
+
+### **Fast DDS (formerly Fast RTPS)**
+
+Default DDS implementation in many ROS 2 distros.
+
+Pros:
+
+* full-featured
+* robust QoS
+* good performance
+
+Cons:
+
+* discovery instability on WSL2
+* shared memory transport often fails in virtualized environments
+
+---
+
+### **Cyclone DDS**
+
+Lightweight, stable, and often more reliable in constrained environments.
+
+Pros:
+
+* excellent stability on WSL2/Docker
+* simple discovery model
+* often “just works”
+
+Cons:
+
+* fewer advanced configuration knobs than Fast DDS
+
+---
+
+### **RTI Connext DDS**
+
+Commercial, high-performance DDS with strong real-time capabilities.
+Less commonly used in open-source ROS deployments due to licensing constraints.
+
+---
+
+### **GurumDDS**
+
+Another commercial DDS implementation supported by ROS 2.
+
+---
+
+# **RMW Selection Workflow**
 
 To switch middleware:
 
@@ -239,30 +372,10 @@ To switch middleware:
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ```
 
-Check:
+To verify:
 
 ```bash
 ros2 doctor --report
 ```
-
----
-
-## **When to Change DDS / RMW**
-
-### Use Fast DDS when:
-
-* Native Linux
-* Shared memory is needed
-* Complex QoS tuning
-* Multicast works reliably
-
-### Use Cyclone DDS when:
-
-* WSL2
-* Docker
-* VPN / corporate / unusual networks
-* Discovery hangs
-* CLI commands freeze
-* Lightweight footprint is desirable
 
 ---

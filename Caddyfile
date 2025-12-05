@@ -1,0 +1,17 @@
+:8765 {
+	root * /usr/share/caddy
+	encode gzip zstd
+
+	@static {
+		path *.js *.css *.png *.jpg *.jpeg *.svg *.webp *.ico *.json *.wasm
+	}
+	# Cache but revalidate every time
+	header @static Cache-Control "public, max-age=0, must-revalidate"
+
+	@html {
+		path *.html
+	}
+	header @html Cache-Control "public, max-age=0, must-revalidate"
+
+	file_server
+}

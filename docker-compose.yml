@@ -20,7 +20,8 @@ services:
       logus2k_network:
         ipv4_address: 172.20.0.110
     volumes:
-      - ./documents.json:/app/documents.json:ro
+      - ./documents.json:/usr/share/caddy/documents.json:ro
+      - ./categories:/usr/share/caddy/categories:ro
 
 networks:
   logus2k_network:
