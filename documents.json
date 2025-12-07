@@ -71,9 +71,9 @@
 			"location": "categories/ros2/ros2.communication.flow.md"
 		},
 		{
-			"name": "Webots Physics Guide",
+			"name": "Physics Guide",
 			"category": "Webots",
-			"location": "categories/webots/webots.communication.flow.md"
+			"location": "categories/webots/physics.guide.md"
 		}
 	]
 }
