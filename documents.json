@@ -69,6 +69,11 @@
 			"name": "Communication Flow",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.communication.flow.md"
+		},
+		{
+			"name": "Webots Physics Guide",
+			"category": "Webots",
+			"location": "categories/webots/webots.communication.flow.md"
 		}
 	]
 }
