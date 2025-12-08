@@ -1,6 +1,11 @@
 {
 	"documents": [
 		{
+			"name": "Glossary",
+			"category": "CUDA",
+			"location": "categories/cuda/glossary.md"
+		},		
+		{
 			"name": "Hyperparameters Guide",
 			"category": "Deep Learning",
 			"location": "categories/dl/hyperparameters_guide_v2.md"
