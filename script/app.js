@@ -14,16 +14,71 @@ class DocumentBrowser {
 
     async init() {
         try {
+            this.createLightbox();
             await this.loadConfiguration();
             await this.loadDocuments();
             this.extractCategories();
             this.renderCategorySelector();
             this.render();
             this.setActiveCategory(this.categories[0]);
+            this.setupImageClickHandlers();
         } catch (error) {
             console.error('Initialization error:', error);
             this.showError('Failed to initialize document browser');
         }
+    }
+
+    createLightbox() {
+        // Create lightbox elements
+        const lightbox = document.createElement('div');
+        lightbox.id = 'imageLightbox';
+        lightbox.className = 'lightbox';
+        lightbox.innerHTML = `
+            <div class="lightbox-content">
+                <span class="lightbox-close">&times;</span>
+                <img class="lightbox-image" src="" alt="">
+            </div>
+        `;
+        document.body.appendChild(lightbox);
+
+        this.lightbox = lightbox;
+        this.lightboxImage = lightbox.querySelector('.lightbox-image');
+        this.lightboxClose = lightbox.querySelector('.lightbox-close');
+
+        // Close handlers
+        this.lightboxClose.addEventListener('click', () => this.closeLightbox());
+        this.lightbox.addEventListener('click', (e) => {
+            if (e.target === this.lightbox) {
+                this.closeLightbox();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.lightbox.classList.contains('active')) {
+                this.closeLightbox();
+            }
+        });
+    }
+
+    setupImageClickHandlers() {
+        // Use event delegation on the content container
+        this.contentContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG') {
+                this.openLightbox(e.target.src, e.target.alt);
+            }
+        });
+    }
+
+    openLightbox(src, alt) {
+        this.lightboxImage.src = src;
+        this.lightboxImage.alt = alt || '';
+        this.lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeLightbox() {
+        this.lightbox.classList.remove('active');
+        document.body.style.overflow = '';
     }
 
     async loadConfiguration() {

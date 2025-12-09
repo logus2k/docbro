@@ -4,7 +4,17 @@
 			"name": "Glossary",
 			"category": "CUDA",
 			"location": "categories/cuda/glossary.md"
-		},		
+		},
+		{
+			"name": "Streaming Multiprocessor",
+			"category": "CUDA",
+			"location": "categories/cuda/sm.md"
+		},	
+		{
+			"name": "Tesla",
+			"category": "CUDA",
+			"location": "categories/cuda/tesla.md"
+		},					
 		{
 			"name": "Hyperparameters Guide",
 			"category": "Deep Learning",

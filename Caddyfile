@@ -5,13 +5,16 @@
 	@static {
 		path *.js *.css *.png *.jpg *.jpeg *.svg *.webp *.ico *.json *.wasm
 	}
-	# Cache but revalidate every time
-	header @static Cache-Control "public, max-age=0, must-revalidate"
+	header @static Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
+	header @static Pragma "no-cache"
+	header @static Expires "0"
 
 	@html {
 		path *.html
 	}
-	header @html Cache-Control "public, max-age=0, must-revalidate"
+	header @html Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
+	header @html Pragma "no-cache"
+	header @html Expires "0"
 
 	file_server
 }
