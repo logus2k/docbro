@@ -66,15 +66,15 @@
 			"location": "categories/genai/sequence_models_evolution.md"
 		},		
 		{
-			"name": "What is a Robot",
-			"category": "ROS 2",
-			"location": "categories/ros2/what_is_a_robot.md"
-		},		
-		{
 			"name": "Glossary",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.glossary.md"
 		},
+		{
+			"name": "What is a Robot",
+			"category": "ROS 2",
+			"location": "categories/ros2/what_is_a_robot.md"
+		},		
 		{
 			"name": "Communication Stack",
 			"category": "ROS 2",
