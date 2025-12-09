@@ -1,4 +1,7 @@
+// app.js
+
 class DocumentBrowser {
+
     constructor(configPath) {
         this.configPath = configPath;
         this.documents = [];
@@ -20,11 +23,96 @@ class DocumentBrowser {
             this.extractCategories();
             this.renderCategorySelector();
             this.render();
-            this.setActiveCategory(this.categories[0]);
+            
+            // Check if there's a hash in the URL
+            const hashParams = this.parseHash();
+            if (hashParams.category && this.categories.includes(hashParams.category)) {
+                this.setActiveCategory(hashParams.category);
+                if (hashParams.tab !== null) {
+                    this.showDocumentByNameOrIndex(hashParams.tab);
+                }
+            } else {
+                this.setActiveCategory(this.categories[0]);
+            }
+            
             this.setupImageClickHandlers();
+            this.setupHashChangeListener();
         } catch (error) {
             console.error('Initialization error:', error);
             this.showError('Failed to initialize document browser');
+        }
+    }
+
+    parseHash() {
+        const hash = window.location.hash.slice(1); // Remove #
+        const params = {};
+        
+        if (!hash) return params;
+        
+        hash.split('&').forEach(part => {
+            const [key, value] = part.split('=');
+            if (key && value) {
+                params[decodeURIComponent(key)] = decodeURIComponent(value);
+            }
+        });
+        
+        // Convert tab to number if it's numeric, otherwise keep as string
+        if (params.tab !== undefined) {
+            const asNumber = parseInt(params.tab, 10);
+            params.tab = isNaN(asNumber) ? params.tab : asNumber;
+        } else {
+            params.tab = null;
+        }
+        
+        return params;
+    }
+
+    updateHash(category, tabIndexOrName) {
+        const filteredDocs = this.documents.filter(doc => doc.category === category);
+        let tabValue;
+        
+        if (typeof tabIndexOrName === 'number') {
+            // Use tab name if available
+            tabValue = filteredDocs[tabIndexOrName]?.name || tabIndexOrName;
+        } else {
+            tabValue = tabIndexOrName;
+        }
+        
+        const hash = `#category=${encodeURIComponent(category)}&tab=${encodeURIComponent(tabValue)}`;
+        
+        // Update without triggering hashchange event if already correct
+        if (window.location.hash !== hash) {
+            window.history.replaceState(null, '', hash);
+        }
+    }
+
+    setupHashChangeListener() {
+        window.addEventListener('hashchange', () => {
+            const hashParams = this.parseHash();
+            if (hashParams.category && this.categories.includes(hashParams.category)) {
+                if (this.activeCategory !== hashParams.category) {
+                    this.setActiveCategory(hashParams.category);
+                }
+                if (hashParams.tab !== null) {
+                    this.showDocumentByNameOrIndex(hashParams.tab);
+                }
+            }
+        });
+    }
+
+    showDocumentByNameOrIndex(tabNameOrIndex) {
+        const filteredDocs = this.getFilteredDocuments();
+        let index;
+        
+        if (typeof tabNameOrIndex === 'number') {
+            index = tabNameOrIndex;
+        } else {
+            // Find by name
+            index = filteredDocs.findIndex(doc => doc.name === tabNameOrIndex);
+        }
+        
+        if (index >= 0 && index < filteredDocs.length) {
+            this.showDocument(index);
         }
     }
 
@@ -253,6 +341,9 @@ class DocumentBrowser {
 
         // Remember this tab for the current category
         this.categoryLastActiveTab[this.activeCategory] = index;
+
+        // Update URL hash
+        this.updateHash(this.activeCategory, index);
 
         // Update tabs
         const tabs = this.tabsContainer.querySelectorAll('.tab');
