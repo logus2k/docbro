@@ -41,4 +41,10 @@ _CUDA compute unified device architecture (G80). Note the absence of distinct pr
 - Each SM has limits on threads, blocks, and shared memory usage
 - Optimizing for SM utilization is crucial for achieving peak performance
 
+Streaming Multiprocessors (SMs) are versioned with a particular "architecture" that defines their compatibility with Streaming Assembler (SASS) code.
+
+![CUDA Streaming Multiprocessor Architecture](https://logus2k.com/docbro/categories/cuda/images/cuda_sm.png)
+
+_A streaming multiprocessor with the "Hopper" SM90 architecture._
+
 ---

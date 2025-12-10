@@ -1,6 +1,11 @@
 {
 	"documents": [
 		{
+			"name": "Threading in Python",
+			"category": "Computação Gráfica",
+			"location": "categories/threading/threading.md"
+		},
+		{
 			"name": "Glossary",
 			"category": "CUDA",
 			"location": "categories/cuda/glossary.md"
@@ -64,7 +69,17 @@
 			"name": "Sequence Models Evolution",
 			"category": "Generative AI",
 			"location": "categories/genai/sequence_models_evolution.md"
-		},		
+		},
+		{
+			"name": "Glossary",
+			"category": "Numba",
+			"location": "categories/numba/glossary.md"
+		},
+		{
+			"name": "Overview",
+			"category": "Numba",
+			"location": "categories/numba/overview.md"
+		},
 		{
 			"name": "Glossary",
 			"category": "ROS 2",
