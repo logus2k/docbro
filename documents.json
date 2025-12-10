@@ -21,6 +21,16 @@
 			"location": "categories/cuda/tesla.md"
 		},					
 		{
+			"name": "Glossary",
+			"category": "CuPy",
+			"location": "categories/cupy/glossary.md"
+		},	
+		{
+			"name": "Study Guide",
+			"category": "CuPy",
+			"location": "categories/cupy/study_guide.md"
+		},							
+		{
 			"name": "Hyperparameters Guide",
 			"category": "Deep Learning",
 			"location": "categories/dl/hyperparameters_guide_v2.md"
@@ -80,6 +90,11 @@
 			"category": "Numba",
 			"location": "categories/numba/overview.md"
 		},
+		{
+			"name": "Study Guide",
+			"category": "Numba",
+			"location": "categories/numba/study_guide.md"
+		},		
 		{
 			"name": "Glossary",
 			"category": "ROS 2",
