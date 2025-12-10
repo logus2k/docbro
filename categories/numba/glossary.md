@@ -131,6 +131,21 @@
 * Enabled explicitly by `@njit` or `@jit(nopython=True)`.
 * Fastest execution mode; Python operations not supported result in compilation failure.
 
+### **Numeric Kernel**
+
+A numeric kernel is the core computation-heavy part of a program, typically expressed as tight loops or vector operations over numerical data.
+It is the portion of code that benefits most from JIT compilation and parallelization.
+
+Numeric kernels have these characteristics:
+
+* **Arithmetic-focused:** Perform large amounts of numeric work (e.g., additions, multiplications, dot products, iterative updates).
+* **Statically typable:** Use numeric scalars and arrays without relying on Python objects or dynamic typing.
+* **No I/O or Python runtime features:** Avoids file I/O, printing, exceptions, dynamic attributes, and other interpreter-dependent behaviors.
+* **Parallelizable or vectorizable:** Iterations are usually independent, making them ideal for thread parallelism (`prange`) or SIMD vectorization.
+* **Performance-critical:** Represent the “hot loops” of the algorithm where most execution time is spent.
+
+Numba is designed to optimize numeric kernels by compiling them into efficient machine code, removing Python overhead, enabling SIMD execution, and (when configured) distributing work across multiple CPU cores.
+
 ### **NumPy Integration**
 
 * Numba supports a large subset of NumPy, translating array operations directly to optimized native loops.
