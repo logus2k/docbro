@@ -16,7 +16,7 @@ On a multi-core CPU, we can have both **concurrency and true parallelism**: mult
 
 You can think of concurrency vs parallelism as different ways to allocate work:
 
-<img src="https://logus2k.com/docbro/categories/cgad/images/parallel_concurrent.png" width="600"/>
+<img src="https://logus2k.com/docbro/categories/threading/images/parallel_concurrent.png" width="600"/>
 
 ### 1.2 Threads and Processes
 

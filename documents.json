@@ -1,11 +1,6 @@
 {
 	"documents": [
 		{
-			"name": "Threading in Python",
-			"category": "Computação Gráfica",
-			"location": "categories/threading/threading.md"
-		},
-		{
 			"name": "Glossary",
 			"category": "CUDA",
 			"location": "categories/cuda/glossary.md"
@@ -114,6 +109,16 @@
 			"name": "Communication Flow",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.communication.flow.md"
+		},
+		{
+			"name": "Glossary",
+			"category": "Threading",
+			"location": "categories/threading/glossary.md"
+		},
+		{
+			"name": "Overview",
+			"category": "Threading",
+			"location": "categories/threading/overview.md"
 		},
 		{
 			"name": "Physics Guide",
