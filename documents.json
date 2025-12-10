@@ -112,12 +112,12 @@
 		},
 		{
 			"name": "Glossary",
-			"category": "Threading",
+			"category": "Threading and Multiprocessing",
 			"location": "categories/threading/glossary.md"
 		},
 		{
 			"name": "Overview",
-			"category": "Threading",
+			"category": "Threading and Multiprocessing",
 			"location": "categories/threading/overview.md"
 		},
 		{
