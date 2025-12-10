@@ -1,4 +1,4 @@
-# **Threading and Multiprocessing Glossary: Key Concepts and Terms**
+# Threading and Multiprocessing Glossary
 
 ---
 

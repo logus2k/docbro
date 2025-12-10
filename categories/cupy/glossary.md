@@ -1,4 +1,4 @@
-# **CuPy Glossary: Key Concepts and Terms**
+# CuPy Glossary
 
 ---
 

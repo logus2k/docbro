@@ -1,4 +1,4 @@
-# **Numba Glossary: Key Concepts and Terms**
+# Numba Glossary
 
 ## **A**
 
