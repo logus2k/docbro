@@ -1,0 +1,337 @@
+<!DOCTYPE html><html><head>
+      <title>proposals</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+    
+    
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="gpu-accelerated-web-applications-proposal">GPU-Accelerated Web Applications Proposal </h1>
+<h2 id="overview">Overview </h2>
+<p>This document proposes four interactive web applications that demonstrate the computational advantages of GPU architectures over traditional CPU processing. Each project leverages CUDA acceleration through CuPy and Numba for server-side computation, real-time data streaming via <a href="http://Socket.IO">Socket.IO</a>, and Three.js for hardware-accelerated client-side visualization.</p>
+<hr>
+<h2 id="project-1-n-body-gravitational-simulation">Project 1: N-Body Gravitational Simulation </h2>
+<h3 id="summary">Summary </h3>
+<p>An interactive 3D visualization of gravitational interactions between celestial bodies, demonstrating massive parallelization advantages for pairwise force calculations.</p>
+<h3 id="technical-objectives">Technical Objectives </h3>
+<ul>
+<li>Implement gravitational N-body simulation supporting 1,000 to 1,000,000 particles</li>
+<li>Compare CPU sequential force calculation (O(n²)) with GPU parallel implementation</li>
+<li>Achieve real-time visualization at 30-60 FPS with interactive camera controls</li>
+<li>Display live performance metrics showing computation time and speedup ratios</li>
+</ul>
+<h3 id="computational-challenge">Computational Challenge </h3>
+<p>Each particle experiences gravitational force from every other particle, requiring n×(n-1)/2 pairwise calculations per timestep. For 100,000 particles, this equals approximately 5 billion force calculations per frame.</p>
+<h3 id="technology-stack">Technology Stack </h3>
+<p><strong>Server-Side Processing:</strong></p>
+<ul>
+<li><strong>CuPy</strong>: Vectorized pairwise distance calculations, force accumulation using GPU array operations</li>
+<li><strong>Numba CUDA</strong>: Custom kernels for optimized memory access patterns, reducing global memory transactions</li>
+<li><strong>FastAPI</strong>: RESTful endpoints for simulation configuration and initial setup</li>
+<li><strong>python-socketio</strong>: Real-time streaming of particle state (positions, velocities) at target frame rate</li>
+</ul>
+<p><strong>Client-Side Visualization:</strong></p>
+<ul>
+<li><strong><a href="http://Socket.IO">Socket.IO</a> Client</strong>: Bidirectional communication for parameter updates and state streaming</li>
+<li><strong>Three.js</strong>: Particle rendering using <code>THREE.Points</code> with <code>BufferGeometry</code> for efficient updates, orbit controls for 3D navigation, optional motion trails and bloom effects</li>
+</ul>
+<h3 id="key-features">Key Features </h3>
+<ul>
+<li>Adjustable particle count with real-time performance impact</li>
+<li>Preset scenarios (binary stars, galaxy collision, solar system)</li>
+<li>Interactive spawn mode for adding particles during simulation</li>
+<li>Side-by-side CPU vs GPU performance comparison</li>
+<li>Configurable physics parameters (gravitational constant, softening factor, timestep)</li>
+</ul>
+<h3 id="success-metrics">Success Metrics </h3>
+<ul>
+<li>100K particles at 30+ FPS on GPU vs &lt;1 FPS on CPU</li>
+<li>Demonstrable 50-100x speedup for large particle counts</li>
+<li>Stable orbital mechanics without numerical divergence</li>
+<li>Smooth visualization without frame drops</li>
+</ul>
+<hr>
+<h2 id="project-2-2d-fluid-simulation-stable-fluids">Project 2: 2D Fluid Simulation (Stable Fluids) </h2>
+<h3 id="summary-1">Summary </h3>
+<p>Real-time smoke and fluid dynamics solver implementing the Stable Fluids algorithm, showcasing GPU acceleration of iterative grid-based numerical methods.</p>
+<h3 id="technical-objectives-1">Technical Objectives </h3>
+<ul>
+<li>Implement incompressible Navier-Stokes solver with advection, diffusion, and pressure projection</li>
+<li>Compare iterative solver performance (Jacobi/Gauss-Seidel methods) between CPU and GPU</li>
+<li>Enable interactive fluid manipulation through mouse/touch input</li>
+<li>Visualize velocity fields and density distribution with artistic rendering options</li>
+</ul>
+<h3 id="computational-challenge-1">Computational Challenge </h3>
+<p>Each simulation step requires solving sparse linear systems iteratively across the entire grid. For a 512×512 grid with 50 Jacobi iterations, this involves 13 million operations per frame. Additionally, advection requires bilinear interpolation at each grid point.</p>
+<h3 id="technology-stack-1">Technology Stack </h3>
+<p><strong>Server-Side Processing:</strong></p>
+<ul>
+<li><strong>CuPy</strong>: Grid operations for advection (semi-Lagrangian method), diffusion kernels, linear system solving</li>
+<li><strong>Numba CUDA</strong>: Optimized stencil operations for neighbor calculations, shared memory utilization for border handling, pressure projection with reduced global memory access</li>
+<li><strong>FastAPI</strong>: Static file serving and simulation parameter configuration</li>
+<li><strong>python-socketio</strong>: Bidirectional streaming of grid state (density, velocity fields) and mouse interaction coordinates</li>
+</ul>
+<p><strong>Client-Side Visualization:</strong></p>
+<ul>
+<li><strong><a href="http://Socket.IO">Socket.IO</a> Client</strong>: Stream user input events (click position, drag velocity) and receive grid updates</li>
+<li><strong>Three.js</strong>: Density field rendered as <code>THREE.DataTexture</code> on textured plane, velocity visualization using arrow helpers or line segments, optional volumetric rendering for 3D smoke effects, custom fragment shaders for artistic color mapping</li>
+</ul>
+<h3 id="key-features-1">Key Features </h3>
+<ul>
+<li>Multiple fluid injection modes (smoke, dye, force application)</li>
+<li>Adjustable grid resolution (64² to 1024²) with performance scaling</li>
+<li>Boundary condition options (wrap-around, solid walls, open boundaries)</li>
+<li>Visualization modes (density only, velocity vectors, divergence field)</li>
+<li>Configurable physical parameters (viscosity, diffusion rate, timestep)</li>
+<li>Recording and playback of interaction sequences</li>
+</ul>
+<h3 id="success-metrics-1">Success Metrics </h3>
+<ul>
+<li>512² grid at 60 FPS on GPU vs &lt;5 FPS on CPU</li>
+<li>Visually smooth, artifact-free smoke behavior</li>
+<li>Demonstrable 10-20x speedup for iterative solver operations</li>
+<li>Responsive interaction with &lt;50ms latency from input to visual feedback</li>
+</ul>
+<hr>
+<h2 id="project-3-3d-cellular-automata-explorer">Project 3: 3D Cellular Automata Explorer </h2>
+<h3 id="summary-2">Summary </h3>
+<p>Extension of Conway's Game of Life into three-dimensional space, demonstrating GPU optimization of stencil operations and emergent complexity visualization.</p>
+<h3 id="technical-objectives-2">Technical Objectives </h3>
+<ul>
+<li>Implement 3D cellular automata with configurable survival/birth rules</li>
+<li>Process large grids (256³ to 512³ cells) with efficient boundary handling</li>
+<li>Demonstrate shared memory optimization for neighbor counting operations</li>
+<li>Explore and visualize emergent 3D patterns and structures</li>
+</ul>
+<h3 id="computational-challenge-2">Computational Challenge </h3>
+<p>Each cell requires counting 26 neighbors in 3D space (compared to 8 in 2D). For a 512³ grid, this involves examining 3.4 billion neighbor relationships per generation. Naive implementations suffer from excessive global memory access.</p>
+<h3 id="technology-stack-2">Technology Stack </h3>
+<p><strong>Server-Side Processing:</strong></p>
+<ul>
+<li><strong>CuPy</strong>: 3D convolution for neighbor counting using separable kernels, state update logic</li>
+<li><strong>Numba CUDA</strong>: Custom kernels with shared memory tiles to minimize memory bandwidth requirements, optimized boundary condition handling (periodic, fixed, reflective)</li>
+<li><strong>FastAPI</strong>: Pattern library management, rule configuration endpoints</li>
+<li><strong>python-socketio</strong>: Stream alive cell coordinates or compressed grid deltas using run-length encoding</li>
+</ul>
+<p><strong>Client-Side Visualization:</strong></p>
+<ul>
+<li><strong><a href="http://Socket.IO">Socket.IO</a> Client</strong>: Receive incremental grid updates and pattern spawn commands</li>
+<li><strong>Three.js</strong>: Alive cells rendered as <code>THREE.InstancedMesh</code> (cubes or spheres), frustum culling and LOD for performance with large populations, camera controls with smooth transitions, optional cell age coloring and transparency effects</li>
+</ul>
+<h3 id="key-features-2">Key Features </h3>
+<ul>
+<li>Preset patterns (3D gliders, oscillators, still lifes)</li>
+<li>Custom rule designer (survival/birth neighbor count ranges)</li>
+<li>Grid cross-section viewer for internal structure analysis</li>
+<li>Pattern seeding tools (random, symmetric, imported)</li>
+<li>Generation step control (single-step, continuous, variable speed)</li>
+<li>Population statistics tracking (alive cells, birth rate, stability detection)</li>
+</ul>
+<h3 id="success-metrics-2">Success Metrics </h3>
+<ul>
+<li>256³ grid processing at 10+ generations/second on GPU vs &lt;0.1 gen/sec on CPU</li>
+<li>Demonstrable 50-100x speedup from shared memory optimization</li>
+<li>Stable long-term evolution without memory leaks</li>
+<li>Discovery and documentation of interesting 3D emergent patterns</li>
+</ul>
+<hr>
+<h2 id="project-4-progressive-ray-tracer">Project 4: Progressive Ray Tracer </h2>
+<h3 id="summary-3">Summary </h3>
+<p>Monte Carlo path tracing renderer demonstrating embarrassingly parallel ray generation and intersection testing, with progressive quality refinement over time.</p>
+<h3 id="technical-objectives-3">Technical Objectives </h3>
+<ul>
+<li>Implement physically-based path tracing with multiple material types</li>
+<li>Compare single-threaded CPU ray tracing with massively parallel GPU execution</li>
+<li>Progressive tile-based rendering showing quality improvement over iterations</li>
+<li>Support for interactive camera movement with automatic restart</li>
+</ul>
+<h3 id="computational-challenge-3">Computational Challenge </h3>
+<p>Path tracing requires casting millions of rays per pixel (typically 1000+ samples for noise-free images). Each ray involves multiple recursive bounces with intersection tests against scene geometry. A 1920×1080 image at 1000 samples requires tracing over 2 billion primary rays.</p>
+<h3 id="technology-stack-3">Technology Stack </h3>
+<p><strong>Server-Side Processing:</strong></p>
+<ul>
+<li><strong>CuPy</strong>: Ray-sphere/plane intersection calculations, material BRDF evaluation, random number generation for Monte Carlo sampling</li>
+<li><strong>Numba CUDA</strong>: Custom ray tracing kernel with optimized ray generation, BVH (Bounding Volume Hierarchy) traversal for complex scenes, importance sampling for materials (cosine-weighted hemisphere, microfacet distributions)</li>
+<li><strong>FastAPI</strong>: Scene description API, camera configuration, material library</li>
+<li><strong>python-socketio</strong>: Stream rendered tiles (8×8 or 16×16 pixel blocks) with progressive sample accumulation</li>
+</ul>
+<p><strong>Client-Side Visualization:</strong></p>
+<ul>
+<li><strong><a href="http://Socket.IO">Socket.IO</a> Client</strong>: Receive image tiles and composite into final display, send camera transformation updates</li>
+<li><strong>Three.js</strong>: Display progressive result as <code>THREE.CanvasTexture</code> updated per tile, optional 3D wireframe preview of scene geometry for positioning, orbit/pan controls for camera manipulation, real-time sample count and convergence display</li>
+</ul>
+<h3 id="key-features-3">Key Features </h3>
+<ul>
+<li>Multiple material types (Lambertian diffuse, metallic, dielectric/glass, emissive)</li>
+<li>Configurable scene complexity (primitives: spheres, planes, triangles)</li>
+<li>Tile prioritization (center-out, importance-based)</li>
+<li>Sample accumulation with variance estimation</li>
+<li>Render quality presets (preview, medium, high, production)</li>
+<li>Scene templates (Cornell box, glass spheres, metallic objects)</li>
+<li>Export rendered images at completion</li>
+</ul>
+<h3 id="success-metrics-3">Success Metrics </h3>
+<ul>
+<li>1920×1080 preview (100 samples) in &lt;30 seconds on GPU vs 10+ minutes on CPU</li>
+<li>Demonstrable 100-500x speedup for large sample counts</li>
+<li>Visually correct materials (color bleeding, caustics, reflections)</li>
+<li>Progressive updates showing smooth quality improvement</li>
+<li>Noise-free convergence at high sample counts (1000+)</li>
+</ul>
+<hr>
+<h2 id="common-architecture">Common Architecture </h2>
+<h3 id="server-infrastructure">Server Infrastructure </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>FastAPI Application
+├── RESTful API (initial configuration, file uploads)
+├── python-socketio (WebSocket-based real-time communication)
+├── CuPy/Numba Compute Layer (CUDA kernel execution)
+└── Performance Monitoring (CPU/GPU timing, memory usage)
+</code></pre><h3 id="client-infrastructure">Client Infrastructure </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>Single-Page Application
+├── Socket.IO Client (bidirectional communication)
+├── Three.js Renderer (WebGL-accelerated visualization)
+├── UI Controls (parameter adjustment, presets)
+└── Performance Dashboard (FPS, latency, speedup metrics)
+</code></pre><h3 id="data-flow">Data Flow </h3>
+<ol>
+<li>User configures simulation parameters via web interface</li>
+<li>Client sends configuration to server via <a href="http://Socket.IO">Socket.IO</a></li>
+<li>Server initializes GPU computation and begins processing</li>
+<li>Server streams results (binary or JSON) at target frame rate</li>
+<li>Client updates Three.js scene with received data</li>
+<li>Client sends interaction events (mouse, camera) back to server</li>
+<li>Server adjusts computation based on interaction</li>
+</ol>
+<h3 id="performance-monitoring">Performance Monitoring </h3>
+<p>All projects include real-time display of:</p>
+<ul>
+<li>CPU computation time per frame</li>
+<li>GPU computation time per frame (including memory transfers)</li>
+<li>Speedup ratio (CPU time / GPU time)</li>
+<li>Frame rate and frame time distribution</li>
+<li>Memory usage (host and device)</li>
+<li>Data transfer bandwidth</li>
+</ul>
+<hr>
+<h2 id="implementation-phases">Implementation Phases </h2>
+<h3 id="phase-1-core-infrastructure">Phase 1: Core Infrastructure </h3>
+<ul>
+<li>FastAPI + python-socketio server setup</li>
+<li><a href="http://Socket.IO">Socket.IO</a> client integration with Three.js</li>
+<li>Basic GPU kernel scaffolding with CuPy</li>
+<li>Performance timing and metrics collection</li>
+</ul>
+<h3 id="phase-2-cpu-baseline">Phase 2: CPU Baseline </h3>
+<ul>
+<li>Implement correct CPU reference versions for each project</li>
+<li>Validate numerical accuracy and stability</li>
+<li>Establish baseline performance measurements</li>
+<li>Create minimal visualization for correctness verification</li>
+</ul>
+<h3 id="phase-3-gpu-implementation">Phase 3: GPU Implementation </h3>
+<ul>
+<li>Port algorithms to CuPy vectorized operations</li>
+<li>Optimize with custom Numba CUDA kernels</li>
+<li>Implement memory transfer optimization (pinned memory, async transfers)</li>
+<li>Profile and optimize hotspots</li>
+</ul>
+<h3 id="phase-4-visualization-enhancement">Phase 4: Visualization Enhancement </h3>
+<ul>
+<li>Implement full Three.js rendering features</li>
+<li>Add interactive controls and parameter adjustment</li>
+<li>Create preset configurations and demos</li>
+<li>Implement recording and playback capabilities</li>
+</ul>
+<h3 id="phase-5-documentation-and-refinement">Phase 5: Documentation and Refinement </h3>
+<ul>
+<li>User documentation and tutorials</li>
+<li>Code documentation and architecture diagrams</li>
+<li>Performance benchmarking across hardware configurations</li>
+<li>Bug fixes and polish</li>
+</ul>
+<hr>
+<h2 id="technical-requirements">Technical Requirements </h2>
+<h3 id="hardware">Hardware </h3>
+<ul>
+<li>NVIDIA GPU with CUDA Compute Capability 6.0+ (Pascal architecture or newer)</li>
+<li>8GB+ GPU memory recommended for large simulations</li>
+<li>16GB+ system RAM</li>
+<li>Modern web browser with WebGL 2.0 support</li>
+</ul>
+<h3 id="software-dependencies">Software Dependencies </h3>
+<p><strong>Backend:</strong></p>
+<ul>
+<li>Python 3.9+</li>
+<li>CUDA Toolkit 11.x or 12.x</li>
+<li>CuPy (matching CUDA version)</li>
+<li>Numba with CUDA support</li>
+<li>FastAPI</li>
+<li>python-socketio</li>
+<li>uvicorn (ASGI server)</li>
+</ul>
+<p><strong>Frontend:</strong></p>
+<ul>
+<li>Node.js 18+ (for development tooling)</li>
+<li>Three.js r150+</li>
+<li><a href="http://Socket.IO">Socket.IO</a> client</li>
+<li>Modern build toolchain (Vite/Webpack)</li>
+</ul>
+<hr>
+<h2 id="expected-outcomes">Expected Outcomes </h2>
+<h3 id="educational-value">Educational Value </h3>
+<ul>
+<li>Clear demonstration of when GPU acceleration provides dramatic advantages</li>
+<li>Understanding of memory access patterns and their performance impact</li>
+<li>Practical experience with CUDA programming through CuPy and Numba</li>
+<li>Real-world application of numerical methods and parallel algorithms</li>
+</ul>
+<h3 id="performance-demonstrations">Performance Demonstrations </h3>
+<ul>
+<li><strong>N-Body</strong>: 50-100x speedup for large particle counts</li>
+<li><strong>Fluids</strong>: 10-20x speedup for iterative solvers on large grids</li>
+<li><strong>Cellular Automata</strong>: 50-100x speedup with shared memory optimization</li>
+<li><strong>Ray Tracer</strong>: 100-500x speedup for high sample counts</li>
+</ul>
+<h3 id="deliverables">Deliverables </h3>
+<ul>
+<li>Four fully functional web applications with polished UI</li>
+<li>Comprehensive source code with documentation</li>
+<li>Performance benchmark reports across hardware configurations</li>
+<li>User guides and technical documentation</li>
+<li>Video demonstrations of each application</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion </h2>
+<p>These four projects provide diverse demonstrations of GPU computing advantages across different problem domains: O(n²) pairwise interactions, iterative numerical solvers, stencil operations with locality optimization, and embarrassingly parallel ray casting. Each project combines rigorous computational work with engaging visual output, making the performance benefits immediately apparent to users.</p>
+<p>The unified architecture (FastAPI + <a href="http://Socket.IO">Socket.IO</a> + Three.js) provides a consistent foundation while allowing each project to showcase unique aspects of GPU programming. Real-time interaction and progressive visualization make the applications both educational and enjoyable to use.</p>
+<hr>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>
