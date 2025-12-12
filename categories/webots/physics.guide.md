@@ -8,7 +8,7 @@ Webots uses a powerful physics library (ODE - Open Dynamics Engine) to calculate
 
 These properties define how difficult it is to move or rotate an object. They are typically set on the **Solid** or **SolidReference** nodes that define the physical components of your robot.
 
-| Physics Term | Where to Set in Webots | Practical Use for Beginners |
+| Physics&nbsp;Term | Where to Set in Webots | Practical Use for Beginners |
 | :--- | :--- | :--- |
 | **Mass** ($m$) | Found in the **`mass`** field of the **Solid** node (or calculated automatically if a **`PBRAppearance`** node is used with density). | **Crucial:** Setting the correct mass (in kg) determines the robot's **weight** and how much force is needed for **acceleration**. A massless object will float away! |
 | **Inertia** ($I$) | Found in the **`inertia`** field of the **Solid** node. | **Important:** For simple shapes like boxes or cylinders, Webots calculates this automatically. For complex shapes, you might need to manually set the **`inertiaMatrix`**. It defines how hard it is to **rotate** the body. |
@@ -19,7 +19,7 @@ These properties define how difficult it is to move or rotate an object. They ar
 
 These are the forces that drive the robot's movement or are exerted upon it by the environment.
 
-| Physics Term | How to Apply/View in Webots | Practical Use for Beginners |
+| Physics&nbsp;Term | How to Apply/View in Webots | Practical Use for Beginners |
 | :--- | :--- | :--- |
 | **Torque** ($\tau$) | Applied through **Motor** or **RotationalMotor** nodes. You control this by setting the motor's **`velocity`** and **`maxForce`** (which is actually a torque limit). | **Motor Control:** The motor applies **torque** to the joint to achieve the desired rotational **velocity**. Setting **`maxForce`** too low means the motor won't be strong enough to lift the robot's **weight**. |
 | **Velocity** ($v$) | Can be read through the sensor functions (e.g., `wb_motor_get_velocity()`) or observed directly in the simulation. | **Feedback:** Use the robot's **velocity** to implement control logic, such as a PID controller to maintain a constant speed. |
@@ -31,7 +31,7 @@ These are the forces that drive the robot's movement or are exerted upon it by t
 
 These define how the robot interacts with the floor and other objects, especially during collisions.
 
-| Physics Term | Where to Set in Webots | Practical Use for Beginners |
+| Physics&nbsp;Term | Where to Set in Webots | Practical Use for Beginners |
 | :--- | :--- | :--- |
 | **Friction** ($f$) | Set within the **Physics** node of the ground object using the **`coulombFriction`** parameter. | **Traction:** **Friction** is essential for wheels to roll without slipping. High friction prevents slipping; low friction (like ice) causes sliding. This often requires experimentation! |
 | **Weight** ($W$) | Not set directly; it's the result of **Mass** $\times$ **Gravity**. | **Collision:** The robot's **weight** determines the strength of the normal force between its wheels and the ground, which in turn affects the maximum possible **friction** force. |
@@ -39,7 +39,7 @@ These define how the robot interacts with the floor and other objects, especiall
 
 By focusing on these nodes and parameters, you'll be able to quickly adjust your robot's physical behavior to match your simulation goals!
 
-| Term | Symbol/Unit | Definition & Relevance to Webots |
+| Term | Symbol/Unit&nbsp; | Definition & Relevance to Webots |
 | :--- | :--- | :--- |
 | **Mass** | $m$ (kg) | A measure of the amount of matter in an object. In Webots, the **mass** of a robot or its links affects its **inertia**, how it responds to **forces**, and how it interacts in **collisions**. |
 | **Force** | $F$ (N) | An interaction that, when unopposed, will change the motion of an object. In Webots, forces like motor **torque**, **gravity**, and contact **forces** drive the robot's movement and interactions. |
