@@ -1,25 +1,15 @@
 {
 	"documents": [
 		{
-			"name": "Threading",
-			"category": "_Glossaries",
-			"location": "categories/threading/glossary.md"
-		},
-		{
-			"name": "CuPy",
-			"category": "_Glossaries",
-			"location": "categories/cupy/glossary.md"
-		},
-		{
-			"name": "Numba",
-			"category": "_Glossaries",
-			"location": "categories/numba/glossary.md"
-		},
-		{
 			"name": "Glossary",
 			"category": "CUDA",
 			"location": "categories/cuda/glossary.md"
 		},
+		{
+			"name": "Overview",
+			"category": "CUDA",
+			"location": "categories/cuda/overview.md"
+		},		
 		{
 			"name": "Streaming Multiprocessor",
 			"category": "CUDA",
