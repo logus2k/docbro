@@ -4,7 +4,8 @@
     background-color: #3a3a3a;
     padding: 0px 12px 0 12px;
     gap: 2px;
-    align-items: flex-end;
+    background-image: url("/docbro/images/low-contrast-linen.png");
+    justify-content: center;
 }
 
 .tab {
@@ -22,6 +23,7 @@
 
 .tab.active {
     background-color: #fffaee;
+    background-image: url("/docbro/images/low-contrast-linen.png");
     color: #1a1a1a;
     font-weight: 600;
     z-index: 1;
