@@ -139,6 +139,16 @@
 			"name": "Physics Guide",
 			"category": "Webots",
 			"location": "categories/webots/physics.guide.md"
-		}
+		},
+		{
+			"name": "Introduction",
+			"category": "GAN",
+			"location": "categories/gan/introduction.md"
+		},
+		{
+			"name": "FID & KID",
+			"category": "GAN",
+			"location": "categories/gan/fid.kid.md"
+		}		
 	]
 }

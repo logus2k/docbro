@@ -4,9 +4,11 @@
 
 This video explores the unified graphics and computing architecture that enables flexible, high-performance parallel processing, programmable in C via CUDA.
 
-<video width="900" controls>
-    <source src="https://logus2k.com/docbro/categories/cuda/videos/nvidia_tesla.mp4" type="video/mp4">
-</video>
+<div class="embedded-video">
+    <video controls>
+        <source src="https://logus2k.com/docbro/categories/cuda/videos/nvidia_tesla.mp4" type="video/mp4">
+    </video>
+</div>
 
 Launched in 2006, the NVIDIA Tesla architecture is a scalable unified graphics and parallel computing platform designed to enable flexible, programmable graphics and high-performance computing. It unifies the traditional vertex and pixel processors, allowing for dynamic load balancing of varying workloads. The architecture is built on a scalable processor array, where the Streaming Multiprocessor (SM) is the core unified multiprocessor. This design executes both graphics shaders and parallel computing programs, supporting up to 768 concurrent threads in hardware with zero scheduling overhead.
 
