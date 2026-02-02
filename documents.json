@@ -9,7 +9,12 @@
 			"name": "Overview",
 			"category": "CUDA",
 			"location": "categories/cuda/overview.md"
-		},		
+		},	
+		{
+			"name": "Memory Types",
+			"category": "CUDA",
+			"location": "categories/cuda/memory.md"
+		},				
 		{
 			"name": "Streaming Multiprocessor",
 			"category": "CUDA",
@@ -94,17 +99,22 @@
 			"name": "Study Guide",
 			"category": "Numba",
 			"location": "categories/numba/study_guide.md"
-		},		
+		},	
+		{
+			"name": "What is a Robot",
+			"category": "Robotics",
+			"location": "categories/robotics/what_is_a_robot.md"
+		},
+		{
+			"name": "VLM",
+			"category": "Robotics",
+			"location": "categories/robotics/vlmaps.md"
+		},			
 		{
 			"name": "Glossary",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.glossary.md"
 		},
-		{
-			"name": "What is a Robot",
-			"category": "ROS 2",
-			"location": "categories/ros2/what_is_a_robot.md"
-		},		
 		{
 			"name": "Communication Stack",
 			"category": "ROS 2",
