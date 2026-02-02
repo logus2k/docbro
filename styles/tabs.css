@@ -10,7 +10,7 @@
 .tab {
     position: relative;
     padding: 5px 16px 5px 16px;
-    background-color: #fff6dd;
+    background-color: #ffecb9;
     cursor: pointer;
     border-radius: 8px 8px 0 0;
     white-space: nowrap;
@@ -21,7 +21,7 @@
 }
 
 .tab.active {
-    background-color: #ffffff;
+    background-color: #fffaee;
     color: #1a1a1a;
     font-weight: 600;
     z-index: 1;

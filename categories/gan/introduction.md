@@ -1,6 +1,6 @@
 # Introduction to Generative Adversarial Networks (GAN)
 
-Generative Adversarial Networks (GANs) represent a framework for **unsupervised and semi-supervised learning** where two neural networks—a **generator** and a **discriminator**—compete in a zero-sum game. According to the sources, a common analogy for this process is to view the generator as an art forger creating realistic fake images and the discriminator as an art expert attempting to distinguish between the forgeries and authentic data.
+Generative Adversarial Networks (GANs) represent a framework for **unsupervised and semi-supervised learning** where two neural networks, a **generator** and a **discriminator**, compete in a zero-sum game. According to the sources, a common analogy for this process is to view the generator as an art forger creating realistic fake images and the discriminator as an art expert attempting to distinguish between the forgeries and authentic data.
 
 Through this competition, the generator learns to implicitly model high-dimensional data distributions without the need for extensively annotated training sets.
 
