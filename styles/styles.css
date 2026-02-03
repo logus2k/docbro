@@ -217,7 +217,7 @@ body {
     border-collapse: collapse;
     width: 100%;
     margin: 1em 0;
-    font-size: 1em;
+    font-size: 0.9em;
 }
 
 .document-content th,
