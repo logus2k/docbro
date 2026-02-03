@@ -4,11 +4,12 @@
     padding: 20px 12px 0 12px;
     gap: 2px;
     justify-content: center;
+    font-size: 1em;
 }
 
 .tab {
     position: relative;
-    padding: 5px 16px 5px 16px;
+    padding: 7px 16px 4px 16px;
     background-color: #ffecb9;
     cursor: pointer;
     border-radius: 8px 8px 0 0;
