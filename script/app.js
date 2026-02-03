@@ -343,6 +343,9 @@ class DocumentBrowser {
         this.contentContainer.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
         });
+        
+        // Add copy buttons to code blocks
+        this.setupCodeCopyButtons();
     }
 
     showDocument(index) {
@@ -378,6 +381,33 @@ class DocumentBrowser {
             }
         });
     }
+
+    setupCodeCopyButtons() {
+        this.contentContainer.querySelectorAll('pre').forEach((pre) => {
+            // Skip if already wrapped
+            if (pre.parentElement.classList.contains('code-block-wrapper')) return;
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+            
+            const btn = document.createElement('button');
+            btn.className = 'code-copy-btn';
+            btn.textContent = 'Copy';
+            btn.addEventListener('click', async () => {
+                const code = pre.querySelector('code')?.textContent || pre.textContent;
+                await navigator.clipboard.writeText(code);
+                btn.textContent = 'Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+            wrapper.appendChild(btn);
+        });
+    }    
 
     showError(message) {
         this.contentContainer.innerHTML = `
