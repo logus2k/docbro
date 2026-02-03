@@ -1,4 +1,4 @@
-## GPU Programming and CUDA: Fundamentals and Basic Concepts
+# GPU Programming and CUDA: Fundamentals and Basic Concepts
 
 Graphics Processing Units (GPUs) emerged originally as specialised hardware for accelerating the rendering pipeline in computer graphics. Over the last two decades, however, they have evolved into some of the most powerful general-purpose parallel processors available. With hundreds to thousands of arithmetic units, high memory bandwidth, and a throughput-oriented execution model, GPUs have become indispensable in scientific computing, high-end simulations, signal processing, data analytics, and deep learning.
 

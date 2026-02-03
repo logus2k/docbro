@@ -1,5 +1,7 @@
 # CUDA Programming Glossary
 
+This **CUDA Programming Glossary** serves as a reference guide to the essential terminology, concepts, and APIs used in CUDA, NVIDIA’s parallel computing platform and programming model. Whether you are new to GPU-accelerated computing or an experienced developer, this glossary provides definitions for key terms such as kernels, threads, blocks, grids, memory hierarchies, and streaming multiprocessors.
+
 ## Core Execution Model
 
 - **Kernel**: A function written in CUDA C/C++ that runs on the GPU
@@ -52,5 +54,3 @@
 - **Cooperative Groups**: APIs for thread collaboration beyond block boundaries
 - **Dynamic Parallelism**: Ability for kernels to launch other kernels
 - **Multi-GPU Programming**: Using multiple GPUs for computation
-
----
