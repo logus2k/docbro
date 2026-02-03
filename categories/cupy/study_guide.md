@@ -620,5 +620,3 @@ print(f"Mean: {mean_value}")  # Slow, triggers implicit transfer
 mean_value = float(cp.mean(x_cp))  # Explicit conversion
 print(f"Mean: {mean_value}")  # Fast
 ```
-
----

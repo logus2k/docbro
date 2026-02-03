@@ -668,5 +668,3 @@ Core features:
 * **Interoperability** with PyTorch, TensorFlow, JAX via DLPack
 
 Best for: Large-scale array operations, image processing, signal processing, scientific computing, data preprocessing for machine learning.
-
----

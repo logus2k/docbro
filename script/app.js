@@ -305,6 +305,7 @@ class DocumentBrowser {
             const tab = document.createElement('div');
             tab.className = 'tab';
             tab.textContent = doc.name;
+            tab.title = doc.name;
             tab.addEventListener('click', () => this.showDocument(index));
             this.tabsContainer.appendChild(tab);
         });
@@ -336,6 +337,11 @@ class DocumentBrowser {
             
             contentDiv.appendChild(innerDiv);
             this.contentContainer.appendChild(contentDiv);
+        });
+        
+        // Apply syntax highlighting to code blocks
+        this.contentContainer.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
         });
     }
 
