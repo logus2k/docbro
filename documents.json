@@ -146,6 +146,11 @@
 			"location": "categories/gan/introduction.md"
 		},
 		{
+			"name": "DCGAN",
+			"category": "GAN",
+			"location": "categories/gan/dcgan.md"
+		},		
+		{
 			"name": "FID & KID",
 			"category": "GAN",
 			"location": "categories/gan/fid.kid.md"
