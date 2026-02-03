@@ -311,7 +311,10 @@ class DocumentBrowser {
     }
 
     renderContent() {
-        this.contentContainer.innerHTML = '';
+        // Remove only document-content elements, preserve category selector
+        const existingDocs = this.contentContainer.querySelectorAll('.document-content');
+        existingDocs.forEach(doc => doc.remove());
+        
         const filteredDocs = this.getFilteredDocuments();
         
         filteredDocs.forEach((doc, index) => {
@@ -319,15 +322,19 @@ class DocumentBrowser {
             contentDiv.className = 'document-content';
             contentDiv.setAttribute('data-index', index);
             
+            const innerDiv = document.createElement('div');
+            innerDiv.className = 'document-content-inner';
+            
             if (doc.error) {
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'error-message';
                 errorDiv.textContent = 'Loading error';
-                contentDiv.appendChild(errorDiv);
+                innerDiv.appendChild(errorDiv);
             } else {
-                contentDiv.innerHTML = doc.content;
+                innerDiv.innerHTML = doc.content;
             }
             
+            contentDiv.appendChild(innerDiv);
             this.contentContainer.appendChild(contentDiv);
         });
     }
