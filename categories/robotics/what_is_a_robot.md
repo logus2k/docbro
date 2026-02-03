@@ -59,5 +59,3 @@ Robots are also used in exploration missions, such as space travel or underwater
 ## Conclusion
 
 In summary, robots are intelligent machines capable of sensing, thinking, and acting autonomously. They are created to make our lives easier, safer, and more efficient by performing tasks that humans cannot or prefer not to do. Unlike ordinary machines, robots can adapt, learn, and interact with their environment, making them a fascinating area of technology and innovation.
-
----
