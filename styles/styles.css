@@ -72,12 +72,12 @@ body {
 .content-container {
     position: relative;
     flex: 1;
-    padding: 15px 16px 10px 320px;
+    padding: 15px 16px 0px 320px;
     min-height: 400px;
     border-radius: 10px;
     background-color: #fffaee;
     background-image: url("/docbro/images/low-contrast-linen.png");
-    margin: 0px 30px 20px 30px;
+    margin: 0px 30px 15px 30px;
     max-width: 1500px;
     align-self: center;
 }
@@ -85,12 +85,11 @@ body {
 .document-content {
     display: none;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 0px;
     border: 0.5px solid #999999;
     background-color: #ffffff;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     border-radius: 3px;
-    max-height: calc(100vh - 130px);
     padding: 10px;
 }
 
@@ -99,8 +98,8 @@ body {
 }
 
 .document-content-inner {
-    padding: 30px 40px 30px 70px;
-    max-height: calc(100vh - 150px);
+    padding: 20px 40px 15px 70px;
+    max-height: calc(100vh - 120px);
     overflow-y: auto;
 }
 
