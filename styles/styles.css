@@ -44,7 +44,6 @@ body {
 }
 
 .toc-pane {
-    min-width: 200px;
     max-width: 500px;
     background-color: #fffaee;
     background-image: url("/docbro/images/low-contrast-linen.png");
@@ -52,14 +51,14 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 10px 5px 10px 10px;
+    padding: 10px 5px 10px 5px;
 }
 
 #tocTree {
     flex: 1;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 20px 5px 10px 15px;
+    padding: 10px 5px 10px 0px;
     min-height: 0;
     outline: none;
 }
@@ -398,6 +397,13 @@ div.wunderbaum,
     border: none !important;
     background: transparent !important;
     background-color: transparent !important;
+    outline: none !important;
+}
+
+#tocTree *:focus,
+#tocTree *:focus-visible {
+    outline: none !important;
+    border-color: transparent !important;
 }
 
 i.wb-expander.fa-solid {

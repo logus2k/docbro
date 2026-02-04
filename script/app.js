@@ -60,7 +60,7 @@ class DocumentBrowser {
     initSplitPane() {
         Split(['#tocPane', '#contentPane'], {
             sizes: [20, 80],
-            minSize: [200, 400],
+            minSize: [5, 400],
             gutterSize: 6,
             cursor: 'col-resize'
         });
@@ -335,6 +335,11 @@ class DocumentBrowser {
                     if (this.activeCategory !== category) {
                         this.activeCategory = category;
                         this.renderTabs();
+                        // Activate first document in this category
+                        const firstDoc = this.documents.find(d => d.category === category);
+                        if (firstDoc) {
+                            await this.activateDocument(firstDoc.globalIndex);
+                        }
                     }
                     return false;
                 }
