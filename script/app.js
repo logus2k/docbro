@@ -303,7 +303,7 @@ class DocumentBrowser {
                     row.setAttribute('data-type', type);
                 }
             },
-            click: (e) => {
+            click: async (e) => {
                 // Let Wunderbaum handle expand/collapse when clicking on expander
                 if (e.targetType === 'expander') {
                     return;
@@ -319,7 +319,7 @@ class DocumentBrowser {
                         const docIndex = parseInt(match[1], 10);
                         // Only activate document if it's different from current
                         if (this.activeDocumentIndex !== docIndex) {
-                            this.activateDocument(docIndex, key);
+                            await this.activateDocument(docIndex, key);
                         } else {
                             // Same document - just jump to header
                             this.jumpToHeader(key);
@@ -328,20 +328,27 @@ class DocumentBrowser {
                     return;
                 }
                 
-                // Category node - update tabs
+                // Category node - toggle expand and update tabs
                 if (key.startsWith('cat-')) {
                     const category = key.replace('cat-', '');
+                    node.setExpanded(!node.isExpanded());
                     if (this.activeCategory !== category) {
                         this.activeCategory = category;
                         this.renderTabs();
                     }
-                    return;
+                    return false;
                 }
                 
-                // Document node - load document
+                // Document node - load document then expand
                 if (key.match(/^doc-\d+$/)) {
                     const docIndex = parseInt(key.replace('doc-', ''), 10);
-                    this.activateDocument(docIndex);
+                    await this.activateDocument(docIndex);
+                    // Re-find node after headers may have been added
+                    const updatedNode = this.treeInstance.findKey(key);
+                    if (updatedNode) {
+                        updatedNode.setExpanded(true);
+                    }
+                    return false;
                 }
             }
         });
