@@ -265,14 +265,13 @@ class DocumentBrowser {
             return {
                 title: category,
                 key: `cat-${category}`,
-                type: 'category',
+                folder: true,
                 expanded: false,
                 children: categoryDocs.map(doc => ({
                     title: doc.name,
                     key: `doc-${doc.globalIndex}`,
-                    type: 'document',
-                    docIndex: doc.globalIndex,
-                    loaded: doc.loaded,
+                    folder: true,
+                    expanded: false,
                     children: []
                 }))
             };
@@ -283,11 +282,11 @@ class DocumentBrowser {
             source: treeData,
             selectMode: 'single',
             checkbox: false,
-            icon: false,
+            icon: true,
             iconMap: {
                 folder: "fa-solid fa-folder",
                 folderOpen: "fa-solid fa-folder-open",
-                doc: "fa-regular fa-file",
+                doc: "fa-solid fa-folder",
                 expanderExpanded: "fa-solid fa-chevron-down",
                 expanderCollapsed: "fa-solid fa-chevron-right",
             },
@@ -305,37 +304,45 @@ class DocumentBrowser {
                 }
             },
             click: (e) => {
+                // Let Wunderbaum handle expand/collapse when clicking on expander
+                if (e.targetType === 'expander') {
+                    return;
+                }
+                
                 const node = e.node;
                 const key = node.key || '';
                 
-                console.log('Tree click:', node.title, 'key:', key);
+                // Header node - jump to header
+                if (key.match(/^doc-\d+-header-/)) {
+                    const match = key.match(/^doc-(\d+)-header-/);
+                    if (match) {
+                        const docIndex = parseInt(match[1], 10);
+                        // Only activate document if it's different from current
+                        if (this.activeDocumentIndex !== docIndex) {
+                            this.activateDocument(docIndex, key);
+                        } else {
+                            // Same document - just jump to header
+                            this.jumpToHeader(key);
+                        }
+                    }
+                    return;
+                }
                 
-                // Determine type and extract data from key
+                // Category node - update tabs
                 if (key.startsWith('cat-')) {
-                    // Category node - toggle expand and update tabs
                     const category = key.replace('cat-', '');
-                    node.setExpanded(!node.isExpanded());
-                    
-                    // Update tabs to show this category
                     if (this.activeCategory !== category) {
                         this.activeCategory = category;
                         this.renderTabs();
                     }
-                } else if (key.match(/^doc-\d+$/)) {
-                    // Document node - extract index from key (format: doc-{index})
-                    const docIndex = parseInt(key.replace('doc-', ''), 10);
-                    console.log('Activating document:', docIndex);
-                    this.activateDocument(docIndex);
-                } else if (key.match(/^doc-\d+-header-/)) {
-                    // Header node - format is "doc-{docIndex}-header-{headerIndex}"
-                    const match = key.match(/^doc-(\d+)-header-/);
-                    if (match) {
-                        const docIndex = parseInt(match[1], 10);
-                        this.activateDocument(docIndex, key);
-                    }
+                    return;
                 }
                 
-                return false;
+                // Document node - load document
+                if (key.match(/^doc-\d+$/)) {
+                    const docIndex = parseInt(key.replace('doc-', ''), 10);
+                    this.activateDocument(docIndex);
+                }
             }
         });
     }
@@ -371,84 +378,42 @@ class DocumentBrowser {
         const doc = this.documents[globalIndex];
         if (!doc) return;
 
+        const isNewDocument = this.activeDocumentIndex !== globalIndex;
+
         // Check if category changed
         if (this.activeCategory !== doc.category) {
             this.activeCategory = doc.category;
             this.renderTabs();
-            
-            // Collapse other categories, expand this one
-            this.categories.forEach(cat => {
-                const catNode = this.treeInstance.findKey(`cat-${cat}`);
-                if (catNode) {
-                    catNode.setExpanded(cat === doc.category);
-                }
-            });
         }
 
         // Update active tab
         this.updateTabsActiveState(globalIndex);
 
-        // Mark loading state in tree
-        const docNode = this.treeInstance.findKey(`doc-${globalIndex}`);
-        if (docNode) {
-            const row = docNode.element;
-            if (row) row.setAttribute('data-loading', 'true');
-        }
-
         // Load document if needed
         if (!doc.loaded) {
             await this.loadDocument(globalIndex);
-            
-            if (docNode) {
-                const row = docNode.element;
-                if (row) {
-                    row.setAttribute('data-loading', 'false');
-                    row.setAttribute('data-loaded', 'true');
-                }
-                docNode.data.loaded = true;
-            }
-        } else if (docNode) {
-            const row = docNode.element;
-            if (row) row.setAttribute('data-loading', 'false');
         }
 
-        // Render document content
-        this.renderDocument(globalIndex);
-        this.activeDocumentIndex = globalIndex;
-        
-        // Update hash
-        this.updateHash(doc.category, doc.name);
-        
-        // Extract headers and update tree
-        this.extractAndUpdateHeaders(globalIndex);
-        
-        // Expand document node in tree
-        if (docNode) {
-            docNode.setExpanded(true);
-            if (!headerId) {
-                try {
-                    docNode.setActive(true);
-                } catch (e) {
-                    console.warn('Could not set document node active:', e);
-                }
-            }
+        // Only re-render and extract headers if document changed
+        if (isNewDocument) {
+            // Render document content
+            this.renderDocument(globalIndex);
+            this.activeDocumentIndex = globalIndex;
+            
+            // Update hash
+            this.updateHash(doc.category, doc.name);
+            
+            // Extract headers and reload tree (this handles expansion)
+            this.extractAndUpdateHeaders(globalIndex);
+            
+            // Setup scroll sync for this document
+            this.setupScrollSync();
         }
         
         // Jump to header if specified
         if (headerId) {
             this.jumpToHeader(headerId);
-            const headerNode = this.treeInstance.findKey(headerId);
-            if (headerNode) {
-                try {
-                    headerNode.setActive(true);
-                } catch (e) {
-                    console.warn('Could not set header node active:', e);
-                }
-            }
         }
-        
-        // Setup scroll sync for this document
-        this.setupScrollSync();
     }
 
     renderDocument(globalIndex) {
@@ -487,6 +452,12 @@ class DocumentBrowser {
 
     extractAndUpdateHeaders(globalIndex) {
         const doc = this.documents[globalIndex];
+        
+        // Skip if headers already extracted
+        if (doc.headers && doc.headers.length > 0) {
+            return;
+        }
+        
         const contentInner = this.contentContainer.querySelector('.document-content-inner');
         if (!contentInner) return;
 
@@ -520,9 +491,6 @@ class DocumentBrowser {
             const node = {
                 title: h.text,
                 key: h.id,
-                type: 'header',
-                headerId: h.id,
-                docIndex: docIndex,
                 children: []
             };
 
@@ -566,7 +534,7 @@ class DocumentBrowser {
             if (!this.scrollSyncEnabled) return;
             
             const doc = this.documents[this.activeDocumentIndex];
-            if (!doc || !doc.headers.length) return;
+            if (!doc || !doc.headers || !doc.headers.length) return;
 
             const scrollTop = contentInner.scrollTop;
             const containerTop = contentInner.offsetTop;
@@ -589,13 +557,6 @@ class DocumentBrowser {
                 if (headerNode && !headerNode.isActive()) {
                     try {
                         headerNode.setActive(true, { noEvents: true });
-                    } catch (e) { /* ignore */ }
-                }
-            } else {
-                const docNode = this.treeInstance.findKey(`doc-${this.activeDocumentIndex}`);
-                if (docNode && !docNode.isActive()) {
-                    try {
-                        docNode.setActive(true, { noEvents: true });
                     } catch (e) { /* ignore */ }
                 }
             }
