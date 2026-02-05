@@ -56,6 +56,21 @@
 			"location": "categories/dl/transfer_learning.md"
 		},
 		{
+			"name": "Introduction",
+			"category": "GAN",
+			"location": "categories/gan/introduction.md"
+		},
+		{
+			"name": "DCGAN",
+			"category": "GAN",
+			"location": "categories/gan/dcgan.md"
+		},		
+		{
+			"name": "FID & KID",
+			"category": "GAN",
+			"location": "categories/gan/fid.kid.md"
+		},			
+		{
 			"name": "Activation Functions",
 			"category": "Generative AI",
 			"location": "categories/genai/activation_functions.md"
@@ -139,21 +154,6 @@
 			"name": "Physics Guide",
 			"category": "Webots",
 			"location": "categories/webots/physics.guide.md"
-		},
-		{
-			"name": "Introduction",
-			"category": "GAN",
-			"location": "categories/gan/introduction.md"
-		},
-		{
-			"name": "DCGAN",
-			"category": "GAN",
-			"location": "categories/gan/dcgan.md"
-		},		
-		{
-			"name": "FID & KID",
-			"category": "GAN",
-			"location": "categories/gan/fid.kid.md"
-		}		
+		}
 	]
 }
