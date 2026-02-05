@@ -367,17 +367,19 @@ body {
 
 /* Scrollbar for TOC */
 #tocTree::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    border-radius: 4px;
 }
 
 #tocTree::-webkit-scrollbar-track {
     background: #ffffff;
     margin-block: 20px;
+    border: 0.5px solid #cecece;
 }
 
 #tocTree::-webkit-scrollbar-thumb {
     background-color: #d3c898;
-    border-radius: 3px;
+    border-radius: 4px;
 }
 
 #tocTree::-webkit-scrollbar-thumb:hover {
@@ -399,6 +401,16 @@ div.wunderbaum,
     background-color: transparent !important;
     outline: none !important;
 }
+
+div.wunderbaum span.wb-node span.wb-title {
+    min-width: 1em;
+    vertical-align: baseline !important;
+    overflow-x: hidden;
+    display: inline;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding-left: 2px;
+} 
 
 #tocTree *:focus,
 #tocTree *:focus-visible {
