@@ -303,56 +303,54 @@ class DocumentBrowser {
                     row.setAttribute('data-type', type);
                 }
             },
-            click: async (e) => {
-                // Let Wunderbaum handle expand/collapse when clicking on expander
+            click: (e) => {
+                const node = e.node;
+                const key = node.key || '';
+                
+                // For expander clicks, let Wunderbaum handle if it recognizes them
+                // (dynamically added nodes may not report targetType correctly)
                 if (e.targetType === 'expander') {
                     return;
                 }
                 
-                const node = e.node;
-                const key = node.key || '';
-                
-                // Header node - jump to header
+                // Header node - toggle expand and jump to header
                 if (key.match(/^doc-\d+-header-/)) {
                     const match = key.match(/^doc-(\d+)-header-/);
                     if (match) {
                         const docIndex = parseInt(match[1], 10);
-                        // Only activate document if it's different from current
                         if (this.activeDocumentIndex !== docIndex) {
-                            await this.activateDocument(docIndex, key);
+                            this.activateDocument(docIndex, key);
                         } else {
-                            // Same document - just jump to header
                             this.jumpToHeader(key);
                         }
                     }
-                    return;
+                    // Toggle expand if node has children
+                    if (node.children && node.children.length > 0) {
+                        node.setExpanded(!node.isExpanded());
+                    }
+                    return false;
                 }
                 
-                // Category node - toggle expand and update tabs
+                // Category node - expand and load first document
                 if (key.startsWith('cat-')) {
                     const category = key.replace('cat-', '');
                     node.setExpanded(!node.isExpanded());
                     if (this.activeCategory !== category) {
                         this.activeCategory = category;
                         this.renderTabs();
-                        // Activate first document in this category
                         const firstDoc = this.documents.find(d => d.category === category);
                         if (firstDoc) {
-                            await this.activateDocument(firstDoc.globalIndex);
+                            this.activateDocument(firstDoc.globalIndex);
                         }
                     }
                     return false;
                 }
                 
-                // Document node - load document then expand
+                // Document node - load document and expand
                 if (key.match(/^doc-\d+$/)) {
                     const docIndex = parseInt(key.replace('doc-', ''), 10);
-                    await this.activateDocument(docIndex);
-                    // Re-find node after headers may have been added
-                    const updatedNode = this.treeInstance.findKey(key);
-                    if (updatedNode) {
-                        updatedNode.setExpanded(true);
-                    }
+                    node.setExpanded(!node.isExpanded());
+                    this.activateDocument(docIndex);
                     return false;
                 }
             }
@@ -415,7 +413,7 @@ class DocumentBrowser {
             // Update hash
             this.updateHash(doc.category, doc.name);
             
-            // Extract headers and reload tree (this handles expansion)
+            // Extract headers and update tree
             this.extractAndUpdateHeaders(globalIndex);
             
             // Setup scroll sync for this document
@@ -453,9 +451,21 @@ class DocumentBrowser {
         contentDiv.appendChild(innerDiv);
         this.contentContainer.appendChild(contentDiv);
         
-        // Apply syntax highlighting
+        // Re-apply header IDs if already extracted
+        if (doc.headers && doc.headers.length > 0) {
+            const headers = Array.from(innerDiv.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+            headers.forEach((h, i) => {
+                if (i < doc.headers.length) {
+                    h.id = doc.headers[i].id;
+                }
+            });
+        }
+        
+        // Apply syntax highlighting (skip mermaid blocks)
         this.contentContainer.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
+            if (!block.classList.contains('language-mermaid')) {
+                hljs.highlightElement(block);
+            }
         });
         
         // Add copy buttons
@@ -524,14 +534,14 @@ class DocumentBrowser {
         if (header) {
             const contentInner = this.contentContainer.querySelector('.document-content-inner');
             if (contentInner) {
-                const headerTop = header.offsetTop - contentInner.offsetTop;
-                contentInner.scrollTop = headerTop;
+                const containerRect = contentInner.getBoundingClientRect();
+                const headerRect = header.getBoundingClientRect();
+                const offset = headerRect.top - containerRect.top + contentInner.scrollTop;
+                contentInner.scrollTo({ top: Math.max(0, offset - 15) });
             }
         }
         
-        setTimeout(() => {
-            this.scrollSyncEnabled = true;
-        }, 100);
+        this.scrollSyncEnabled = true;
     }
 
     setupScrollSync() {
@@ -568,6 +578,12 @@ class DocumentBrowser {
                 const headerNode = this.treeInstance.findKey(currentHeaderId);
                 if (headerNode && !headerNode.isActive()) {
                     try {
+                        // Expand all parent nodes so the header is visible
+                        headerNode.visitParents((p) => {
+                            if (!p.isExpanded()) {
+                                p.setExpanded(true);
+                            }
+                        });
                         headerNode.setActive(true, { noEvents: true });
                     } catch (e) { /* ignore */ }
                 }
