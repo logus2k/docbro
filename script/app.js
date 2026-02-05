@@ -476,8 +476,26 @@ class DocumentBrowser {
             }
         });
         
+        // Render mermaid diagrams
+        this.renderMermaidBlocks(innerDiv);
+        
         // Add copy buttons
         this.setupCodeCopyButtons();
+    }
+
+    renderMermaidBlocks(container) {
+        const mermaidBlocks = container.querySelectorAll('pre code.language-mermaid');
+        if (mermaidBlocks.length === 0 || typeof mermaid === 'undefined') return;
+
+        mermaidBlocks.forEach((codeBlock) => {
+            const pre = codeBlock.parentElement;
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = codeBlock.textContent;
+            pre.replaceWith(div);
+        });
+
+        mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
     }
 
     extractAndUpdateHeaders(globalIndex) {

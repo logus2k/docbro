@@ -16,71 +16,24 @@ This layered architecture is what makes ROS 2 middleware-agnostic and allows nod
 
 # **End-to-End Diagram: Talker → Listener**
 
+```mermaid
+flowchart TD
+    A["TALKER<br/>(Publisher Node)"]
+    B["ROS Client Library<br/>(RCL)<br/>rclcpp::Publisher / rclpy"]
+    C["RMW<br/>(ros middleware interface)<br/>e.g. rmw_cyclonedds_cpp, rmw_fastrtps_cpp"]
+    D["DDS Publisher<br/>(DataWriter)<br/>- Serializes message to DDS/IDLC format<br/>- Applies QoS<br/>- Sends data to matching DDS Subscribers"]
+    E["RTPS<br/>(DDSI-RTPS) Protocol<br/>- discovery packets<br/>- DATA / HEARTBEAT submessages"]
+    F["Operating System Transport<br/>UDPv4 / UDPv6 / Shared Memory<br/>- Network routing, loopback"]
+    G["DDS Subscriber<br/>(DataReader)<br/>- Deserializes DDS message<br/>- Applies QoS filtering<br/>- Hands sample to RMW"]
+    H["RCL<br/>(Python/C++)<br/>Calls user-defined callback"]
+    I["LISTENER<br/>(Subscriber Node)<br/>e.g. void callback"]
+    
+    A -->|1. Your code calls<br/>publisher->publish| B
+    B -->|2. RCL converts ROS<br/>message into RMW format| C
+    C -->|3. RMW forwards data<br/>to DDS Writer| D
+    D -->|4. DDS sends message<br/>using RTPS protocol| E
+    E -->|5. Transport: UDP Multicast<br/>/ Unicast / Shared Memory| F
+    F -->|6. RTPS packets received<br/>by DDS Subscriber| G
+    G -->|7. RMW delivers ROS<br/>message to RCL| H
+    H -->|8. Your callback<br/>executes| I
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                          TALKER  (Publisher Node)                           │
-└────────────────────────────────────────────────────────────────────────────┘
-                |
-                |  (1) Your code calls publisher->publish(msg)
-                ▼
-        ┌─────────────────────────────────────┐
-        │        ROS Client Library (RCL)     │
-        │     rclcpp::Publisher / rclpy       │
-        └─────────────────────────────────────┘
-                |
-                |  (2) RCL converts ROS message into RMW format
-                ▼
-        ┌─────────────────────────────────────┐
-        │      RMW (ros middleware interface) │
-        │   e.g. rmw_cyclonedds_cpp, rmw_fastrtps_cpp
-        └─────────────────────────────────────┘
-                |
-                |  (3) RMW forwards data to DDS Writer
-                ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                    DDS Publisher (DataWriter)                               │
-│  - Serializes message to DDS/IDLC format                                    │
-│  - Applies QoS (reliability, history, deadlines)                            │
-│  - Sends data to matching DDS Subscribers                                   │
-└────────────────────────────────────────────────────────────────────────────┘
-                |
-                |  (4) DDS sends message using RTPS protocol
-                ▼
-        ┌─────────────────────────────────────┐
-        │       RTPS (DDSI-RTPS) Protocol     │
-        │ - discovery packets                 │
-        │ - DATA / HEARTBEAT submessages      │
-        └─────────────────────────────────────┘
-                |
-                |  (5) Transport: UDP Multicast / Unicast / Shared Memory
-                ▼
-  ╔══════════════════════════════════════════════════════════════════════════╗
-  ║                         Operating System Transport                        ║
-  ║                      UDPv4 / UDPv6 / Shared Memory                        ║
-  ║    - Network routing, loopback, WSL2 virtualization layer (if applicable) ║
-  ╚══════════════════════════════════════════════════════════════════════════╝
-                |
-                |  (6) RTPS packets received by DDS Subscriber
-                ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                       DDS Subscriber (DataReader)                           │
-│ - Deserializes DDS message                                                  │
-│ - Applies QoS filtering (deadline, lifespan, history)                       │
-│ - Hands sample to RMW                                                       │
-└────────────────────────────────────────────────────────────────────────────┘
-                |
-                |  (7) RMW delivers ROS message representation to RCL
-                ▼
-        ┌─────────────────────────────────────┐
-        │          RCL (Python/C++)           │
-        │   Calls user-defined callback       │
-        └─────────────────────────────────────┘
-                |
-                |  (8) Your callback executes
-                ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                          LISTENER (Subscriber Node)                         │
-│            e.g.    void callback(const std_msgs::msg::String& msg)         │
-└────────────────────────────────────────────────────────────────────────────┘
-```
----
