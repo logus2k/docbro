@@ -424,6 +424,14 @@ class DocumentBrowser {
         if (headerId) {
             this.jumpToHeader(headerId);
         }
+        
+        // Set the document node as active in the tree
+        const docNode = this.treeInstance.findKey(`doc-${globalIndex}`);
+        if (docNode) {
+            try {
+                docNode.setActive(true, { noEvents: true });
+            } catch (e) { /* ignore */ }
+        }
     }
 
     renderDocument(globalIndex) {
