@@ -384,6 +384,7 @@ body {
 
 #tocTree::-webkit-scrollbar-thumb:hover {
     background-color: #cec0a5;
+    cursor: pointer;
 }
 
 /* Loading indicator in document node */
