@@ -116,6 +116,11 @@
 			"location": "categories/numba/study_guide.md"
 		},	
 		{
+			"name": "Reinforcement Learning",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/reinforcement_learning.md"
+		},		
+		{
 			"name": "What is a Robot",
 			"category": "Robotics",
 			"location": "categories/robotics/what_is_a_robot.md"
