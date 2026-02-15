@@ -121,6 +121,11 @@
 			"location": "categories/rl/overview.md"
 		},
 		{
+			"name": "Exploration vs Exploitation",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/exploration_vs_exploitation.md"
+		},		
+		{
 			"name": "DQN",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/dqn.md"
