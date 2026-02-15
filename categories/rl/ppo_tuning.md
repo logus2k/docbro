@@ -1,12 +1,10 @@
-# PPO Tuning: Clip Range, Epochs per Batch, and Entropy Coefficient
+# PPO Tuning
 
-## Overview
+## Clip Range, Epochs per Batch, and Entropy Coefficient
 
 PPO's stability and ease of tuning come from a small set of well-understood hyperparameters that control how aggressively the policy updates, how thoroughly each batch of experience is used, and how much the agent is encouraged to explore. The three most impactful parameters for tuning are the clip range, the number of optimization epochs per batch, and the entropy coefficient.
 
 This document explains each mechanism, how they interact, and how to tune them effectively for LunarLander-v3 with Stable-Baselines3.
-
----
 
 ## 1. The Clip Range ($\epsilon$)
 
@@ -54,8 +52,6 @@ The clip range is a safety valve. It says: "regardless of how good or bad this a
 
 Some implementations anneal $\epsilon$ from a higher value to a lower value over training. The intuition is that early in training, larger updates are beneficial (the policy is far from optimal, so big steps are helpful), while late in training, smaller updates are safer (the policy is close to optimal, and large steps risk destabilizing it). SB3 does not anneal the clip range by default, but it can be implemented via a custom schedule.
 
----
-
 ## 2. Epochs per Batch (`n_epochs`)
 
 ### What It Does
@@ -92,8 +88,6 @@ For LunarLander-v3, the default combination ($\epsilon = 0.2$, `n_epochs` = 10) 
 The total batch of experience is collected over `n_steps` environment steps across `n_envs` parallel environments. The total batch size is `n_steps × n_envs`. This batch is then divided into `n_epochs × (batch_size / mini_batch_size)` gradient updates.
 
 A larger total batch provides more diverse experience per update cycle, which makes multiple epochs more useful (there's more to learn from). A smaller total batch has less diversity, so multiple epochs are more likely to overfit.
-
----
 
 ## 3. Entropy Coefficient ($c_2$)
 
@@ -137,8 +131,6 @@ SB3 logs the policy entropy during training. A healthy entropy curve typically s
 - **Entropy stays high throughout training:** Policy never commits. Decrease $c_2$ or increase the number of training steps.
 - **Entropy oscillates wildly:** Training instability. Check the clip range and learning rate.
 
----
-
 ## 4. Other Important PPO Hyperparameters
 
 While clip range, epochs, and entropy are the primary tuning targets, several other parameters interact with them and are worth understanding.
@@ -175,8 +167,6 @@ $\lambda = 1$ gives unbiased but high-variance Monte Carlo-like estimates. $\lam
 
 Weight of the critic's loss in the combined objective. Defaults to 0.5. Increasing it prioritizes value function accuracy (better advantages but potentially worse policy updates). Rarely needs tuning.
 
----
-
 ## 5. Summary of SB3 PPO Hyperparameters
 
 | Parameter | SB3 Name | Default | Role | Tuning Range (LunarLander) |
@@ -191,8 +181,6 @@ Weight of the critic's loss in the combined objective. Defaults to 0.5. Increasi
 | Value function coeff. | `vf_coef` | 0.5 | Weight of critic loss | 0.5 – 1.0 |
 | Max grad norm | `max_grad_norm` | 0.5 | Gradient clipping for stability | 0.5 – 1.0 |
 | Number of envs | `n_envs` | 1 | Parallel environments for data collection | 1 – 16 |
-
----
 
 ## 6. Diagnostic Checklist
 

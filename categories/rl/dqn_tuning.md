@@ -1,12 +1,10 @@
-# DQN Tuning: Replay Buffer, Target Network Updates, and Epsilon Decay
+# DQN Tuning
 
-## Overview
+## Replay Buffer, Target Network Updates, and Epsilon Decay
 
 Training a DQN agent involves three interconnected mechanisms that together determine learning quality and stability: the experience replay buffer, the target network update schedule, and the epsilon decay strategy. Each serves a distinct purpose, but their interactions are what ultimately shape the agent's learning dynamics. Understanding these interactions is essential for effective hyperparameter tuning.
 
 This document explains each mechanism in depth, discusses how they interact, and provides practical guidance for tuning them in the context of LunarLander-v3 with Stable-Baselines3.
-
----
 
 ## 1. Experience Replay Buffer
 
@@ -41,8 +39,6 @@ A related parameter is `learning_starts` — how many transitions are collected 
 ### Batch Size
 
 The mini-batch size determines how many transitions are sampled per gradient update. Larger batches provide more stable gradient estimates but are computationally more expensive and may smooth over important rare transitions. Smaller batches are noisier but update more frequently. For LunarLander-v3, batch sizes of 64 to 256 are standard.
-
----
 
 ## 2. Target Network Update Frequency
 
@@ -86,8 +82,6 @@ For LunarLander-v3, values between 1,000 and 10,000 steps are typical. The defau
 
 The target network update frequency and replay buffer size are coupled. A large buffer with frequent target updates means the agent trains on old data against frequently changing targets — both sides are mismatched. A small buffer with infrequent target updates means the agent trains on recent data against stale targets — the targets lag behind the data. The healthiest regime is when the buffer is large enough for diversity but not so large that it's dominated by pre-target-update experience, and the target updates are frequent enough to stay relevant but infrequent enough to provide stability.
 
----
-
 ## 3. Epsilon Decay
 
 ### What It Does
@@ -120,8 +114,6 @@ SB3's default `exploration_fraction` is 0.1 (epsilon decays over the first 10% o
 
 `exploration_initial_eps` defaults to 1.0 and `exploration_final_eps` defaults to 0.05. These are sensible starting points. Lowering the final epsilon to 0.01 can help if the agent's final evaluation performance is hurt by residual random actions.
 
----
-
 ## 4. How the Three Mechanisms Interact
 
 The three mechanisms form a coupled system. Here are the key interaction patterns:
@@ -144,8 +136,6 @@ Epsilon is at its final low value, and the buffer is mostly filled with near-opt
 
 **What matters here:** stability. The target network should update infrequently enough that the near-converged Q-values aren't disrupted. The buffer should be large enough that the agent doesn't overfit to a narrow set of recent transitions.
 
----
-
 ## 5. Summary of SB3 DQN Hyperparameters
 
 | Parameter | SB3 Name | Default | Role | Tuning Range (LunarLander) |
@@ -159,8 +149,6 @@ Epsilon is at its final low value, and the buffer is mostly filled with near-opt
 | Exploration fraction | `exploration_fraction` | 0.1 | Fraction of training for epsilon decay | 0.1 – 0.3 |
 | Discount factor | `gamma` | 0.99 | Weight of future rewards | 0.99 – 0.999 |
 | Learning rate | `learning_rate` | 0.0001 | Step size for gradient updates | 0.0001 – 0.001 |
-
----
 
 ## 6. Diagnostic Checklist
 
