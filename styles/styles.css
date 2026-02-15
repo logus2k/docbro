@@ -49,13 +49,12 @@ body {
 .main-split-container {
     flex: 1;
     display: flex;
-    margin: 0 15px 15px 15px;
+    margin: 0px 10px 10px 10px;
     border-radius: 8px;
     overflow: hidden;
     background-color: #fffaeefe;
     background-image: url("/docbro/images/low-contrast-linen.png");
     min-height: 0;
-    width: calc(100% - 30px);
 }
 
 .toc-pane {
