@@ -194,14 +194,13 @@ body {
 .document-content h1 {
     font-size: 2em;
     margin: 0.67em 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 0.5px solid #ccc;
     padding-bottom: 0.3em;
 }
 
 .document-content h2 {
     font-size: 1.5em;
     margin: 0.83em 0;
-    border-bottom: 1px solid #eee;
     padding-bottom: 0.3em;
 }
 

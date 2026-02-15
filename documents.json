@@ -116,9 +116,14 @@
 			"location": "categories/numba/study_guide.md"
 		},	
 		{
-			"name": "Reinforcement Learning",
+			"name": "Overview",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/reinforcement_learning.md"
+		},
+		{
+			"name": "DQN",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/deep_q_networks.md"
 		},		
 		{
 			"name": "What is a Robot",
