@@ -1,7 +1,5 @@
 # Parameter-Efficient Fine-Tuning (PEFT) with LoRA & QLoRA
 
----
-
 ## 1) Why PEFT?
 
 Fine-tuning all weights of large pretrained models is effective but **expensive** (memory, compute, storage). **Parameter-Efficient Fine-Tuning (PEFT)** adapts a model by training **only a small subset of additional parameters** while keeping the original weights **frozen**. Benefits:

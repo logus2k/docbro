@@ -1,22 +1,17 @@
 {
 	"documents": [
 		{
-			"name": "Glossary",
-			"category": "CUDA",
-			"location": "categories/cuda/glossary.md"
-		},
-		{
 			"name": "Overview",
 			"category": "CUDA",
 			"location": "categories/cuda/overview.md"
 		},	
 		{
-			"name": "Memory Types",
+			"name": "Memory",
 			"category": "CUDA",
 			"location": "categories/cuda/memory.md"
 		},				
 		{
-			"name": "Streaming Multiprocessor",
+			"name": "SM",
 			"category": "CUDA",
 			"location": "categories/cuda/sm.md"
 		},	
@@ -27,14 +22,19 @@
 		},					
 		{
 			"name": "Glossary",
-			"category": "CuPy",
-			"location": "categories/cupy/glossary.md"
-		},	
+			"category": "CUDA",
+			"location": "categories/cuda/glossary.md"
+		},
 		{
 			"name": "Study Guide",
 			"category": "CuPy",
 			"location": "categories/cupy/study_guide.md"
 		},							
+		{
+			"name": "Glossary",
+			"category": "CuPy",
+			"location": "categories/cupy/glossary.md"
+		},	
 		{
 			"name": "Hyperparameters Guide",
 			"category": "Deep Learning",
@@ -101,11 +101,6 @@
 			"location": "categories/genai/sequence_models_evolution.md"
 		},
 		{
-			"name": "Glossary",
-			"category": "Numba",
-			"location": "categories/numba/glossary.md"
-		},
-		{
 			"name": "Overview",
 			"category": "Numba",
 			"location": "categories/numba/overview.md"
@@ -115,6 +110,11 @@
 			"category": "Numba",
 			"location": "categories/numba/study_guide.md"
 		},	
+		{
+			"name": "Glossary",
+			"category": "Numba",
+			"location": "categories/numba/glossary.md"
+		},
 		{
 			"name": "Overview",
 			"category": "Reinforcement Learning",
@@ -129,6 +129,11 @@
 			"name": "PPO",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/ppo.md"
+		},
+		{
+			"name": "Algorithms",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/algorithms.md"
 		},			
 		{
 			"name": "What is a Robot",
@@ -141,11 +146,6 @@
 			"location": "categories/robotics/vlmaps.md"
 		},			
 		{
-			"name": "Glossary",
-			"category": "ROS 2",
-			"location": "categories/ros2/ros2.glossary.md"
-		},
-		{
 			"name": "Communication Stack",
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.communication.stack.md"
@@ -157,13 +157,18 @@
 		},
 		{
 			"name": "Glossary",
-			"category": "Threading and Multiprocessing",
-			"location": "categories/threading/glossary.md"
+			"category": "ROS 2",
+			"location": "categories/ros2/ros2.glossary.md"
 		},
 		{
 			"name": "Overview",
 			"category": "Threading and Multiprocessing",
 			"location": "categories/threading/overview.md"
+		},
+		{
+			"name": "Glossary",
+			"category": "Threading and Multiprocessing",
+			"location": "categories/threading/glossary.md"
 		},
 		{
 			"name": "Physics Guide",

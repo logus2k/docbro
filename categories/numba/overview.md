@@ -3,8 +3,6 @@
 ## **Overview**
 **Numba** is a **Just-In-Time (JIT) compiler** for Python that translates Python functions into optimized machine code (using LLVM). It is designed to **accelerate numerical and scientific computations**, making Python code run at speeds comparable to C or Fortran.
 
----
-
 ## **Key Features**
 
 ### **1. Performance Optimization**

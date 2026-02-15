@@ -2,6 +2,8 @@
 
 **Reinforcement Learning (RL)** is a powerful class of methods designed to solve complex **sequential decision-making tasks**. Unlike standard supervised learning, RL focuses on an agent that interacts with an external environment, learning through a process of trial and error. By maintaining an internal state and following a specific policy, the agent chooses actions that prompt the environment to respond with new observations and rewards.
 
+> Reinforcement learning can be defined as a *"framework for solving control tasks (also called decision problems) by building agents that learn from the environment by interacting with it through trial and error and receiving rewards (positive or negative) as unique feedback"*.
+
 The fundamental goal of any RL agent is guided by the **Maximum Expected Utility Principle**: choosing a policy that maximizes the total sum of expected rewards over time. This journey toward an optimal policy involves balancing the **exploration-exploitation tradeoff**, where an agent must decide between taking actions known to yield high rewards and trying new actions to gather more information about the world. Whether the task is episodic, like a single game, or a continual interaction, the agent's objective remains the same: to achieve the highest possible return.
 
 <div class="embedded-video">

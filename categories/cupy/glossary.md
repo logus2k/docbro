@@ -1,7 +1,5 @@
 # CuPy Glossary
 
----
-
 ## **A**
 
 ### **Array API Compatibility**

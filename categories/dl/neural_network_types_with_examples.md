@@ -2,9 +2,7 @@
 
 A practical, code-oriented overview of key architectures: what they are, when to use them, with minimal PyTorch examples.
 
----
-
-## 0) Quick “when to use what”
+## When to use what
 
 | Modality / Task         | First pick                 | Why                          | Alternatives           |
 | ----------------------- | -------------------------- | ---------------------------- | ---------------------- |
