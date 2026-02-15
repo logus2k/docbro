@@ -118,7 +118,7 @@
 		{
 			"name": "Overview",
 			"category": "Reinforcement Learning",
-			"location": "categories/rl/reinforcement_learning.md"
+			"location": "categories/rl/overview.md"
 		},
 		{
 			"name": "DQN",
