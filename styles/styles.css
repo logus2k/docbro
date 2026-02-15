@@ -150,7 +150,7 @@ body {
 }
 
 .document-content-inner {
-    padding: 20px 40px 15px 60px;
+    padding: 20px 40px 15px 65px;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -201,7 +201,6 @@ body {
 .document-content h2 {
     font-size: 1.5em;
     margin: 0.83em 0;
-    padding-bottom: 0.3em;
 }
 
 .document-content h3 {
