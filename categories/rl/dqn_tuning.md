@@ -1,6 +1,6 @@
 # DQN Tuning
 
-## Replay Buffer, Target Network Updates, and Epsilon Decay
+## Overview: Replay Buffer, Target Network Updates, and Epsilon Decay
 
 Training a DQN agent involves three interconnected mechanisms that together determine learning quality and stability: the experience replay buffer, the target network update schedule, and the epsilon decay strategy. Each serves a distinct purpose, but their interactions are what ultimately shape the agent's learning dynamics. Understanding these interactions is essential for effective hyperparameter tuning.
 
