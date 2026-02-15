@@ -123,8 +123,13 @@
 		{
 			"name": "DQN",
 			"category": "Reinforcement Learning",
-			"location": "categories/rl/deep_q_networks.md"
-		},		
+			"location": "categories/rl/dqn.md"
+		},
+		{
+			"name": "PPO",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/ppo.md"
+		},			
 		{
 			"name": "What is a Robot",
 			"category": "Robotics",

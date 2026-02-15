@@ -10,7 +10,7 @@ In classical Q-learning, an agent maintains a Q-table that maps every (state, ac
 
 The algorithm was introduced by DeepMind in 2013 and refined in a landmark 2015 Nature paper, where it achieved human-level performance on a wide range of Atari 2600 games using only raw pixel observations and game scores as input.
 
-![Deep-Q Network](https://logus2k.com/docbro/categories/rl/images/deep_q_network.png)
+![Deep-Q Network](https://logus2k.com/docbro/categories/rl/images/dqn.png)
 
 ## Core Components
 
@@ -124,3 +124,13 @@ Combines six orthogonal improvements into a single agent: Double DQN, Prioritize
 ## When to Use DQN
 
 DQN is a strong baseline choice when working with discrete action spaces, especially when the state space is high-dimensional (images, complex observations). For continuous action spaces, actor-critic methods like DDPG, TD3, or SAC are more appropriate. For environments requiring high sample efficiency, model-based methods should be considered. For multi-agent or cooperative settings, specialized extensions exist but vanilla DQN is typically insufficient.
+
+## References
+
+- Mnih et al. (2013). "Playing Atari with Deep Reinforcement Learning." arXiv:1312.5602.
+- Mnih et al. (2015). "Human-level control through deep reinforcement learning." Nature, 518(7540).
+- van Hasselt et al. (2016). "Deep Reinforcement Learning with Double Q-learning." AAAI.
+- Wang et al. (2016). "Dueling Network Architectures for Deep Reinforcement Learning." ICML.
+- Schaul et al. (2016). "Prioritized Experience Replay." ICLR.
+- Bellemare et al. (2017). "A Distributional Perspective on Reinforcement Learning." ICML.
+- Hessel et al. (2018). "Rainbow: Combining Improvements in Deep Reinforcement Learning." AAAI.

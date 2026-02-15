@@ -286,7 +286,7 @@ class DocumentBrowser {
             iconMap: {
                 folder: "fa-solid fa-folder",
                 folderOpen: "fa-solid fa-folder-open",
-                doc: "fa-solid fa-folder",
+                doc: "fa-regular fa-file",
                 expanderExpanded: "fa-solid fa-chevron-down",
                 expanderCollapsed: "fa-solid fa-chevron-right",
             },
