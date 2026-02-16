@@ -108,7 +108,7 @@ For LunarLander-v3 with the same total environment steps:
 
 This is exactly what the project asks you to analyze and compare.
 
-## 5. How to Report This in the Project
+## 5. How to Report This
 
 ### Computing Gradient Updates
 
