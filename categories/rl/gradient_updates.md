@@ -118,7 +118,7 @@ For PPO, compute it using the formula above, or log it from SB3's internals. The
 
 ### What to Compare
 
-The project asks for a sample efficiency comparison. This should include:
+For a sample efficiency comparison, this should include:
 
 **Learning curves aligned by environment steps:** Plot mean return vs. total environment steps for both agents. This shows which agent learns faster in terms of experience — which is the fair comparison since environment interaction is the expensive resource.
 
@@ -126,9 +126,9 @@ The project asks for a sample efficiency comparison. This should include:
 
 **Update efficiency:** Report the ratio of gradient updates to environment steps for each agent. Discuss why they differ (replay buffer vs. on-policy collection) and what the implications are.
 
-### Key Points for the Report
+### Reporting Key Points
 
-When discussing sample efficiency in the theoretical section:
+When discussing sample efficiency in a theoretical section:
 
 DQN is **off-policy**: it can learn from any past experience, regardless of what policy generated it. This enables the replay buffer and data reuse, making each environment step count for many gradient updates. The cost is distributional mismatch — the data in the buffer doesn't perfectly reflect the current policy.
 
@@ -142,4 +142,4 @@ Sample efficiency (environment steps to reach a performance level) is not the sa
 
 With `n_envs` = 8, PPO collects experience 8× faster in real time, even though it uses the same total number of environment steps. This parallelism is a practical advantage of PPO that doesn't show up in sample efficiency plots but matters for real-world training time.
 
-If the project asks about training time or computational cost, this distinction is important. If it only asks about sample efficiency (performance vs. environment steps), parallelism is irrelevant — what matters is total steps, not how fast they were collected.
+If a project asks about training time or computational cost, this distinction is important. If it only asks about sample efficiency (performance vs. environment steps), parallelism is irrelevant — what matters is total steps, not how fast they were collected.
