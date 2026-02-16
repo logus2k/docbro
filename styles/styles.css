@@ -332,6 +332,7 @@ body {
 #tocTree .fa-folder,
 #tocTree .fa-folder-open {
     color: #d4a944 !important;
+    vertical-align: middle;
 }
 
 #tocTree .wunderbaum span.wb-node {
@@ -415,14 +416,14 @@ div.wunderbaum,
 
 div.wunderbaum span.wb-node span.wb-title {
     min-width: 1em;
-    vertical-align: baseline !important;
+    vertical-align: middle !important;
     overflow-x: hidden;
-    display: inline;
     white-space: nowrap;
     text-overflow: ellipsis;
     padding-left: 2px;
     font-size: 0.9em;
     font-family: 'Roboto', sans-serif !important;
+    padding-bottom: 2px;
 }
 
 #tocTree *:focus,
@@ -433,6 +434,12 @@ div.wunderbaum span.wb-node span.wb-title {
 
 i.wb-expander.fa-solid {
     font-size: 10px;
-    align-content: normal;
     text-align: center;
+    vertical-align: middle !important;
+    margin-top: 3px;
+}
+
+div.wb-row.wb-active {
+    background-color: #aee7b4 !important;
+    border-radius: 3px;
 }
