@@ -1,4 +1,4 @@
-# Deep Q-Networks Step by Step
+# Deep Q-Networks - Step by Step
 
 ## The Two Networks Architecture
 

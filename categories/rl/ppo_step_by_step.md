@@ -1,4 +1,4 @@
-# PPO Step by Step
+# PPO Networks - Step by Step
 
 ## The Two Networks Architecture
 
