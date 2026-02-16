@@ -131,7 +131,7 @@
 			"location": "categories/rl/dqn.md"
 		},
 		{
-			"name": "Step-by-Step",
+			"name": "DQN Step-by-Step",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/deep_q_step_by_step.md"
 		},
@@ -141,7 +141,7 @@
 			"location": "categories/rl/ppo.md"
 		},
 		{
-			"name": "Step-by-Step",
+			"name": "PPO Step-by-Step",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/ppo_step_by_step.md"
 		},
