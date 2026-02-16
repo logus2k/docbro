@@ -1,3 +1,3 @@
 docker compose down docbro
-docker build --no-cache -t docbro:1.0 .
+docker build --no-cache -t logus2k/docbro:latest .
 docker compose up -d docbro

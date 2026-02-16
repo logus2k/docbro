@@ -7,7 +7,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: docbro:1.0
+    image: logus2k/docbro
     container_name: docbro
     hostname: docbro
     logging:
@@ -19,9 +19,9 @@ services:
     networks:
       logus2k_network:
         ipv4_address: 172.20.0.110
-    volumes:
-      - ./documents.json:/usr/share/caddy/documents.json:ro
-      - ./categories:/usr/share/caddy/categories:ro
+    #volumes:
+      #- ./documents.json:/usr/share/caddy/documents.json:ro
+      #- ./categories:/usr/share/caddy/categories:ro
 
 networks:
   logus2k_network:
