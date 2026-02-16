@@ -131,11 +131,20 @@
 			"location": "categories/rl/dqn.md"
 		},
 		{
+			"name": "Step-by-Step",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/deep_q_step_by_step.md"
+		},
+		{
 			"name": "PPO",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/ppo.md"
 		},
-
+		{
+			"name": "Step-by-Step",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/ppo_step_by_step.md"
+		},
 		{
 			"name": "DQN Tuning",
 			"category": "Reinforcement Learning",
