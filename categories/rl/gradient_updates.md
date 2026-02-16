@@ -2,7 +2,7 @@
 
 ## Overview
 
-When the project asks you to "report the number of gradient updates performed by each agent," it's pointing at a fundamental difference between DQN and PPO. Both agents interact with the same environment for the same number of total steps, but they use those steps in radically different ways. Understanding this difference is central to the sample efficiency comparison and to explaining why the two agents learn at different speeds.
+When a project asks you to "report the number of gradient updates performed by each agent," it's pointing at a fundamental difference between DQN and PPO. Both agents interact with the same environment for the same number of total steps, but they use those steps in radically different ways. Understanding this difference is central to the sample efficiency comparison and to explaining why the two agents learn at different speeds.
 
 ## 1. What Is a Gradient Update?
 
