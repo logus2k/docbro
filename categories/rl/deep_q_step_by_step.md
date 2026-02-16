@@ -4,7 +4,7 @@
 
 Deep Q-Learning uses two neural networks with identical architecture:
 
-**Q-Network (Frank's conscience):** Takes a state as input. The output layer has one neuron per possible action, and each neuron outputs a Q-value — a number that quantifies how good that action is expected to be from this state. For LunarLander-v3 with 4 actions:
+**Q-Network:** Takes a state as input. The output layer has one neuron per possible action, and each neuron outputs a Q-value — a number that quantifies how good that action is expected to be from this state. For LunarLander-v3 with 4 actions:
 
 ```
 State (8) → Hidden Layers → [Q(do nothing), Q(fire left), Q(fire main), Q(fire right)]
@@ -74,7 +74,7 @@ Once the replay buffer has enough data, training begins. At every environment st
 
 **Step 2:** Pass the current state $s$ into the **Q-Network**. It outputs Q-values for all actions. We take the Q-value corresponding to the action in our quadruple (action 2, fire main). Say it outputs $Q(s, a) = 3.1$.
 
-This is **Frank's current conscience** — what the Q-Network currently believes about this (state, action) pair.
+This is what the Q-Network currently believes about this (state, action) pair.
 
 **Step 3:** Pass the next state $s'$ into the **Target Network**. It outputs Q-values for all actions. We take the **highest** Q-value:
 
@@ -97,7 +97,7 @@ This represents: "you got +0.3 now, and the best possible future from where you 
 
 | | Value | Meaning |
 |--|-------|---------|
-| Q-Network output | 3.1 | Frank's current conscience — what it believes |
+| Q-Network output | 3.1 | What it believes |
 | Target value | 4.953 | The ideal conscience — what it should believe |
 
 **Step 6:** Compute the **mean squared loss** between these two values:
@@ -110,7 +110,7 @@ In practice, this is averaged across all quadruples in the batch.
 
 The **target network remains unchanged**. No gradients flow through it. It just provided a stable reference number.
 
-**Step 8:** Repeat for the next batch. The Q-Network's weights shift slightly with every update. Frank's conscience improves step by step.
+**Step 8:** Repeat for the next batch. The Q-Network's weights shift slightly with every update. It improves step by step.
 
 ---
 
@@ -129,14 +129,14 @@ The cycle then continues:
 ```
 Steps 1–10,000:       Target network frozen
                        Q-Network learns against stable targets
-                       Frank's conscience improves gradually
+                       It improves gradually
 
 Step 10,001:           Target network updated ← Q-Network weights
                        New, better reference point established
 
 Steps 10,001–20,000:  Target network frozen again
                        Q-Network learns against improved targets
-                       Frank's conscience improves further
+                       It improves further
 
 Step 20,001:           Target network updated again
 ...
@@ -173,7 +173,7 @@ A secondary benefit is **data reuse**: each quadruple in the buffer can be sampl
    Target Network produces max Q-value for the next state → ideal conscience
    Target = reward + γ × max Q-value from target network
    Loss = (target − Q-Network prediction)²
-   Backpropagate through Q-Network only → Frank learns
+   Backpropagate through Q-Network only → It learns
    Target Network remains frozen
 
 3. TARGET UPDATE (every N steps)
@@ -183,5 +183,5 @@ A secondary benefit is **data reuse**: each quadruple in the buffer can be sampl
 4. REPEAT
    Epsilon decays over time (less random, more greedy)
    Q-Network improves → better actions → better data → better learning
-   Frank becomes a champ
+   It eventually performs great
 ```
