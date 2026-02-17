@@ -9,7 +9,7 @@
 
 .tab {
     position: relative;
-    padding: 7px 16px 4px 16px;
+    padding: 6px 16px 4px 16px;
     background-color: #ffecb9;
     cursor: pointer;
     border-radius: 8px 8px 0 0;
@@ -22,7 +22,7 @@
     max-width: 200px;
     user-select: none;
     -webkit-user-select: none;
-    margin-top: 3px;
+    margin-top: 4px;
 }
 
 .tab.active {
@@ -33,7 +33,7 @@
     z-index: 1;
     margin-bottom: 0;
     padding: 9px 16px 4px 16px;
-    margin-top: 0px;
+    margin-top: 1px;
 }
 
 /* Shrink tabs on smaller screens */
