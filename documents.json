@@ -136,6 +136,11 @@
 			"location": "categories/rl/deep_q_step_by_step.md"
 		},
 		{
+			"name": "DQN Tuning",
+			"category": "Reinforcement Learning",
+			"location": "categories/rl/dqn_tuning.md"
+		},
+		{
 			"name": "PPO",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/ppo.md"
@@ -146,23 +151,20 @@
 			"location": "categories/rl/ppo_step_by_step.md"
 		},
 		{
-			"name": "DQN Tuning",
-			"category": "Reinforcement Learning",
-			"location": "categories/rl/dqn_tuning.md"
-		},		{
 			"name": "PPO Tuning",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/ppo_tuning.md"
-		},		{
+		},
+		{
 			"name": "Gradients",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/gradient_updates.md"
-		},		{
+		},
+		{
 			"name": "ε-Greedy",
 			"category": "Reinforcement Learning",
 			"location": "categories/rl/epsilon_greedy.md"
 		},		
-
 		{
 			"name": "Algorithms",
 			"category": "Reinforcement Learning",
