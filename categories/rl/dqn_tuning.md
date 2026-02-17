@@ -4,6 +4,17 @@
 
 Training a DQN agent involves three interconnected mechanisms that together determine learning quality and stability: the experience replay buffer, the target network update schedule, and the epsilon decay strategy. Each serves a distinct purpose, but their interactions are what ultimately shape the agent's learning dynamics. Understanding these interactions is essential for effective hyperparameter tuning.
 
+**DQN hyperparameters:**
+- Learning rate — step size for gradient updates
+- Gamma — discount factor for future rewards
+- Buffer size — how many transitions the replay buffer holds
+- Batch size — transitions sampled per gradient update
+- Learning starts — steps of pure random exploration before training begins
+- Exploration initial eps — starting epsilon (1.0, fully random)
+- Exploration final eps — ending epsilon (0.05, mostly greedy)
+- Exploration fraction — what fraction of training is used to decay epsilon
+- Target update interval — how many steps between copying Q-network to target network
+
 This document explains each mechanism in depth, discusses how they interact, and provides practical guidance for tuning them in the context of LunarLander-v3 with Stable-Baselines3.
 
 ## 1. Experience Replay Buffer

@@ -4,6 +4,16 @@
 
 PPO's stability and ease of tuning come from a small set of well-understood hyperparameters that control how aggressively the policy updates, how thoroughly each batch of experience is used, and how much the agent is encouraged to explore. The three most impactful parameters for tuning are the clip range, the number of optimization epochs per batch, and the entropy coefficient.
 
+**PPO hyperparameters:**
+- Learning rate — step size for gradient updates
+- Gamma — discount factor for future rewards
+- N steps — how many steps per collection phase (2048)
+- N epochs — how many passes over the collected data (10)
+- Batch size — mini-batch size during training
+- Clip range — the epsilon for clipping (0.2)
+- GAE lambda — bias-variance trade-off for advantage estimation (0.95)
+- Entropy coefficient — floor to prevent exploration from collapsing too early
+
 This document explains each mechanism, how they interact, and how to tune them effectively for LunarLander-v3 with Stable-Baselines3.
 
 ## 1. The Clip Range ($\epsilon$)
