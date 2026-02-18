@@ -8,6 +8,6 @@ Ultimately, the library aims to **streamline AI development** by providing robus
 
 <div class="embedded-video">
     <video controls>
-        <source src="https://logus2k.com/docbro/categories/gymnasium/videos/overview.mp4" type="video/mp4">
+        <source src="https://logus2k.com/docbro/categories/gymnasium/videos/gymnasium.mp4" type="video/mp4">
     </video>
 </div>
