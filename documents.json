@@ -102,6 +102,11 @@
 		},
 		{
 			"name": "Overview",
+			"category": "Gymnasium",
+			"location": "categories/gymnasium/overview.md"
+		},		
+		{
+			"name": "Overview",
 			"category": "Numba",
 			"location": "categories/numba/overview.md"
 		},
