@@ -101,10 +101,75 @@
 			"location": "categories/genai/sequence_models_evolution.md"
 		},
 		{
+			"name": "Implementation Overview",
+			"category": "Genetic Algorithms",
+			"location": "categories/genetic/ga_implementation.md"
+		},		
+		{
 			"name": "Overview",
 			"category": "Gymnasium",
 			"location": "categories/gymnasium/overview.md"
-		},		
+		},
+		{
+			"name": "What is MLOps",
+			"category": "MLOps",
+			"location": "categories/mlops/what_is_mlops.md"
+		},			
+		{
+			"name": "Overview",
+			"category": "MLOps",
+			"location": "categories/mlops/overview.md"
+		},	
+		{
+			"name": "Design",
+			"category": "MLOps",
+			"location": "categories/mlops/systems_design.md"
+		},					
+		{
+			"name": "Engineering",
+			"category": "MLOps",
+			"location": "categories/mlops/data_engineering.md"
+		},
+		{
+			"name": "Training",
+			"category": "MLOps",
+			"location": "categories/mlops/training_data.md"
+		},	
+		{
+			"name": "Features",
+			"category": "MLOps",
+			"location": "categories/mlops/feature_engineering.md"
+		},	
+		{
+			"name": "Development",
+			"category": "MLOps",
+			"location": "categories/mlops/development_and_evaluation.md"
+		},							
+		{
+			"name": "Deployment",
+			"category": "MLOps",
+			"location": "categories/mlops/deployment.md"
+		},
+		{
+			"name": "Distribution",
+			"category": "MLOps",
+			"location": "categories/mlops/data_distribution.md"
+		},			
+		{
+			"name": "Learning",
+			"category": "MLOps",
+			"location": "categories/mlops/continual_learning.md"
+		},			
+		{
+			"name": "Infrastructure",
+			"category": "MLOps",
+			"location": "categories/mlops/infrastructure.md"
+		},
+		{
+			"name": "Human Side",
+			"category": "MLOps",
+			"location": "categories/mlops/human_side.md"
+		},			
 		{
 			"name": "Overview",
 			"category": "Numba",
