@@ -36,6 +36,31 @@
     margin-top: 1px;
 }
 
+/* Close button */
+.tab-close-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: #e9b96f;
+    color: #333333;
+    font-size: 14px;
+    line-height: 14px;
+    font-weight: 400;
+    text-align: center;
+    cursor: pointer;
+    display: none;
+    border: none;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.tab:hover .tab-close-btn {
+    display: block;
+}
+
 /* Shrink tabs on smaller screens */
 @media (max-width: 1200px) {
     .tab {

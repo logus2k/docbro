@@ -14,7 +14,8 @@ class DocumentBrowser {
         this.tabsContainer = document.getElementById('tabsContainer');
         this.contentContainer = document.getElementById('contentContainer');
         this.scrollSyncEnabled = true;
-        
+        this.closedTabs = new Set();
+
         this.init();
     }
 
@@ -360,14 +361,28 @@ class DocumentBrowser {
     renderTabs() {
         this.tabsContainer.innerHTML = '';
         const categoryDocs = this.documents.filter(d => d.category === this.activeCategory);
-        
-        categoryDocs.forEach((doc) => {
+        const openDocs = categoryDocs.filter(d => !this.closedTabs.has(d.globalIndex));
+
+        openDocs.forEach((doc) => {
             const tab = document.createElement('div');
             tab.className = 'tab';
             tab.textContent = doc.name;
             tab.title = doc.name;
             tab.setAttribute('data-doc-index', doc.globalIndex);
             tab.addEventListener('click', () => this.activateDocument(doc.globalIndex));
+
+            // Add close button unless this is the last open tab
+            if (openDocs.length > 1) {
+                const closeBtn = document.createElement('span');
+                closeBtn.className = 'tab-close-btn';
+                closeBtn.textContent = '\u00d7';
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.closeTab(doc.globalIndex);
+                });
+                tab.appendChild(closeBtn);
+            }
+
             this.tabsContainer.appendChild(tab);
         });
     }
@@ -384,15 +399,63 @@ class DocumentBrowser {
         });
     }
 
+    closeTab(globalIndex) {
+        const categoryDocs = this.documents.filter(d => d.category === this.activeCategory);
+        const openDocs = categoryDocs.filter(d => !this.closedTabs.has(d.globalIndex));
+
+        // Don't close the last open tab
+        if (openDocs.length <= 1) return;
+
+        this.closedTabs.add(globalIndex);
+
+        if (this.activeDocumentIndex === globalIndex) {
+            // Find next open tab to the right in the full category order
+            const closedPos = categoryDocs.findIndex(d => d.globalIndex === globalIndex);
+            let nextDoc = null;
+
+            for (let i = closedPos + 1; i < categoryDocs.length; i++) {
+                if (!this.closedTabs.has(categoryDocs[i].globalIndex)) {
+                    nextDoc = categoryDocs[i];
+                    break;
+                }
+            }
+            // If none to the right, pick nearest to the left
+            if (!nextDoc) {
+                for (let i = closedPos - 1; i >= 0; i--) {
+                    if (!this.closedTabs.has(categoryDocs[i].globalIndex)) {
+                        nextDoc = categoryDocs[i];
+                        break;
+                    }
+                }
+            }
+
+            this.renderTabs();
+            if (nextDoc) {
+                this.activateDocument(nextDoc.globalIndex);
+            }
+        } else {
+            this.renderTabs();
+            this.updateTabsActiveState(this.activeDocumentIndex);
+        }
+    }
+
     async activateDocument(globalIndex, headerId = null) {
         const doc = this.documents[globalIndex];
         if (!doc) return;
+
+        // Reopen tab if it was closed
+        const wasClosed = this.closedTabs.has(globalIndex);
+        if (wasClosed) {
+            this.closedTabs.delete(globalIndex);
+        }
 
         const isNewDocument = this.activeDocumentIndex !== globalIndex;
 
         // Check if category changed
         if (this.activeCategory !== doc.category) {
             this.activeCategory = doc.category;
+            this.renderTabs();
+        } else if (wasClosed) {
             this.renderTabs();
         }
 
