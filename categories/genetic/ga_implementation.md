@@ -1,19 +1,18 @@
 # Genetic Algorithm Implementation
 
-This document describes the complete implementation of a neuroevolution system that evolves neural networks to solve the LunarLander-v3 environment. The codebase is organized into four main modules plus an entry point:
+This document describes the complete implementation of the neuroevolution system used in `05_annex1_genetic.ipynb` to evolve neural networks that solve the LunarLander-v3 environment. The notebook imports from the `genetic` package, which provides the core GA modules:
 
 ```
-src/
+genetic/
   evolution/
-    utils.py                 - Shared utility (genome size calculation)
     genome.py                - Genome creation
     neural_network.py        - Neural network (phenotype)
-    genetic_algorithm.py     - Core GA loop
-    parallel_evaluator.py    - Parallel genome evaluation
+    genetic_algorithm.py     - Core GA loop + parallel evaluation
   environment/
-    lunarlander_runner.py    - Gymnasium environment interface
-  main.py                   - Entry point
+    lunarlander_runner.py    - Gymnasium environment interface + training evaluation
 ```
+
+The notebook adds training orchestration on top: multi-seed runs, periodic deterministic evaluation, best-model selection with the same two-tier logic used for DQN/PPO, live charts, and artifact saving.
 
 The flow is: **create genomes -> decode into neural networks -> evaluate in environment -> select, crossover, mutate -> repeat**.
 
@@ -22,8 +21,6 @@ The flow is: **create genomes -> decode into neural networks -> evaluate in envi
 A genome is a flat NumPy array of floating-point numbers. Each number will become a weight or bias in the neural network. The genome encodes the entire network in a single vector.
 
 ```python
-from evolution.utils import compute_genome_size
-
 def create_genome(input_size, hidden1_size, hidden2_size, output_size):
     genome_size = compute_genome_size(input_size, hidden1_size, hidden2_size, output_size)
     genome = np.random.uniform(-1, 1, genome_size)
@@ -33,21 +30,20 @@ def create_genome(input_size, hidden1_size, hidden2_size, output_size):
 **Key concepts:**
 
 - `np.random.uniform(-1, 1, genome_size)` creates random values between -1 and 1. This is the initial "DNA" of each individual.
-- The genome size depends on the network architecture. For our network (8 inputs, 10+10 hidden, 4 outputs), the genome has 284 values.
+- The genome size depends on the network architecture. For our network (8 inputs, 10+10 hidden, 4 outputs), the genome has **244** values.
 
-### Genome size calculation (`utils.py`)
+### Genome size calculation
+
+The genome size counts every weight and bias in the network:
 
 ```python
-def compute_genome_size(input_size, hidden1_size, hidden2_size, output_size):
-    return (input_size * hidden1_size + hidden1_size +
-            hidden1_size * hidden2_size + hidden2_size +
-            hidden2_size * output_size + output_size)
+genome_size = (input_size * hidden1_size + hidden1_size +
+               hidden1_size * hidden2_size + hidden2_size +
+               hidden2_size * output_size + output_size)
 ```
 
-This counts every weight and bias in the network:
-
-| Component | Count | For our architecture |
-|-----------|-------|---------------------|
+| Component | Formula | For our architecture |
+|-----------|---------|---------------------|
 | Weights: input -> hidden1 | input_size * hidden1_size | 8 * 10 = 80 |
 | Biases: hidden1 | hidden1_size | 10 |
 | Weights: hidden1 -> hidden2 | hidden1_size * hidden2_size | 10 * 10 = 100 |
@@ -116,11 +112,15 @@ This is a standard feedforward neural network with:
 
 The `tanh` activation squashes values to the range [-1, 1]. The output layer has no activation function (linear), so the raw scores determine the action. The action with the highest score is selected via `np.argmax(output)`.
 
-**Important**: This is pure NumPy, no PyTorch, no autograd, no gradient computation. The network is just a mathematical function that maps 8 inputs to 4 outputs. The GA never needs to differentiate through it.
+**Important**: This is pure NumPy - no PyTorch, no autograd, no gradient computation. The network is just a mathematical function that maps 8 inputs to 4 outputs. The GA never needs to differentiate through it.
 
-## 3. Environment Evaluation (`lunarlander_runner.py`)
+## 3. Environment Evaluation
 
-This module runs a genome through the LunarLander environment and returns its fitness.
+There are two evaluation modes in the notebook, serving different purposes.
+
+### Training evaluation (inside `genetic_algorithm.py`)
+
+During evolution, each genome is evaluated by the GA's internal evaluator, which runs the genome through the LunarLander environment using multiple seeds and includes an early termination penalty:
 
 ```python
 def evaluate_genome(genome, input_size, hidden1_size, hidden2_size, output_size,
@@ -155,29 +155,57 @@ def evaluate_genome(genome, input_size, hidden1_size, hidden2_size, output_size,
 **Step by step:**
 
 1. Create the Gymnasium environment and decode the genome into a neural network
-2. For each evaluation seed:
+2. For each of the 3 evaluation seeds:
    - Reset the environment with that seed (different initial conditions)
    - Run a loop: observe state -> forward pass -> pick action -> step environment
    - Accumulate reward until the episode ends (landing, crash, or timeout)
    - If reward drops below -200, give a penalty of -300 and stop early (this genome is clearly bad, no point continuing)
-3. Return the average reward across all seeds
+3. Return the average reward across all seeds as the fitness score
 
-**Multiple seeds**: Each genome is evaluated on 3 different random seeds per generation. This reduces noise - a genome that scores well on one lucky scenario but fails on others will get a mediocre average, preventing lucky genomes from dominating the population.
+**Multiple seeds**: Each genome is evaluated on 3 different random seeds per generation (`EVAL_SEEDS_PER_GEN = 3`). This reduces noise - a genome that scores well on one lucky scenario but fails on others will get a mediocre average, preventing lucky genomes from dominating the population.
 
-**Early termination penalty**: The `-300` penalty is harsher than just letting the episode continue. Without it, a bad genome that crashes early at -200 gets a better score than one that struggles longer and reaches -250. The penalty ensures consistently bad genomes are punished equally.
+**Early termination penalty**: The -300 penalty is harsher than just letting the episode continue. Without it, a bad genome that crashes early at -200 gets a better score than one that struggles longer and reaches -250. The penalty ensures consistently bad genomes are punished equally.
 
-## 4. Parallel Evaluation (`parallel_evaluator.py`)
+### Deterministic evaluation (notebook Cell 7 and Cell 15)
 
-Since each genome's evaluation is independent, we can run them in parallel across CPU cores.
+For model selection and final reporting, the notebook uses a separate `evaluate_genome_deterministic` function that does **not** apply the early termination penalty:
 
 ```python
-def _evaluate_single(args):
-    genome, input_size, hidden1_size, hidden2_size, output_size, index, generation, seeds, render = args
-    fitness = evaluate_genome(genome, input_size, hidden1_size, hidden2_size,
-                              output_size, index, generation, seeds, render)
-    return genome, fitness
+def evaluate_genome_deterministic(genome, n_episodes, seed=None):
+    nn = NeuralNetwork(INPUT_SIZE, HIDDEN1_SIZE, HIDDEN2_SIZE, OUTPUT_SIZE, genome)
+    env = gym.make(GYMNASIUM_MODEL, enable_wind=WIND_ENABLED)
+    rewards = []
 
+    for ep in range(n_episodes):
+        ep_seed = seed + ep if seed is not None else None
+        obs, _ = env.reset(seed=ep_seed)
+        total_reward = 0.0
+        done = False
 
+        while not done:
+            output = nn.forward(obs)
+            action = np.argmax(output)
+            obs, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+            total_reward += float(reward)
+
+        rewards.append(total_reward)
+
+    env.close()
+    return rewards
+```
+
+This function runs the genome for exactly `n_episodes` complete episodes with sequential seeds (`seed`, `seed+1`, `seed+2`, ...) and returns the full list of per-episode rewards. No early stopping, no penalty floor. This matches the evaluation protocol used for DQN and PPO, ensuring a fair comparison.
+
+It is used in two contexts:
+- **During training** (Cell 8): every 100 generations (`EVAL_FREQ_GENS`), the best genome of the current generation is evaluated over 20 episodes (`EVAL_N_EPISODES`) to track progress and select the best model
+- **After training** (Cell 15): the saved best genome per seed is evaluated over 20 episodes (`EVALUATION_EPISODES`) for the final summary tables
+
+## 4. Parallel Evaluation
+
+Since each genome's evaluation is independent, the GA runs them in parallel across CPU cores using `ProcessPoolExecutor`.
+
+```python
 class ParallelEvaluator:
     def __init__(self, max_workers=None):
         self.max_workers = max_workers or os.cpu_count()
@@ -200,7 +228,7 @@ class ParallelEvaluator:
 **Key concepts:**
 
 - `_evaluate_single` is a top-level function (not a method) because Python's `multiprocessing` on Windows uses `spawn`, which requires all worker functions to be picklable. Top-level functions satisfy this.
-- `ProcessPoolExecutor` distributes the 50 genome evaluations across available CPU cores. With 20 workers and 50 genomes, each worker handles 2-3 evaluations.
+- `ProcessPoolExecutor` distributes the 50 genome evaluations across available CPU cores. With the notebook's `MAX_WORKERS = 20` and 50 genomes, each worker handles 2-3 evaluations.
 - Results are sorted by fitness (highest first) before returning, so the caller always receives the population in rank order.
 - The speedup is near-linear with core count since evaluations are completely independent (no shared state).
 
@@ -224,7 +252,17 @@ class GeneticAlgorithm:
         self.evaluator = ParallelEvaluator(max_workers)
 ```
 
-The population starts as 50 random genomes. The mutation rate starts at 0.05 and will decay to 0.01 over the course of training.
+The population starts as 50 random genomes. The mutation rate starts at 0.05 and will decay to 0.01 over the course of training. The notebook instantiates this as:
+
+```python
+ga = GeneticAlgorithm(
+    INPUT_SIZE, HIDDEN1_SIZE, HIDDEN2_SIZE, OUTPUT_SIZE,
+    POPULATION_SIZE, MUTATION_RATE, render=False, max_workers=MAX_WORKERS,
+    generations=GENERATIONS
+)
+```
+
+The `mutation_rate_min` parameter uses its default value of 0.01.
 
 ### Adaptive Mutation Rate
 
@@ -241,6 +279,8 @@ This is a linear interpolation:
 - At generation 5000: `progress = 1.0`, so `mutation_rate = 0.01`
 
 **Why decay?** Early in training, the population is random and needs large mutations to explore the search space. Later, the population has converged to good solutions and large mutations would knock them off course. Decaying the rate allows the algorithm to transition from exploration to refinement.
+
+The notebook's live stats display shows the current mutation rate as `MR: 0.0XXX`, confirming the decay is active during training.
 
 Without decay, the fixed mutation rate of 0.05 caused population collapses even at generation 4000+, where the average fitness would suddenly drop from 270 to 16 between generations.
 
@@ -334,41 +374,52 @@ def next_generation(self, sorted_population):
 
 The balance is: 3 elites (6%) provide stability, 47 new children (94%) provide exploration. This ratio was tuned experimentally.
 
-## 6. Entry Point (`main.py`)
+## 6. Notebook Training Loop (Cell 8)
 
-The main script ties everything together:
+The notebook's training loop wraps the GA modules with multi-seed execution, periodic evaluation, best-model tracking, live charts, and artifact saving.
 
-```python
-def main():
-    parser = argparse.ArgumentParser(prog="Neuroevolution LunarLander-v3")
-    parser.add_argument("-r", "--render", action="store_true")
-    parser.add_argument("-w", "--workers", type=int, default=None)
-    arg = parser.parse_args()
+### Per-seed training structure
 
-    # Network architecture
-    input_size = 8       # LunarLander observation space
-    hidden1_size = 10
-    hidden2_size = 10
-    output_size = 4      # LunarLander action space
+For each seed in `SEED_LIST = [42, 123, 3407]`:
 
-    # GA hyperparameters
-    population_size = 50
-    mutation_rate = 0.05
-    generations = 5000
+1. **Setup**: Create a timestamped run directory (`models/ga/YYYY-MM-DD_HH_MM_SS/`), seed all RNGs, instantiate the GA
 
-    ga = GeneticAlgorithm(input_size, hidden1_size, hidden2_size, output_size,
-                          population_size, mutation_rate, render, arg.workers,
-                          generations=generations)
+2. **Evolution loop** (5000 generations):
+   - `ga.evaluate_population(gen)` - evaluate all 50 genomes on 3 random seeds
+   - Record fitness history (best, average, worst per generation)
+   - Accumulate estimated environment steps: `POPULATION_SIZE * EVAL_SEEDS_PER_GEN * 300` per generation (300 is the approximate average episode length)
+   - Every 100 generations (`EVAL_FREQ_GENS`): run deterministic evaluation of the generation's best genome
+   - Every 100 generations (`CHART_UPDATE_FREQ`): update live stats display and fitness chart
+   - `ga.next_generation(sorted_population)` - selection, crossover, mutation
 
-    for gen in range(generations):
-        sorted_population = ga.evaluate_population(gen)
-        # ... logging ...
-        ga.next_generation(sorted_population)
+3. **Periodic deterministic evaluation** (every 100 generations):
+   - Take the best genome from the current generation
+   - Run it for 20 deterministic episodes (`EVAL_N_EPISODES`) using the training seed
+   - Compute mean reward, std, success rate, and combined score (mean - std)
+   - Apply two-tier best-model selection (same logic as DQN/PPO's `CombinedMetricEvalCallback`):
+     - If the genome is "solved" (mean >= 200) and no previous genome was solved, save it as best
+     - If already have a solved genome, only replace if the new combined score is higher
+     - If no genome has solved yet, save whichever has the highest combined score
+   - Save `best_genome.npy` when a new best is found
 
-    # ... save results and plot ...
+4. **Save artifacts** after all generations complete:
+   - `{SESSION_PREFIX}_ga_{seed}.npy` - final genome (best of last generation)
+   - `best_genome.npy` - best genome found during training (by combined metric)
+   - `eval_log/evaluations.npz` - periodic evaluation history (generations, means, stds, scores, success_rates)
+   - `fitness_history_seed{seed}.npz` - per-generation fitness history (best, avg, worst arrays)
+
+### Saved artifacts per run
+
+```
+models/ga/2026-02-22_22_39_48/
+  annex1_ga_123.npy          # Final genome (end of training)
+  best_genome.npy            # Best genome (by combined metric)
+  eval_log/
+    evaluations.npz          # Periodic eval history
+  fitness_history_seed123.npz  # Per-generation fitness curves
 ```
 
-The training loop is simple: evaluate, log, evolve, repeat. All complexity lives in the modules.
+Note that `annex1_ga_123.npy` (the final genome) and `best_genome.npy` (the best genome) may differ. The best genome is typically from an earlier generation where the combined score peaked, while the final genome is simply the top-ranked genome of the last generation.
 
 ## 7. The Complete Training Pipeline
 
@@ -388,10 +439,14 @@ evaluate_population()
   |     |     |-- For each of 3 seeds:
   |     |     |     |-- env.reset(seed)           # New scenario
   |     |     |     |-- Loop: forward() -> argmax -> env.step()
-  |     |     |     |-- Accumulate reward
+  |     |     |     |-- Accumulate reward (early stop at -200 -> -300)
   |     |     |-- Average reward across 3 seeds   # Fitness score
   |     |
   |     |-- Sort by fitness (descending)
+  |
+  |-- [Every 100 gens] Deterministic eval of best genome (20 episodes)
+  |     |-- Two-tier best model selection
+  |     |-- Save best_genome.npy if new best found
   |
   v
 next_generation(sorted_population)
@@ -413,18 +468,23 @@ Generation N+1
 |-----------|-------|---------|
 | Population size | 50 | Number of genomes per generation |
 | Mutation rate (start) | 0.05 | Initial perturbation strength |
-| Mutation rate (end) | 0.01 | Final perturbation strength |
+| Mutation rate (end) | 0.01 | Final perturbation strength (default) |
 | Mutation clip | +/- 0.1 | Max change per gene per generation |
 | Elitism | Top 3 | Genomes preserved unchanged |
-| Parent selection | Top 20% | Genomes eligible for reproduction |
-| Crossover | Uniform (gene-wise) | How parents combine |
+| Parent selection | Top 20% (10 genomes) | Genomes eligible for reproduction |
+| Crossover | Uniform (gene-wise, 50/50) | How parents combine |
 | Eval seeds per generation | 3 | Episodes per genome per generation |
+| Early termination | reward < -200 -> -300 | Penalty for clearly failing genomes |
 | Generations | 5000 | Total evolutionary cycles |
+| Deterministic eval frequency | Every 100 generations | Best-model tracking interval |
+| Deterministic eval episodes | 20 | Episodes per evaluation checkpoint |
 | Network architecture | 8-10-10-4 | Input-hidden1-hidden2-output |
 | Hidden activation | tanh | Squashes to [-1, 1] |
 | Output activation | None (linear) | Raw scores for action selection |
 | Genome size | 244 | Total weights + biases |
-| Max workers | os.cpu_count() | Parallel evaluation processes |
+| Max workers | 20 | Parallel evaluation processes |
+| Seeds | 42, 123, 3407 | Three independent training runs |
+| Estimated env steps per seed | ~225M | 5000 * 50 * 3 * ~300 |
 
 ## 9. Key Design Decisions and Their Effects
 
@@ -450,4 +510,12 @@ Generation N+1
 
 ### Parallel evaluation (ProcessPoolExecutor)
 **Problem solved**: Sequential evaluation of 50 genomes, each running 3 episodes, was slow. With 3 seeds, training time tripled compared to the original single-seed setup.
-**Effect**: Near-linear speedup with core count. On a 24-core machine with 20 workers, a full 5000-generation run completes in approximately 17-30 minutes depending on the seed.
+**Effect**: Near-linear speedup with core count. With `MAX_WORKERS = 20` and 50 genomes, a full 5000-generation run completes in approximately 17-30 minutes per seed depending on convergence behaviour.
+
+### Two-tier best-model selection
+**Problem solved**: Simply keeping the genome with the highest mean reward can select a genome that got lucky on one evaluation. A genome scoring 310 mean but 80 std is less reliable than one scoring 280 mean and 10 std.
+**Effect**: The combined metric (mean - std) favours genomes that are both high-performing and consistent, matching the selection logic used for DQN and PPO. This also means the best genome found during training may come from an earlier generation rather than the final one.
+
+### Separate deterministic evaluation
+**Problem solved**: The training fitness scores use 3 random seeds that change every generation, include the early termination penalty, and only run one episode per seed. This is too noisy and not comparable to the DQN/PPO evaluation protocol.
+**Effect**: The periodic deterministic evaluation (20 episodes, fixed seed, no penalty) provides an apples-to-apples comparison with DQN and PPO, and drives the best-model selection independently of the noisy training fitness.
