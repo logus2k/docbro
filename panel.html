@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jsPanel</title>
+    <link rel="icon" href=",">
+    <link rel="stylesheet" href="./libraries/jspanel/jspanel.min.css">
+    <style>
+
+        .jsPanel-title {
+            font-size: 11px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: bold !important;
+            letter-spacing: 1.5px;
+            padding: 4px;
+            margin: 0px;
+            border-radius: 8px 8px 0px 0px;
+        }
+
+        .jsPanel-titlebar .jsPanel-title {
+            margin: 4px 5px 0px 8px;
+        }        
+
+        .jsPanel-controlbar {
+            margin: 0px;
+        }        
+
+        /* CSS for custom controls */
+        .custom-control-icon.custom-smallify::before{ content: ""; }
+        .custom-control-icon.custom-minimize::before { content: ""; }
+        .custom-control-icon.custom-normalize::before{ content: ""; }
+        .custom-control-icon.custom-maximize::before{ content: ""; }
+        .custom-control-icon.custom-close::before{
+            content: url(./icons/close.svg);
+        }
+
+    </style>
+</head>
+<body>
+
+
+
+
+<script src="./libraries/jspanel/jspanel.min.js"></script>
+<script>
+
+    jsPanel.create({
+        id: "myPanel",
+        headerTitle: "PANEL",
+        theme: "#ffb44f",
+        callback: function() {
+            this.content.style.padding = "10px";
+        },
+        borderRadius: "8px",
+        border: "0.5px solid #9a9a9a",
+        boxShadow: 1,
+        headerControls: {
+            minimize: "remove",
+            smallify: "remove",
+            normalize: "remove",
+            maximize: "remove"
+        },
+        iconfont: [
+            "custom-smallify",
+            "custom-minimize",
+            "custom-normalize",
+            "custom-maximize",
+            "custom-close"
+        ]
+    });
+
+    document.getElementById("myPanel").content.innerHTML = "<div>A demo panel.</div>";
+
+</script>
+</body>
+</html>
