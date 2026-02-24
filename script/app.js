@@ -232,7 +232,7 @@ class DocumentBrowser {
 
         try {
             if (this.isPdf(doc)) {
-                const pdfDoc = await getDocument({ url: doc.location, disableRange: true, disableStream: true }).promise;
+                const pdfDoc = await getDocument({ url: doc.location }).promise;
                 doc.pdfDoc = pdfDoc;
                 doc.error = false;
                 doc.loaded = true;
@@ -654,18 +654,10 @@ class DocumentBrowser {
             });
             await textLayer.render();
 
-            // DEBUG: log scale-factor and double-click info
-            const sf = textLayerDiv.style.getPropertyValue('--scale-factor');
-            console.log(`Page ${i}: --scale-factor=${sf}, textScale=${textScale}, viewport.scale=${textViewport.scale}`);
-            textLayerDiv.addEventListener('dblclick', (e) => {
-                const sel = window.getSelection();
-                const span = e.target.closest('span');
-                console.log('--- dblclick debug ---');
-                console.log('selected text:', sel.toString());
-                console.log('span text:', span?.textContent);
-                console.log('span style:', span?.style.cssText);
-                console.log('--scale-factor on container:', textLayerDiv.style.getPropertyValue('--scale-factor'));
-                console.log('computed font-size:', span ? getComputedStyle(span).fontSize : 'n/a');
+            // Custom right-click menu for PDF pages (save/copy page image)
+            pageDiv.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                this.showPdfContextMenu(e.clientX, e.clientY, canvas);
             });
 
             // Link overlay (manual annotation handling)
@@ -762,6 +754,59 @@ class DocumentBrowser {
         });
 
         mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
+    }
+
+    showPdfContextMenu(x, y, canvas) {
+        // Remove any existing menu
+        document.querySelector('.pdf-context-menu')?.remove();
+
+        const menu = document.createElement('div');
+        menu.className = 'pdf-context-menu';
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+
+        const copyItem = document.createElement('div');
+        copyItem.className = 'pdf-context-menu-item';
+        copyItem.textContent = 'Copy page as image';
+        copyItem.addEventListener('click', () => {
+            menu.remove();
+            canvas.toBlob(async (blob) => {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                } catch (err) {
+                    console.error('Copy failed:', err);
+                }
+            });
+        });
+
+        const saveItem = document.createElement('div');
+        saveItem.className = 'pdf-context-menu-item';
+        saveItem.textContent = 'Save page as image';
+        saveItem.addEventListener('click', () => {
+            menu.remove();
+            const link = document.createElement('a');
+            link.download = 'page.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        menu.appendChild(copyItem);
+        menu.appendChild(saveItem);
+        document.body.appendChild(menu);
+
+        // Close on click elsewhere or Escape
+        const close = () => {
+            menu.remove();
+            document.removeEventListener('click', close);
+            document.removeEventListener('keydown', onKey);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        setTimeout(() => {
+            document.addEventListener('click', close);
+            document.addEventListener('keydown', onKey);
+        }, 0);
     }
 
     extractAndUpdateHeaders(globalIndex) {
