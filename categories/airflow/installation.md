@@ -6,6 +6,8 @@ In case your installation is successful, you'll see a screen similar to this:
 
 <img src="https://logus2k.com/docbro/categories/airflow/images/homepage.png" width=600/>
 
+> The official reference page for the installation can be found at: [Running Airflow in Docker](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html)
+
 ## 1. Project Initialization
 Create the project root directory and set up a local Python virtual environment for development.
 
@@ -196,3 +198,11 @@ Open your browser and navigate to: **http://localhost:8080**
 
 * **Username:** `airflow`
 * **Password:** `airflow`
+
+### Common Troubleshooting
+
+| Issue | Solution |
+| --- | --- |
+| **Containers keep restarting** | Check your Docker RAM. Increase it to at least 4 GB in Docker Settings > Resources. |
+| **Permission denied (Linux)** | Ensure you set the `AIRFLOW_UID` in the `.env` file as shown in Step 3. |
+| **Port 8080 already in use** | Open `docker-compose.yaml` and change the mapping for `airflow-webserver` from `8080:8080` to `8081:8080`. |
