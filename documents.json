@@ -1,6 +1,11 @@
 {
 	"documents": [
 		{
+			"name": "Installation",
+			"category": "Apache Airflow",
+			"location": "categories/airflow/installation.md"
+		},	
+		{
 			"name": "Overview",
 			"category": "CUDA",
 			"location": "categories/cuda/overview.md"
