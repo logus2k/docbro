@@ -232,7 +232,11 @@ class DocumentBrowser {
 
         try {
             if (this.isPdf(doc)) {
-                const pdfDoc = await getDocument({ url: doc.location }).promise;
+                const pdfDoc = await getDocument({
+                    url: doc.location,
+                    disableRange: true,
+                    disableStream: true,
+                }).promise;
                 doc.pdfDoc = pdfDoc;
                 doc.error = false;
                 doc.loaded = true;
