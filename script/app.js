@@ -606,7 +606,7 @@ class DocumentBrowser {
     async renderPdfPages(pdfDoc, container) {
         const numPages = pdfDoc.numPages;
         const pageDivs = [];
-        const annotationEntries = [];
+        const overlayEntries = []; // text layers + annotation layers that need scaling
 
         for (let i = 1; i <= numPages; i++) {
             const page = await pdfDoc.getPage(i);
@@ -636,18 +636,37 @@ class DocumentBrowser {
             };
             await page.render(renderContext).promise;
 
-            // Text layer
+            // Text layer — use a viewport matching the displayed size for accurate selection
             const textContent = await page.getTextContent();
+            const displayedWidth = canvas.getBoundingClientRect().width;
+            const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
+            const textViewport = page.getViewport({ scale: textScale });
+
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'textLayer';
+            textLayerDiv.style.setProperty('--scale-factor', textScale);
             pageDiv.appendChild(textLayerDiv);
 
             const textLayer = new TextLayer({
                 textContentSource: textContent,
                 container: textLayerDiv,
-                viewport
+                viewport: textViewport
             });
             await textLayer.render();
+
+            // DEBUG: log scale-factor and double-click info
+            const sf = textLayerDiv.style.getPropertyValue('--scale-factor');
+            console.log(`Page ${i}: --scale-factor=${sf}, textScale=${textScale}, viewport.scale=${textViewport.scale}`);
+            textLayerDiv.addEventListener('dblclick', (e) => {
+                const sel = window.getSelection();
+                const span = e.target.closest('span');
+                console.log('--- dblclick debug ---');
+                console.log('selected text:', sel.toString());
+                console.log('span text:', span?.textContent);
+                console.log('span style:', span?.style.cssText);
+                console.log('--scale-factor on container:', textLayerDiv.style.getPropertyValue('--scale-factor'));
+                console.log('computed font-size:', span ? getComputedStyle(span).fontSize : 'n/a');
+            });
 
             // Link overlay (manual annotation handling)
             const annotations = await page.getAnnotations();
@@ -705,13 +724,13 @@ class DocumentBrowser {
                     annotationDiv.appendChild(link);
                 }
 
-                annotationEntries.push({ div: annotationDiv, viewport });
+                overlayEntries.push({ div: annotationDiv, viewport });
             }
         }
 
-        // Scale annotation layers to match CSS-scaled canvas size
-        const updateAnnotationScales = () => {
-            for (const entry of annotationEntries) {
+        // Scale text + annotation layers to match CSS-scaled canvas size
+        const updateOverlayScales = () => {
+            for (const entry of overlayEntries) {
                 const pageDiv = entry.div.parentElement;
                 if (pageDiv) {
                     const displayedWidth = pageDiv.clientWidth;
@@ -723,10 +742,10 @@ class DocumentBrowser {
             }
         };
 
-        requestAnimationFrame(updateAnnotationScales);
+        requestAnimationFrame(updateOverlayScales);
 
         // Update annotation scales when container resizes (e.g. window resize, split drag)
-        const resizeObserver = new ResizeObserver(updateAnnotationScales);
+        const resizeObserver = new ResizeObserver(updateOverlayScales);
         resizeObserver.observe(container);
     }
 
