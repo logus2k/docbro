@@ -124,7 +124,16 @@ body {
     background-color: #f5f5f5;
 }
 
-.settings-item input[type="checkbox"] {
+.settings-group-label {
+    padding: 4px 14px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.settings-item input[type="radio"] {
     accent-color: #d4a944;
     cursor: pointer;
 }

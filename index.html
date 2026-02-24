@@ -19,9 +19,18 @@
         <img src="icons/settings-gear.svg" alt="Settings">
     </div>
     <div class="settings-menu" id="settingsMenu">
+        <div class="settings-group-label">Page layout</div>
         <label class="settings-item">
-            <input type="checkbox" id="dualPageToggle" checked>
-            <span>Dual-page layout</span>
+            <input type="radio" name="pageLayout" value="auto" checked>
+            <span>Auto</span>
+        </label>
+        <label class="settings-item">
+            <input type="radio" name="pageLayout" value="single">
+            <span>One page</span>
+        </label>
+        <label class="settings-item">
+            <input type="radio" name="pageLayout" value="dual">
+            <span>Two pages</span>
         </label>
     </div>
     <div class="container">

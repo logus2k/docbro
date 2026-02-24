@@ -17,7 +17,7 @@ class DocumentBrowser {
         this.contentContainer = document.getElementById('contentContainer');
         this.scrollSyncEnabled = true;
         this.closedTabs = new Set();
-        this.dualPageMode = true;
+        this.pageLayoutMode = 'auto';
 
         this.init();
     }
@@ -78,7 +78,7 @@ class DocumentBrowser {
     setupSettings() {
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsMenu = document.getElementById('settingsMenu');
-        const dualPageToggle = document.getElementById('dualPageToggle');
+        const layoutRadios = settingsMenu.querySelectorAll('input[name="pageLayout"]');
 
         settingsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -91,13 +91,34 @@ class DocumentBrowser {
             }
         });
 
-        dualPageToggle.addEventListener('change', (e) => {
-            this.dualPageMode = e.target.checked;
-            const pdfContent = this.contentContainer.querySelector('.pdf-content');
-            if (pdfContent) {
-                pdfContent.classList.toggle('dual-page', this.dualPageMode);
-            }
+        layoutRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.pageLayoutMode = e.target.value;
+                this.applyPageLayout();
+            });
         });
+
+        new ResizeObserver(() => {
+            if (this.pageLayoutMode === 'auto') {
+                this.applyPageLayout();
+            }
+        }).observe(this.contentPane);
+    }
+
+    applyPageLayout() {
+        const pdfContent = this.contentContainer.querySelector('.pdf-content');
+        if (!pdfContent) return;
+
+        let shouldBeDual;
+        if (this.pageLayoutMode === 'dual') {
+            shouldBeDual = true;
+        } else if (this.pageLayoutMode === 'single') {
+            shouldBeDual = false;
+        } else {
+            shouldBeDual = pdfContent.clientWidth >= 900;
+        }
+
+        pdfContent.classList.toggle('dual-page', shouldBeDual);
     }
 
     parseHash() {
@@ -561,9 +582,6 @@ class DocumentBrowser {
 
         if (this.isPdf(doc)) {
             innerDiv.classList.add('pdf-content');
-            if (this.dualPageMode) {
-                innerDiv.classList.add('dual-page');
-            }
         }
 
         if (doc.error) {
@@ -575,6 +593,7 @@ class DocumentBrowser {
             contentDiv.appendChild(innerDiv);
             this.contentContainer.appendChild(contentDiv);
             this.renderPdfPages(doc.pdfDoc, innerDiv);
+            this.applyPageLayout();
             return;
         } else {
             innerDiv.innerHTML = doc.content;
