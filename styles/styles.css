@@ -67,7 +67,7 @@ body {
 .settings-btn {
     position: fixed;
     bottom: 20px;
-    left: 8px;
+    left: 13px;
     width: 24px;
     height: 24px;
     display: flex;
@@ -159,7 +159,7 @@ body {
 .main-split-container {
     flex: 1;
     display: flex;
-    margin: 0px 10px 10px 41px;
+    margin: 0px 10px 10px 49px;
     border-radius: 8px;
     overflow: hidden;
     background-color: #fffaeefe;

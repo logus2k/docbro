@@ -1,11 +1,11 @@
 /* Mode toggle buttons (above settings gear, bottom-left) */
 .mode-toggle-container {
     position: fixed;
-    top: 40px;
-    left: 9px;
+    top: 50px;
+    left: 12px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
     z-index: 100;
 }
 
