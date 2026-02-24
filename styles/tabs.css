@@ -39,10 +39,10 @@
 /* Close button */
 .tab-close-btn {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 15px;
-    height: 15px;
+    top: 3px;
+    right: 3px;
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     background-color: #fff5e6;
     color: #333333;
