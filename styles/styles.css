@@ -20,7 +20,7 @@ body {
     font-weight: 600;
     position: absolute;
     top: 0px;
-    left: 50px;
+    left: 42px;
     border-color: #fffffeef;
     border-width: 0px 1.5px 1.5px 1.5px;
     border-radius: 0px 0px 6px 6px;
@@ -32,9 +32,9 @@ body {
 .settings-btn {
     position: fixed;
     bottom: 20px;
-    left: 13px;
-    width: 26px;
-    height: 26px;
+    left: 11px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -51,8 +51,8 @@ body {
 }
 
 .settings-btn img {
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
 }
 
 .settings-menu {
@@ -115,7 +115,7 @@ body {
 .main-split-container {
     flex: 1;
     display: flex;
-    margin: 0px 10px 10px 50px;
+    margin: 0px 10px 10px 41px;
     border-radius: 8px;
     overflow: hidden;
     background-color: #fffaeefe;
@@ -211,11 +211,19 @@ body {
 
 /* Markdown document styling */
 .document-content.active.md-doc {
+    overflow-y: auto;
+}
+
+.md-doc .document-content-inner {
     background-color: #ffffff;
     border: 0.5px solid #999999;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-radius: 3px;
+    margin-right: 5px;
+    overflow-y: visible;
+    flex: none;
+    min-height: 100%;
 }
-
 
 .document-content-inner {
     padding: 20px 40px 15px 65px;
@@ -224,28 +232,46 @@ body {
     overflow-y: auto;
 }
 
-/* Scrollbar width */
-.document-content-inner::-webkit-scrollbar {
+/* Scrollbar styling for Markdown (on .document-content.md-doc) */
+.document-content.md-doc::-webkit-scrollbar {
     width: 8px;
     height: 8px;
-    margin-top: 10px;
 }
 
-/* Scrollbar track */
-.document-content-inner::-webkit-scrollbar-track {
+.document-content.md-doc::-webkit-scrollbar-track {
     box-shadow: inset 0 0 5px #dedede;
     border-radius: 8px;
     margin-block: 4px;
 }
 
-/* Scrollbar thumb */
-.document-content-inner::-webkit-scrollbar-thumb {
+.document-content.md-doc::-webkit-scrollbar-thumb {
     background-color: #cecece;
     border-radius: 10px;
 }
 
-/* Scrollbar thumb hover */
-.document-content-inner::-webkit-scrollbar-thumb:hover {
+.document-content.md-doc::-webkit-scrollbar-thumb:hover {
+    background-color: #cecece;
+    cursor: pointer;
+}
+
+/* Scrollbar styling for PDF (on .document-content-inner) */
+.document-content-inner.pdf-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.document-content-inner.pdf-content::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px #dedede;
+    border-radius: 8px;
+    margin-block: 4px;
+}
+
+.document-content-inner.pdf-content::-webkit-scrollbar-thumb {
+    background-color: #cecece;
+    border-radius: 10px;
+}
+
+.document-content-inner.pdf-content::-webkit-scrollbar-thumb:hover {
     background-color: #cecece;
     cursor: pointer;
 }
@@ -354,7 +380,7 @@ body {
 
 /* PDF rendering */
 .document-content-inner.pdf-content {
-    padding: 0px;
+    padding: 0px 5px 0px 0px;
     align-items: center;
 }
 
