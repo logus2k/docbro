@@ -1,0 +1,130 @@
+/* jsPanel title bar overrides */
+#contentEditorPanel .jsPanel-title {
+    font-size: 11px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold !important;
+    letter-spacing: 1.5px;
+    padding: 4px;
+    margin: 0px;
+    border-radius: 8px 8px 0px 0px;
+}
+
+#contentEditorPanel .jsPanel-titlebar .jsPanel-title {
+    margin: 4px 5px 0px 8px;
+}
+
+#contentEditorPanel .jsPanel-controlbar {
+    margin: 0px;
+}
+
+/* Custom close icon */
+.custom-control-icon.custom-smallify::before { content: ""; }
+.custom-control-icon.custom-minimize::before { content: ""; }
+.custom-control-icon.custom-normalize::before { content: ""; }
+.custom-control-icon.custom-maximize::before { content: ""; }
+.custom-control-icon.custom-close::before {
+    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px' fill='%23333333'%3E%3Cpath d='m336-308.46 144-144 144 144L651.54-336l-144-144 144-144L624-651.54l-144 144-144-144L308.46-624l144 144-144 144L336-308.46ZM224.62-160q-27.62 0-46.12-18.5Q160-197 160-224.62v-510.76q0-27.62 18.5-46.12Q197-800 224.62-800h510.76q27.62 0 46.12 18.5Q800-763 800-735.38v510.76q0 27.62-18.5 46.12Q763-160 735.38-160H224.62Zm0-40h510.76q9.24 0 16.93-7.69 7.69-7.69 7.69-16.93v-510.76q0-9.24-7.69-16.93-7.69-7.69-16.93-7.69H224.62q-9.24 0-16.93 7.69-7.69 7.69-7.69 16.93v510.76q0 9.24 7.69 16.93 7.69 7.69 16.93 7.69ZM200-760v560-560Z'/%3E%3C/svg%3E");
+}
+
+/* Panel content area */
+#contentEditorPanel .jsPanel-content {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Editor wrapper */
+.content-editor-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Roboto', sans-serif;
+}
+
+.content-editor-body {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* EasyMDE overrides */
+.content-editor-body .EasyMDEContainer {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-editor-body .EasyMDEContainer .CodeMirror {
+    flex: 1;
+    min-height: 0;
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    font-family: 'Roboto', monospace;
+    font-size: 13px;
+}
+
+.content-editor-body .EasyMDEContainer .CodeMirror-scroll {
+    min-height: 0;
+}
+
+/* Bottom toolbar */
+.content-editor-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid #e0e0e0;
+    background: #fafafa;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.content-editor-btn {
+    padding: 5px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.content-editor-btn:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
+}
+
+.content-editor-btn.save-btn {
+    background: #ffb44f;
+    border-color: #e6a040;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.content-editor-btn.save-btn:hover {
+    background: #ffc670;
+}
+
+.content-editor-btn.save-btn.saved {
+    background: #4caf50;
+    border-color: #388e3c;
+    color: #fff;
+}
+
+.content-editor-btn.save-btn.error {
+    background: #f44336;
+    border-color: #d32f2f;
+    color: #fff;
+}
+
+.content-editor-btn.clear-btn {
+    color: #666;
+}
+
+.content-editor-btn.clear-btn:hover {
+    color: #333;
+}

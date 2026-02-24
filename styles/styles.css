@@ -67,32 +67,32 @@ body {
 .settings-btn {
     position: fixed;
     bottom: 20px;
-    left: 11px;
-    width: 20px;
-    height: 20px;
+    left: 8px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #888;
+    color: #a8a8a8;
     border-radius: 50%;
     transition: color 0.2s, background-color 0.2s;
     z-index: 100;
 }
 
 .settings-btn:hover {
-    color: #555;
+    color: #fff;
     background-color: rgba(0, 0, 0, 0.08);
 }
 
-.settings-btn img {
-    width: 20px;
-    height: 20px;
+.settings-btn svg {
+    width: 24px;
+    height: 24px;
 }
 
 .settings-menu {
     position: fixed;
-    bottom: 56px;
+    bottom: 110px;
     left: 12px;
     background: #fff;
     border: 1px solid #ddd;
@@ -242,7 +242,6 @@ body {
     display: none;
     width: 100%;
     margin: 0px;
-    border-radius: 3px;
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -432,9 +431,8 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
-    border: 0.5px solid #9f9f9f;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-    margin-bottom: 5px;
+    border: 0.5px solid #99999999;
+    box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
     max-width: 900px;
     width: 100%;
 }
@@ -600,7 +598,6 @@ body {
 #tocTree .fa-folder,
 #tocTree .fa-folder-open {
     color: #d4a944 !important;
-    vertical-align: middle;
 }
 
 #tocTree .wunderbaum span.wb-node {

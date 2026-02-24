@@ -1,0 +1,104 @@
+/* Mode toggle buttons (above settings gear, bottom-left) */
+.mode-toggle-container {
+    position: fixed;
+    top: 40px;
+    left: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 100;
+}
+
+.mode-toggle-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    border: none;
+    background: none;
+    padding: 0;
+    color: #a8a8a8;
+}
+
+.mode-toggle-btn:hover {
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.mode-toggle-btn.active {
+    color: #fff;
+}
+
+
+.mode-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Paragraph overlay - base */
+.pdf-paragraph-overlay {
+    position: absolute;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.15s ease;
+    z-index: 3;
+}
+
+/* Hover highlight */
+.pdf-paragraph-overlay.hovered {
+    background-color: rgba(255, 180, 79, 0.15);
+}
+
+/* Selected highlight */
+.pdf-paragraph-overlay.selected {
+    background-color: rgba(255, 180, 79, 0.35);
+    border: 1px solid rgba(255, 180, 79, 0.6);
+}
+
+/* Selected + hovered */
+.pdf-paragraph-overlay.selected.hovered {
+    background-color: rgba(255, 180, 79, 0.45);
+}
+
+/* Copy-to-editor button */
+.para-copy-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    color: #333;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 4;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-paragraph-overlay.selected.hovered .para-copy-btn {
+    opacity: 1;
+}
+
+.para-copy-btn:hover {
+    background: #ffb44f;
+    color: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Suppress text selection in selection mode */
+body.selection-mode-active .pdf-page .textLayer {
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
