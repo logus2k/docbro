@@ -1,4 +1,4 @@
-# Airflow Installation Guide
+# Apache Airflow Installation Guide
 
 This guide provides a step-by-step walkthrough for setting up Apache Airflow 3.1.7 using Docker. It covers the specific requirements for both Windows (Docker Desktop) and Linux (including WSL2).
 
