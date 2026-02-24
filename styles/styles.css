@@ -20,12 +20,78 @@ body {
     font-weight: 600;
     position: absolute;
     top: 0px;
-    left: 12px;
+    left: 50px;
     border-color: #fffffeef;
     border-width: 0px 1.5px 1.5px 1.5px;
     border-radius: 0px 0px 6px 6px;
     padding: 2px 6px 3px 6px;
     background-color: #ffc630;
+}
+
+/* Settings button and menu */
+.settings-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 13px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #888;
+    border-radius: 50%;
+    transition: color 0.2s, background-color 0.2s;
+    z-index: 100;
+}
+
+.settings-btn:hover {
+    color: #555;
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.settings-btn img {
+    width: 26px;
+    height: 26px;
+}
+
+.settings-menu {
+    position: fixed;
+    bottom: 56px;
+    left: 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    display: none;
+    z-index: 101;
+    min-width: 170px;
+}
+
+.settings-menu.active {
+    display: block;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #333;
+    white-space: nowrap;
+}
+
+.settings-item:hover {
+    background-color: #f5f5f5;
+}
+
+.settings-item input[type="checkbox"] {
+    accent-color: #d4a944;
+    cursor: pointer;
 }
 
 .embedded-video {
@@ -49,7 +115,7 @@ body {
 .main-split-container {
     flex: 1;
     display: flex;
-    margin: 0px 10px 10px 10px;
+    margin: 0px 10px 10px 50px;
     border-radius: 8px;
     overflow: hidden;
     background-color: #fffaeefe;
@@ -124,7 +190,6 @@ body {
     min-height: 0;
     height: 100%;
     width: 100%;
-    border-radius: 0 10px 10px 0;
     display: flex;
     flex-direction: column;
 }
@@ -133,11 +198,7 @@ body {
     display: none;
     width: 100%;
     margin: 0px;
-    border: 0.5px solid #999999;
-    background-color: #ffffff;
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     border-radius: 3px;
-    padding: 10px;
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -147,6 +208,14 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* Markdown document styling */
+.document-content.active.md-doc {
+    background-color: #ffffff;
+    border: 0.5px solid #999999;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
 
 .document-content-inner {
     padding: 20px 40px 15px 65px;
@@ -281,6 +350,74 @@ body {
 .document-content img {
     max-width: 100%;
     height: auto;
+}
+
+/* PDF rendering */
+.document-content-inner.pdf-content {
+    padding: 0px;
+    align-items: center;
+}
+
+.pdf-page {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    border: 0.5px solid #9f9f9f;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    margin-bottom: 5px;
+    max-width: 900px;
+    width: 100%;
+}
+
+.document-content-inner.pdf-content.dual-page .pdf-page {
+    margin-bottom: 0;
+}
+
+.pdf-page canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+}
+
+.pdf-page .textLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    opacity: 0.25;
+    line-height: 1.0;
+}
+
+.pdf-page .textLayer span {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    transform-origin: 0% 0%;
+}
+
+.pdf-page .textLayer ::selection {
+    background: rgba(0, 0, 255, 0.3);
+}
+
+/* Dual-page PDF layout */
+.document-content-inner.pdf-content.dual-page {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+    gap: 6px;
+}
+
+.document-content-inner.pdf-content.dual-page .pdf-page {
+    max-width: calc(50% - 3px);
+    flex: 0 1 calc(50% - 3px);
+}
+
+.document-content-inner.pdf-content.dual-page .pdf-page canvas {
+    width: 100% !important;
+    height: auto !important;
 }
 
 .code-block-wrapper {

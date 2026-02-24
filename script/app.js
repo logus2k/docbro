@@ -1,4 +1,6 @@
 // app.js
+import { getDocument, GlobalWorkerOptions, TextLayer, OutputScale } from '../libraries/pdf.js/pdf.min.mjs';
+GlobalWorkerOptions.workerSrc = './libraries/pdf.js/pdf.worker.min.mjs';
 
 class DocumentBrowser {
 
@@ -15,13 +17,19 @@ class DocumentBrowser {
         this.contentContainer = document.getElementById('contentContainer');
         this.scrollSyncEnabled = true;
         this.closedTabs = new Set();
+        this.dualPageMode = true;
 
         this.init();
+    }
+
+    isPdf(doc) {
+        return doc.location.toLowerCase().endsWith('.pdf');
     }
 
     async init() {
         try {
             this.createLightbox();
+            this.setupSettings();
             await this.loadConfiguration();
             this.extractCategories();
             this.initSplitPane();
@@ -64,6 +72,31 @@ class DocumentBrowser {
             minSize: [5, 400],
             gutterSize: 6,
             cursor: 'col-resize'
+        });
+    }
+
+    setupSettings() {
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const dualPageToggle = document.getElementById('dualPageToggle');
+
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
+                settingsMenu.classList.remove('active');
+            }
+        });
+
+        dualPageToggle.addEventListener('change', (e) => {
+            this.dualPageMode = e.target.checked;
+            const pdfContent = this.contentContainer.querySelector('.pdf-content');
+            if (pdfContent) {
+                pdfContent.classList.toggle('dual-page', this.dualPageMode);
+            }
         });
     }
 
@@ -183,7 +216,9 @@ class DocumentBrowser {
                 loaded: false,
                 content: '',
                 error: false,
-                headers: []
+                headers: [],
+                configHeaders: doc.headers || null,
+                pdfDoc: null
             }));
         } catch (error) {
             console.error('Configuration loading error:', error);
@@ -194,8 +229,16 @@ class DocumentBrowser {
     async loadDocument(globalIndex) {
         const doc = this.documents[globalIndex];
         if (doc.loaded) return true;
-        
+
         try {
+            if (this.isPdf(doc)) {
+                const pdfDoc = await getDocument(doc.location).promise;
+                doc.pdfDoc = pdfDoc;
+                doc.error = false;
+                doc.loaded = true;
+                return true;
+            }
+
             const response = await fetch(doc.location);
             if (!response.ok) {
                 throw new Error(`HTTP error ${response.status}`);
@@ -499,29 +542,43 @@ class DocumentBrowser {
 
     renderDocument(globalIndex) {
         const doc = this.documents[globalIndex];
-        
+
         // Clear content container
         this.contentContainer.innerHTML = '';
-        
+
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'document-content active';
+        contentDiv.className = this.isPdf(doc)
+            ? 'document-content active pdf-doc'
+            : 'document-content active md-doc';
         contentDiv.setAttribute('data-doc-index', globalIndex);
-        
+
         const innerDiv = document.createElement('div');
         innerDiv.className = 'document-content-inner';
-        
+
+        if (this.isPdf(doc)) {
+            innerDiv.classList.add('pdf-content');
+            if (this.dualPageMode) {
+                innerDiv.classList.add('dual-page');
+            }
+        }
+
         if (doc.error) {
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.textContent = 'Loading error';
             innerDiv.appendChild(errorDiv);
+        } else if (this.isPdf(doc) && doc.pdfDoc) {
+            contentDiv.appendChild(innerDiv);
+            this.contentContainer.appendChild(contentDiv);
+            this.renderPdfPages(doc.pdfDoc, innerDiv);
+            return;
         } else {
             innerDiv.innerHTML = doc.content;
         }
-        
+
         contentDiv.appendChild(innerDiv);
         this.contentContainer.appendChild(contentDiv);
-        
+
         // Re-apply header IDs if already extracted
         if (doc.headers && doc.headers.length > 0) {
             const headers = Array.from(innerDiv.querySelectorAll('h1, h2, h3, h4, h5, h6'));
@@ -531,19 +588,63 @@ class DocumentBrowser {
                 }
             });
         }
-        
+
         // Apply syntax highlighting (skip mermaid blocks)
         this.contentContainer.querySelectorAll('pre code').forEach((block) => {
             if (!block.classList.contains('language-mermaid')) {
                 hljs.highlightElement(block);
             }
         });
-        
+
         // Render mermaid diagrams
         this.renderMermaidBlocks(innerDiv);
-        
+
         // Add copy buttons
         this.setupCodeCopyButtons();
+    }
+
+    async renderPdfPages(pdfDoc, container) {
+        const numPages = pdfDoc.numPages;
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const scale = 1.5;
+            const viewport = page.getViewport({ scale });
+            const outputScale = new OutputScale();
+
+            // Page wrapper
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            container.appendChild(pageDiv);
+
+            // Canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.floor(viewport.width * outputScale.sx);
+            canvas.height = Math.floor(viewport.height * outputScale.sy);
+            canvas.style.width = Math.floor(viewport.width) + 'px';
+            canvas.style.height = Math.floor(viewport.height) + 'px';
+            pageDiv.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const renderContext = {
+                canvasContext: ctx,
+                viewport,
+                transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
+            };
+            await page.render(renderContext).promise;
+
+            // Text layer
+            const textContent = await page.getTextContent();
+            const textLayerDiv = document.createElement('div');
+            textLayerDiv.className = 'textLayer';
+            pageDiv.appendChild(textLayerDiv);
+
+            const textLayer = new TextLayer({
+                textContentSource: textContent,
+                container: textLayerDiv,
+                viewport
+            });
+            await textLayer.render();
+        }
     }
 
     renderMermaidBlocks(container) {
@@ -563,12 +664,32 @@ class DocumentBrowser {
 
     extractAndUpdateHeaders(globalIndex) {
         const doc = this.documents[globalIndex];
-        
+
         // Skip if headers already extracted
         if (doc.headers && doc.headers.length > 0) {
             return;
         }
-        
+
+        if (this.isPdf(doc)) {
+            // Use manually defined headers from documents.json
+            if (doc.configHeaders && doc.configHeaders.length > 0) {
+                doc.headers = doc.configHeaders.map((h, i) => ({
+                    id: `doc-${globalIndex}-header-${i}`,
+                    level: h.level,
+                    text: h.text
+                }));
+                const headerTree = this.buildHeaderTree(doc.headers, globalIndex);
+                const docNode = this.treeInstance.findKey(`doc-${globalIndex}`);
+                if (docNode) {
+                    docNode.removeChildren();
+                    if (headerTree.length > 0) {
+                        docNode.addChildren(headerTree);
+                    }
+                }
+            }
+            return;
+        }
+
         const contentInner = this.contentContainer.querySelector('.document-content-inner');
         if (!contentInner) return;
 
@@ -641,9 +762,13 @@ class DocumentBrowser {
             contentInner.removeEventListener('scroll', this._scrollHandler);
         }
 
+        // Skip scroll sync for PDF documents (no DOM header elements to track)
+        const doc = this.documents[this.activeDocumentIndex];
+        if (doc && this.isPdf(doc)) return;
+
         this._scrollHandler = () => {
             if (!this.scrollSyncEnabled) return;
-            
+
             const doc = this.documents[this.activeDocumentIndex];
             if (!doc || !doc.headers || !doc.headers.length) return;
 

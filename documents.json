@@ -279,6 +279,11 @@
 			"name": "Physics Guide",
 			"category": "Webots",
 			"location": "categories/webots/physics.guide.md"
-		}
+		},
+		{
+			"name": "Implementing a cGAN",
+			"category": "Reports",
+			"location": "categories/reports/taap/pdf/taap_mp1_group1_report.pdf"
+		}		
 	]
 }
