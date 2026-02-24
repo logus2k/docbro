@@ -427,6 +427,22 @@ body {
     background: rgba(0, 0, 255, 0.3);
 }
 
+/* Annotation layer (PDF links) */
+.pdf-page .annotationLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.pdf-page .annotationLayer section,
+.pdf-page .annotationLayer a {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
 /* Dual-page PDF layout */
 .document-content-inner.pdf-content.dual-page {
     display: flex;

@@ -232,7 +232,7 @@ class DocumentBrowser {
 
         try {
             if (this.isPdf(doc)) {
-                const pdfDoc = await getDocument(doc.location).promise;
+                const pdfDoc = await getDocument({ url: doc.location, disableRange: true, disableStream: true }).promise;
                 doc.pdfDoc = pdfDoc;
                 doc.error = false;
                 doc.loaded = true;
@@ -605,6 +605,9 @@ class DocumentBrowser {
 
     async renderPdfPages(pdfDoc, container) {
         const numPages = pdfDoc.numPages;
+        const pageDivs = [];
+        const annotationEntries = [];
+
         for (let i = 1; i <= numPages; i++) {
             const page = await pdfDoc.getPage(i);
             const scale = 1.5;
@@ -615,6 +618,7 @@ class DocumentBrowser {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page';
             container.appendChild(pageDiv);
+            pageDivs.push(pageDiv);
 
             // Canvas
             const canvas = document.createElement('canvas');
@@ -644,7 +648,86 @@ class DocumentBrowser {
                 viewport
             });
             await textLayer.render();
+
+            // Link overlay (manual annotation handling)
+            const annotations = await page.getAnnotations();
+            const linkAnnotations = annotations.filter(a => a.subtype === 'Link' && (a.dest || a.url));
+            if (linkAnnotations.length > 0) {
+                const annotationDiv = document.createElement('div');
+                annotationDiv.className = 'annotationLayer';
+                annotationDiv.style.width = viewport.width + 'px';
+                annotationDiv.style.height = viewport.height + 'px';
+                pageDiv.appendChild(annotationDiv);
+
+                for (const annot of linkAnnotations) {
+                    const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(annot.rect);
+                    const left = Math.min(x1, x2);
+                    const top = Math.min(y1, y2);
+                    const width = Math.abs(x2 - x1);
+                    const height = Math.abs(y2 - y1);
+
+                    const link = document.createElement('a');
+                    link.style.position = 'absolute';
+                    link.style.left = left + 'px';
+                    link.style.top = top + 'px';
+                    link.style.width = width + 'px';
+                    link.style.height = height + 'px';
+
+                    if (annot.url) {
+                        link.href = annot.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                    } else if (annot.dest) {
+                        link.href = '#';
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            try {
+                                let dest = annot.dest;
+                                if (typeof dest === 'string') {
+                                    dest = await pdfDoc.getDestination(dest);
+                                }
+                                if (!Array.isArray(dest)) return;
+                                const ref = dest[0];
+                                const pageIndex = typeof ref === 'number' ? ref : await pdfDoc.getPageIndex(ref);
+                                const targetDiv = pageDivs[pageIndex];
+                                if (targetDiv) {
+                                    const containerRect = container.getBoundingClientRect();
+                                    const targetRect = targetDiv.getBoundingClientRect();
+                                    const offset = targetRect.top - containerRect.top + container.scrollTop;
+                                    container.scrollTo({ top: offset, behavior: 'smooth' });
+                                }
+                            } catch (err) {
+                                console.error('PDF link navigation error:', err);
+                            }
+                        });
+                    }
+
+                    annotationDiv.appendChild(link);
+                }
+
+                annotationEntries.push({ div: annotationDiv, viewport });
+            }
         }
+
+        // Scale annotation layers to match CSS-scaled canvas size
+        const updateAnnotationScales = () => {
+            for (const entry of annotationEntries) {
+                const pageDiv = entry.div.parentElement;
+                if (pageDiv) {
+                    const displayedWidth = pageDiv.clientWidth;
+                    if (displayedWidth > 0) {
+                        const scaleFactor = displayedWidth / entry.viewport.width;
+                        entry.div.style.transform = `scale(${scaleFactor})`;
+                    }
+                }
+            }
+        };
+
+        requestAnimationFrame(updateAnnotationScales);
+
+        // Update annotation scales when container resizes (e.g. window resize, split drag)
+        const resizeObserver = new ResizeObserver(updateAnnotationScales);
+        resizeObserver.observe(container);
     }
 
     renderMermaidBlocks(container) {
