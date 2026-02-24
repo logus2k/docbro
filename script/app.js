@@ -97,28 +97,18 @@ class DocumentBrowser {
                 this.applyPageLayout();
             });
         });
-
-        new ResizeObserver(() => {
-            if (this.pageLayoutMode === 'auto') {
-                this.applyPageLayout();
-            }
-        }).observe(this.contentPane);
     }
 
     applyPageLayout() {
         const pdfContent = this.contentContainer.querySelector('.pdf-content');
         if (!pdfContent) return;
 
-        let shouldBeDual;
-        if (this.pageLayoutMode === 'dual') {
-            shouldBeDual = true;
-        } else if (this.pageLayoutMode === 'single') {
-            shouldBeDual = false;
-        } else {
-            shouldBeDual = pdfContent.clientWidth >= 900;
+        pdfContent.classList.remove('auto-layout', 'dual-page');
+        if (this.pageLayoutMode === 'auto') {
+            pdfContent.classList.add('auto-layout');
+        } else if (this.pageLayoutMode === 'dual') {
+            pdfContent.classList.add('dual-page');
         }
-
-        pdfContent.classList.toggle('dual-page', shouldBeDual);
     }
 
     parseHash() {
