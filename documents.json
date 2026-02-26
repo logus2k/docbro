@@ -4,7 +4,17 @@
 			"name": "Installation",
 			"category": "Apache Airflow",
 			"location": "categories/airflow/installation.md"
-		},	
+		},
+		{
+			"name": "Overview",
+			"category": "CRISP-ML(Q)",
+			"location": "categories/crisp_mlq/overview.md"
+		},
+		{
+			"name": "Phases",
+			"category": "CRISP-ML(Q)",
+			"location": "categories/crisp_mlq/crisp_mlq_phases.md"
+		},			
 		{
 			"name": "Overview",
 			"category": "CUDA",
