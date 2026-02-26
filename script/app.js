@@ -686,13 +686,16 @@ class DocumentBrowser {
         } else if (this.isPdf(doc) && doc.pdfDoc) {
             contentDiv.appendChild(innerDiv);
             this.contentContainer.appendChild(contentDiv);
-            await this.renderPdfPages(doc.pdfDoc, innerDiv);
+            // Create placeholders immediately, then render pages progressively
+            await this.setupPdfPlaceholders(doc.pdfDoc, innerDiv);
             this.applyPageLayout();
             this.applyZoom();
             // Re-activate selection mode overlays if edit mode is on
             if (this.editMode && this.selectionMode) {
                 this.selectionMode.activate();
             }
+            // Render actual page content in the background (don't await)
+            this.renderPdfPagesProgressively(doc.pdfDoc, innerDiv);
             return;
         } else {
             innerDiv.innerHTML = doc.content;
@@ -725,37 +728,77 @@ class DocumentBrowser {
         this.setupCodeCopyButtons();
     }
 
-    async renderPdfPages(pdfDoc, container) {
+    async setupPdfPlaceholders(pdfDoc, container) {
         const numPages = pdfDoc.numPages;
-        const pageDivs = [];
-        const overlayEntries = [];
-        const renderVersion = this._renderVersion;
+        const scale = 1.5;
 
         // Clean up previous state
         this._cleanupPdf();
         this._pdfDoc = pdfDoc;
         this._pdfContainer = container;
 
-        for (let i = 1; i <= numPages; i++) {
-            if (this._renderVersion !== renderVersion) return;
+        // Batch-fetch all page metadata (lightweight, no GPU memory)
+        const pages = await Promise.all(
+            Array.from({ length: numPages }, (_, i) =>
+                pdfDoc.getPage(i + 1).catch(e => {
+                    console.warn(`Failed to get page ${i + 1}:`, e);
+                    return null;
+                })
+            )
+        );
 
-            let page;
-            try {
-                page = await pdfDoc.getPage(i);
-            } catch (e) {
-                console.warn(`Failed to get page ${i}:`, e);
-                continue;
-            }
-
-            const scale = 1.5;
-            const viewport = page.getViewport({ scale });
-            const outputScale = new OutputScale();
-
-            // Page wrapper
+        // Create placeholder divs with correct aspect ratios
+        const pageDivs = [];
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page';
+
+            if (page) {
+                const viewport = page.getViewport({ scale });
+                pageDiv.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+                pageDiv._pdfPage = page;
+                pageDiv._pdfViewport = viewport;
+                pageDiv._pdfOutputScale = new OutputScale();
+            } else {
+                pageDiv.style.aspectRatio = '8.5 / 11';
+            }
+
             container.appendChild(pageDiv);
             pageDivs.push(pageDiv);
+        }
+
+        this._pdfPageDivs = pageDivs;
+
+        // Set up overlay scaling for annotations
+        if (this._pdfResizeObserver) this._pdfResizeObserver.disconnect();
+        this._pdfResizeObserver = new ResizeObserver(() => {
+            for (const entry of this._pdfOverlayEntries) {
+                const pd = entry.div.parentElement;
+                if (pd) {
+                    const dw = pd.clientWidth;
+                    if (dw > 0) {
+                        entry.div.style.transform = `scale(${dw / entry.viewport.width})`;
+                    }
+                }
+            }
+        });
+        this._pdfResizeObserver.observe(container);
+    }
+
+    async renderPdfPagesProgressively(pdfDoc, container) {
+        const renderVersion = this._renderVersion;
+        const pageDivs = this._pdfPageDivs;
+
+        for (let i = 0; i < pageDivs.length; i++) {
+            if (this._renderVersion !== renderVersion) return;
+
+            const pageDiv = pageDivs[i];
+            const page = pageDiv._pdfPage;
+            if (!page) continue;
+
+            const viewport = pageDiv._pdfViewport;
+            const outputScale = pageDiv._pdfOutputScale;
 
             // Create a fresh canvas, render, convert to <img>, then destroy canvas
             const canvas = document.createElement('canvas');
@@ -770,7 +813,7 @@ class DocumentBrowser {
                     transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
                 }).promise;
             } catch (e) {
-                console.warn(`Failed to render page ${i}:`, e);
+                console.warn(`Failed to render page ${i + 1}:`, e);
             }
             if (this._renderVersion !== renderVersion) return;
 
@@ -780,27 +823,23 @@ class DocumentBrowser {
             img.style.height = Math.floor(viewport.height) + 'px';
             try {
                 const blob = await new Promise((resolve, reject) => {
-                    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+                    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.92);
                 });
                 img.src = URL.createObjectURL(blob);
             } catch (e) {
-                console.warn(`Failed to convert page ${i} to image:`, e);
+                console.warn(`Failed to convert page ${i + 1} to image:`, e);
             }
             // Free the canvas GPU buffer immediately
             canvas.width = 0;
             canvas.height = 0;
 
             pageDiv.appendChild(img);
-
-            // Store page ref for on-demand canvas re-render (context menu)
-            pageDiv._pdfPage = page;
-            pageDiv._pdfViewport = viewport;
-            pageDiv._pdfOutputScale = outputScale;
+            pageDiv.style.aspectRatio = ''; // let the img drive sizing now
 
             // Text layer
             try {
                 const textContent = await page.getTextContent();
-                const displayedWidth = img.getBoundingClientRect().width || pageDiv.clientWidth;
+                const displayedWidth = pageDiv.clientWidth || img.getBoundingClientRect().width;
                 const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
                 const textViewport = page.getViewport({ scale: textScale });
 
@@ -820,7 +859,7 @@ class DocumentBrowser {
                     this.selectionMode.registerPage(pageDiv, textContent, textScale, textViewport);
                 }
             } catch (e) {
-                console.warn(`Failed to render text layer for page ${i}:`, e);
+                console.warn(`Failed to render text layer for page ${i + 1}:`, e);
             }
 
             // Context menu — re-render to a temporary canvas on demand
@@ -886,35 +925,12 @@ class DocumentBrowser {
                         annotationDiv.appendChild(link);
                     }
 
-                    overlayEntries.push({ div: annotationDiv, viewport });
+                    this._pdfOverlayEntries.push({ div: annotationDiv, viewport });
                 }
             } catch (e) {
-                console.warn(`Failed to process annotations for page ${i}:`, e);
+                console.warn(`Failed to process annotations for page ${i + 1}:`, e);
             }
         }
-
-        this._pdfPageDivs = pageDivs;
-        this._pdfOverlayEntries = overlayEntries;
-
-        // Scale text + annotation layers to match CSS-scaled size
-        const updateOverlayScales = () => {
-            for (const entry of this._pdfOverlayEntries) {
-                const pageDiv = entry.div.parentElement;
-                if (pageDiv) {
-                    const displayedWidth = pageDiv.clientWidth;
-                    if (displayedWidth > 0) {
-                        const scaleFactor = displayedWidth / entry.viewport.width;
-                        entry.div.style.transform = `scale(${scaleFactor})`;
-                    }
-                }
-            }
-        };
-
-        requestAnimationFrame(updateOverlayScales);
-
-        if (this._pdfResizeObserver) this._pdfResizeObserver.disconnect();
-        this._pdfResizeObserver = new ResizeObserver(updateOverlayScales);
-        this._pdfResizeObserver.observe(container);
     }
 
     async _showPdfPageContextMenu(x, y, pageDiv) {

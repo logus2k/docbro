@@ -450,6 +450,10 @@ body {
     margin-bottom: 0;
 }
 
+.pdf-page:empty {
+    background-color: #f0f0f0;
+}
+
 .pdf-page canvas,
 .pdf-page img {
     display: block;
