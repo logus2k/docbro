@@ -20,8 +20,9 @@ class DocumentBrowser {
         this.contentContainer = document.getElementById('contentContainer');
         this.scrollSyncEnabled = true;
         this.closedTabs = new Set();
-        this.pageLayoutMode = 'auto';
+        this.pageLayoutMode = 'single';
         this.pdfZoom = 1;
+        this._layoutResizeObserver = null;
         this.selectionMode = null;
         this.contentPanel = null;
         this.pdfTocSync = new PdfTocSync();
@@ -119,13 +120,23 @@ class DocumentBrowser {
         layoutRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.pageLayoutMode = e.target.value;
-                this.applyPageLayout();
+                this.applyLayoutAndZoom();
             });
         });
 
         const zoomSlider = document.getElementById('pdfZoomSlider');
         const zoomValue = document.getElementById('pdfZoomValue');
         zoomSlider.addEventListener('input', (e) => {
+            // When user moves slider, switch to custom mode
+            if (this.pageLayoutMode !== 'custom') {
+                this.pageLayoutMode = 'custom';
+                const customRadio = settingsMenu.querySelector('input[name="pageLayout"][value="custom"]');
+                if (customRadio) customRadio.checked = true;
+                const sliderItem = zoomSlider.closest('.zoom-slider-item');
+                if (sliderItem) sliderItem.classList.remove('zoom-auto');
+                this.applyPageLayout();
+                this._setupLayoutResizeObserver(); // disconnects the observer
+            }
             this.pdfZoom = parseInt(e.target.value, 10) / 100;
             zoomValue.textContent = e.target.value + '%';
             this.applyZoom();
@@ -136,12 +147,77 @@ class DocumentBrowser {
         const pdfContent = this.contentContainer.querySelector('.pdf-content');
         if (!pdfContent) return;
 
-        pdfContent.classList.remove('auto-layout', 'dual-page');
-        if (this.pageLayoutMode === 'auto') {
-            pdfContent.classList.add('auto-layout');
+        pdfContent.classList.remove('custom-layout', 'dual-page');
+        if (this.pageLayoutMode === 'custom') {
+            pdfContent.classList.add('custom-layout');
         } else if (this.pageLayoutMode === 'dual') {
             pdfContent.classList.add('dual-page');
         }
+    }
+
+    computeFitZoom(mode) {
+        const pdfContent = this.contentContainer.querySelector('.pdf-content');
+        if (!pdfContent) return 1;
+        const availableWidth = pdfContent.clientWidth;
+        if (mode === 'single') {
+            return availableWidth / 900;
+        }
+        if (mode === 'dual') {
+            return (availableWidth - 6) / 900; // 2×450 = 900, minus 6px gap
+        }
+        return this.pdfZoom;
+    }
+
+    applyLayoutAndZoom() {
+        const zoomSlider = document.getElementById('pdfZoomSlider');
+        const zoomValue = document.getElementById('pdfZoomValue');
+        const sliderItem = zoomSlider?.closest('.zoom-slider-item');
+
+        if (this.pageLayoutMode === 'single' || this.pageLayoutMode === 'dual') {
+            this.pdfZoom = this.computeFitZoom(this.pageLayoutMode);
+            if (sliderItem) sliderItem.classList.add('zoom-auto');
+        } else {
+            if (sliderItem) sliderItem.classList.remove('zoom-auto');
+        }
+
+        // Update slider and label to reflect current zoom
+        if (zoomSlider) {
+            const pct = Math.round(this.pdfZoom * 100);
+            zoomSlider.value = pct;
+            if (zoomValue) zoomValue.textContent = pct + '%';
+        }
+
+        this.applyPageLayout();
+        this.applyZoom();
+        this._setupLayoutResizeObserver();
+    }
+
+    _setupLayoutResizeObserver() {
+        // Disconnect any existing observer
+        if (this._layoutResizeObserver) {
+            this._layoutResizeObserver.disconnect();
+            this._layoutResizeObserver = null;
+        }
+
+        if (this.pageLayoutMode !== 'single' && this.pageLayoutMode !== 'dual') return;
+
+        const pdfContent = this.contentContainer.querySelector('.pdf-content');
+        if (!pdfContent) return;
+
+        this._layoutResizeObserver = new ResizeObserver(() => {
+            if (this.pageLayoutMode !== 'single' && this.pageLayoutMode !== 'dual') return;
+            this.pdfZoom = this.computeFitZoom(this.pageLayoutMode);
+            this.applyZoom();
+
+            const zoomSlider = document.getElementById('pdfZoomSlider');
+            const zoomValue = document.getElementById('pdfZoomValue');
+            if (zoomSlider) {
+                const pct = Math.round(this.pdfZoom * 100);
+                zoomSlider.value = pct;
+                if (zoomValue) zoomValue.textContent = pct + '%';
+            }
+        });
+        this._layoutResizeObserver.observe(pdfContent);
     }
 
     applyZoom() {
@@ -688,8 +764,7 @@ class DocumentBrowser {
             this.contentContainer.appendChild(contentDiv);
             // Create placeholders immediately, then render pages progressively
             await this.setupPdfPlaceholders(doc.pdfDoc, innerDiv);
-            this.applyPageLayout();
-            this.applyZoom();
+            this.applyLayoutAndZoom();
             // Re-activate selection mode overlays if edit mode is on
             if (this.editMode && this.selectionMode) {
                 this.selectionMode.activate();
@@ -962,6 +1037,10 @@ class DocumentBrowser {
         if (this._pdfResizeObserver) {
             this._pdfResizeObserver.disconnect();
             this._pdfResizeObserver = null;
+        }
+        if (this._layoutResizeObserver) {
+            this._layoutResizeObserver.disconnect();
+            this._layoutResizeObserver = null;
         }
         // Revoke blob URLs to free memory
         for (const pageDiv of this._pdfPageDivs) {
