@@ -992,29 +992,37 @@ class DocumentBrowser {
         return root;
     }
 
+    getScrollContainer() {
+        const doc = this.documents[this.activeDocumentIndex];
+        if (doc && !this.isPdf(doc)) {
+            return this.contentContainer.querySelector('.document-content.md-doc');
+        }
+        return this.contentContainer.querySelector('.document-content-inner');
+    }
+
     jumpToHeader(headerId) {
         this.scrollSyncEnabled = false;
-        
+
         const header = document.getElementById(headerId);
         if (header) {
-            const contentInner = this.contentContainer.querySelector('.document-content-inner');
-            if (contentInner) {
-                const containerRect = contentInner.getBoundingClientRect();
+            const scrollContainer = this.getScrollContainer();
+            if (scrollContainer) {
+                const containerRect = scrollContainer.getBoundingClientRect();
                 const headerRect = header.getBoundingClientRect();
-                const offset = headerRect.top - containerRect.top + contentInner.scrollTop;
-                contentInner.scrollTo({ top: Math.max(0, offset - 15) });
+                const offset = headerRect.top - containerRect.top + scrollContainer.scrollTop;
+                scrollContainer.scrollTo({ top: Math.max(0, offset - 15) });
             }
         }
-        
+
         this.scrollSyncEnabled = true;
     }
 
     setupScrollSync() {
-        const contentInner = this.contentContainer.querySelector('.document-content-inner');
-        if (!contentInner) return;
+        const scrollContainer = this.getScrollContainer();
+        if (!scrollContainer) return;
 
         if (this._scrollHandler) {
-            contentInner.removeEventListener('scroll', this._scrollHandler);
+            scrollContainer.removeEventListener('scroll', this._scrollHandler);
         }
 
         // Skip scroll sync for PDF documents (no DOM header elements to track)
@@ -1027,8 +1035,8 @@ class DocumentBrowser {
             const doc = this.documents[this.activeDocumentIndex];
             if (!doc || !doc.headers || !doc.headers.length) return;
 
-            const scrollTop = contentInner.scrollTop;
-            const containerTop = contentInner.offsetTop;
+            const scrollTop = scrollContainer.scrollTop;
+            const containerTop = scrollContainer.offsetTop;
             
             let currentHeaderId = null;
             for (const h of doc.headers) {
@@ -1059,7 +1067,7 @@ class DocumentBrowser {
             }
         };
 
-        contentInner.addEventListener('scroll', this._scrollHandler);
+        scrollContainer.addEventListener('scroll', this._scrollHandler);
     }
 
     setupCodeCopyButtons() {
