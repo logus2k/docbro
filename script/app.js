@@ -19,7 +19,7 @@ class DocumentBrowser {
         this.contentContainer = document.getElementById('contentContainer');
         this.scrollSyncEnabled = true;
         this.closedTabs = new Set();
-        this.pageLayoutMode = 'single';
+        this.pageLayoutMode = 'auto';
         this.pdfZoom = 1;
         this.selectionMode = null;
         this.contentPanel = null;

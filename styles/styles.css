@@ -532,18 +532,15 @@ body {
 
 /* Dual-page PDF layout */
 .document-content-inner.pdf-content.dual-page {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-start;
-    align-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, calc(450px * var(--pdf-zoom, 1)));
+    align-items: start;
+    align-content: start;
     gap: 6px;
 }
 
 .document-content-inner.pdf-content.dual-page .pdf-page {
-    max-width: calc(50% * var(--pdf-zoom, 1) - 3px);
-    flex: 0 1 calc(50% * var(--pdf-zoom, 1) - 3px);
+    max-width: 100%;
 }
 
 .document-content-inner.pdf-content.dual-page .pdf-page canvas {
