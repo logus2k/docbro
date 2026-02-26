@@ -536,7 +536,7 @@ body {
 
 .document-content-inner.pdf-content.dual-page .pdf-page {
     width: calc(450px * var(--pdf-zoom, 1));
-    max-width: calc(450px * var(--pdf-zoom, 1));
+    max-width: calc(50% - 3px);
     flex: 0 0 auto;
     margin: 0;
 }
