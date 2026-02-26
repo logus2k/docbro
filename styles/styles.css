@@ -450,7 +450,8 @@ body {
     margin-bottom: 0;
 }
 
-.pdf-page canvas {
+.pdf-page canvas,
+.pdf-page img {
     display: block;
     width: 100% !important;
     height: auto !important;
@@ -534,7 +535,8 @@ body {
     max-width: 100%;
 }
 
-.document-content-inner.pdf-content.dual-page .pdf-page canvas {
+.document-content-inner.pdf-content.dual-page .pdf-page canvas,
+.document-content-inner.pdf-content.dual-page .pdf-page img {
     width: 100% !important;
     height: auto !important;
 }
@@ -555,7 +557,8 @@ body {
     margin-bottom: 0;
 }
 
-.document-content-inner.pdf-content.auto-layout .pdf-page canvas {
+.document-content-inner.pdf-content.auto-layout .pdf-page canvas,
+.document-content-inner.pdf-content.auto-layout .pdf-page img {
     width: 100% !important;
     height: auto !important;
 }

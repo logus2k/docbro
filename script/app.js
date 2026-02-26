@@ -28,6 +28,13 @@ class DocumentBrowser {
         this._renderVersion = 0;
         this.editMode = false;
 
+        // PDF rendering state
+        this._pdfResizeObserver = null;
+        this._pdfOverlayEntries = [];
+        this._pdfPageDivs = [];
+        this._pdfDoc = null;
+        this._pdfContainer = null;
+
         this.init();
     }
 
@@ -652,6 +659,9 @@ class DocumentBrowser {
             this.selectionMode.reset();
         }
 
+        // Clean up PDF rendering state before clearing DOM
+        this._cleanupPdf();
+
         // Clear content container
         this.contentContainer.innerHTML = '';
 
@@ -718,11 +728,15 @@ class DocumentBrowser {
     async renderPdfPages(pdfDoc, container) {
         const numPages = pdfDoc.numPages;
         const pageDivs = [];
-        const overlayEntries = []; // text layers + annotation layers that need scaling
+        const overlayEntries = [];
         const renderVersion = this._renderVersion;
 
+        // Clean up previous state
+        this._cleanupPdf();
+        this._pdfDoc = pdfDoc;
+        this._pdfContainer = container;
+
         for (let i = 1; i <= numPages; i++) {
-            // Abort if a newer render started
             if (this._renderVersion !== renderVersion) return;
 
             let page;
@@ -743,32 +757,50 @@ class DocumentBrowser {
             container.appendChild(pageDiv);
             pageDivs.push(pageDiv);
 
-            // Canvas
+            // Create a fresh canvas, render, convert to <img>, then destroy canvas
             const canvas = document.createElement('canvas');
             canvas.width = Math.floor(viewport.width * outputScale.sx);
             canvas.height = Math.floor(viewport.height * outputScale.sy);
-            canvas.style.width = Math.floor(viewport.width) + 'px';
-            canvas.style.height = Math.floor(viewport.height) + 'px';
-            pageDiv.appendChild(canvas);
-
             const ctx = canvas.getContext('2d');
-            const renderContext = {
-                canvasContext: ctx,
-                viewport,
-                transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
-            };
 
             try {
-                await page.render(renderContext).promise;
+                await page.render({
+                    canvasContext: ctx,
+                    viewport,
+                    transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
+                }).promise;
             } catch (e) {
                 console.warn(`Failed to render page ${i}:`, e);
             }
             if (this._renderVersion !== renderVersion) return;
 
-            // Text layer — use a viewport matching the displayed size for accurate selection
+            // Convert canvas to <img>
+            const img = document.createElement('img');
+            img.style.width = Math.floor(viewport.width) + 'px';
+            img.style.height = Math.floor(viewport.height) + 'px';
+            try {
+                const blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+                });
+                img.src = URL.createObjectURL(blob);
+            } catch (e) {
+                console.warn(`Failed to convert page ${i} to image:`, e);
+            }
+            // Free the canvas GPU buffer immediately
+            canvas.width = 0;
+            canvas.height = 0;
+
+            pageDiv.appendChild(img);
+
+            // Store page ref for on-demand canvas re-render (context menu)
+            pageDiv._pdfPage = page;
+            pageDiv._pdfViewport = viewport;
+            pageDiv._pdfOutputScale = outputScale;
+
+            // Text layer
             try {
                 const textContent = await page.getTextContent();
-                const displayedWidth = canvas.getBoundingClientRect().width;
+                const displayedWidth = img.getBoundingClientRect().width || pageDiv.clientWidth;
                 const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
                 const textViewport = page.getViewport({ scale: textScale });
 
@@ -784,7 +816,6 @@ class DocumentBrowser {
                 });
                 await textLayer.render();
 
-                // Register paragraphs for selection mode
                 if (this.selectionMode) {
                     this.selectionMode.registerPage(pageDiv, textContent, textScale, textViewport);
                 }
@@ -792,13 +823,13 @@ class DocumentBrowser {
                 console.warn(`Failed to render text layer for page ${i}:`, e);
             }
 
-            // Custom right-click menu for PDF pages (save/copy page image)
+            // Context menu — re-render to a temporary canvas on demand
             pageDiv.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-                this.showPdfContextMenu(e.clientX, e.clientY, canvas);
+                this._showPdfPageContextMenu(e.clientX, e.clientY, pageDiv);
             });
 
-            // Link overlay (manual annotation handling)
+            // Link overlay (annotations)
             try {
                 const annotations = await page.getAnnotations();
                 const linkAnnotations = annotations.filter(a => a.subtype === 'Link' && (a.dest || a.url));
@@ -862,9 +893,12 @@ class DocumentBrowser {
             }
         }
 
-        // Scale text + annotation layers to match CSS-scaled canvas size
+        this._pdfPageDivs = pageDivs;
+        this._pdfOverlayEntries = overlayEntries;
+
+        // Scale text + annotation layers to match CSS-scaled size
         const updateOverlayScales = () => {
-            for (const entry of overlayEntries) {
+            for (const entry of this._pdfOverlayEntries) {
                 const pageDiv = entry.div.parentElement;
                 if (pageDiv) {
                     const displayedWidth = pageDiv.clientWidth;
@@ -878,9 +912,52 @@ class DocumentBrowser {
 
         requestAnimationFrame(updateOverlayScales);
 
-        // Update annotation scales when container resizes (e.g. window resize, split drag)
-        const resizeObserver = new ResizeObserver(updateOverlayScales);
-        resizeObserver.observe(container);
+        if (this._pdfResizeObserver) this._pdfResizeObserver.disconnect();
+        this._pdfResizeObserver = new ResizeObserver(updateOverlayScales);
+        this._pdfResizeObserver.observe(container);
+    }
+
+    async _showPdfPageContextMenu(x, y, pageDiv) {
+        const page = pageDiv._pdfPage;
+        const viewport = pageDiv._pdfViewport;
+        const outputScale = pageDiv._pdfOutputScale;
+        if (!page || !viewport || !outputScale) return;
+
+        // Re-render to a temporary canvas for copy/save
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width * outputScale.sx);
+        canvas.height = Math.floor(viewport.height * outputScale.sy);
+        const ctx = canvas.getContext('2d');
+        try {
+            await page.render({
+                canvasContext: ctx,
+                viewport,
+                transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
+            }).promise;
+        } catch (e) {
+            console.warn('Failed to re-render page for context menu:', e);
+            return;
+        }
+        this.showPdfContextMenu(x, y, canvas);
+        // Canvas will be GC'd after the menu closes
+    }
+
+    _cleanupPdf() {
+        if (this._pdfResizeObserver) {
+            this._pdfResizeObserver.disconnect();
+            this._pdfResizeObserver = null;
+        }
+        // Revoke blob URLs to free memory
+        for (const pageDiv of this._pdfPageDivs) {
+            const img = pageDiv.querySelector('img');
+            if (img && img.src.startsWith('blob:')) {
+                URL.revokeObjectURL(img.src);
+            }
+        }
+        this._pdfOverlayEntries = [];
+        this._pdfPageDivs = [];
+        this._pdfDoc = null;
+        this._pdfContainer = null;
     }
 
     renderMermaidBlocks(container) {

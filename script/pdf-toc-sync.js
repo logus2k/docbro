@@ -77,9 +77,10 @@ export class PdfTocSync {
 
     async _extractTocFromText(pdfDoc, globalIndex) {
         const numPages = pdfDoc.numPages;
-        const maxScanPages = Math.min(numPages, 5);
+        const maxScanPages = Math.min(numPages, 10);
         const results = [];
         let foundToc = false;
+        let missCount = 0; // consecutive lines without a page number
         let tocFinished = false;
 
         for (let p = 1; p <= maxScanPages && !tocFinished; p++) {
@@ -127,10 +128,12 @@ export class PdfTocSync {
                 const rightItem = line.items[line.items.length - 1];
                 const pageNum = parseInt(rightItem.str, 10);
                 if (isNaN(pageNum) || pageNum < 1 || pageNum > numPages) {
-                    // No valid page number — likely end of TOC section
-                    if (results.length > 0) tocFinished = true;
+                    // Track consecutive misses to detect end of TOC section
+                    if (results.length > 0) missCount++;
+                    if (missCount >= 6) { tocFinished = true; break; }
                     continue;
                 }
+                missCount = 0; // reset on successful parse
 
                 // Build title from items excluding trailing dots and page number
                 const titleParts = [];
