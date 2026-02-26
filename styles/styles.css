@@ -203,11 +203,12 @@ body {
 #tocTree .wb-list-container {
     outline: none;
     cursor: pointer;
+    max-height: 0px;
 }
 
 .content-pane {
     flex: 1;
-    min-width: 400px;
+    min-width: 0;
     min-height: 0;
     overflow: hidden;
     display: flex;

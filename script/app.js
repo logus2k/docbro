@@ -93,11 +93,28 @@ class DocumentBrowser {
     }
 
     initSplitPane() {
-        Split(['#tocPane', '#contentPane'], {
+        const tocPane = document.getElementById('tocPane');
+        this._splitInstance = Split(['#tocPane', '#contentPane'], {
             sizes: [20, 80],
-            minSize: [5, 400],
+            minSize: [5, 5],
             gutterSize: 6,
-            cursor: 'col-resize'
+            cursor: 'col-resize',
+            onDragEnd: () => {
+                this._tocPixelWidth = tocPane.getBoundingClientRect().width;
+            }
+        });
+        // Store initial pixel width
+        this._tocPixelWidth = tocPane.getBoundingClientRect().width;
+
+        // On window resize, maintain the TOC's pixel width
+        window.addEventListener('resize', () => {
+            if (!this._tocPixelWidth || !this._splitInstance) return;
+            const container = tocPane.parentElement;
+            const containerWidth = container.getBoundingClientRect().width;
+            if (containerWidth <= 0) return;
+            const tocPct = (this._tocPixelWidth / containerWidth) * 100;
+            const clamped = Math.min(Math.max(tocPct, 1), 90);
+            this._splitInstance.setSizes([clamped, 100 - clamped]);
         });
     }
 
