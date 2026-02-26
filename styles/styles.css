@@ -216,6 +216,15 @@ body {
     height: 100%;
 }
 
+.right-pane {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 /* Split.js gutter */
 .gutter {
     background-repeat: no-repeat;

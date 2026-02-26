@@ -94,27 +94,33 @@ class DocumentBrowser {
 
     initSplitPane() {
         const tocPane = document.getElementById('tocPane');
-        this._splitInstance = Split(['#tocPane', '#contentPane'], {
-            sizes: [20, 80],
-            minSize: [5, 5],
+        const rightPane = document.getElementById('rightPane');
+        this._splitInstance = Split(['#tocPane', '#contentPane', '#rightPane'], {
+            sizes: [20, 75, 5],
+            minSize: [5, 5, 5],
             gutterSize: 6,
             cursor: 'col-resize',
             onDragEnd: () => {
                 this._tocPixelWidth = tocPane.getBoundingClientRect().width;
+                this._rightPanePixelWidth = rightPane.getBoundingClientRect().width;
             }
         });
-        // Store initial pixel width
+        // Store initial pixel widths
         this._tocPixelWidth = tocPane.getBoundingClientRect().width;
+        this._rightPanePixelWidth = rightPane.getBoundingClientRect().width;
 
-        // On window resize, maintain the TOC's pixel width
+        // On window resize, maintain both TOC and right pane pixel widths
         window.addEventListener('resize', () => {
-            if (!this._tocPixelWidth || !this._splitInstance) return;
+            if (!this._splitInstance) return;
             const container = tocPane.parentElement;
             const containerWidth = container.getBoundingClientRect().width;
             if (containerWidth <= 0) return;
             const tocPct = (this._tocPixelWidth / containerWidth) * 100;
-            const clamped = Math.min(Math.max(tocPct, 1), 90);
-            this._splitInstance.setSizes([clamped, 100 - clamped]);
+            const rightPct = (this._rightPanePixelWidth / containerWidth) * 100;
+            const clampedToc = Math.min(Math.max(tocPct, 1), 90);
+            const clampedRight = Math.min(Math.max(rightPct, 1), 90);
+            const contentPct = 100 - clampedToc - clampedRight;
+            this._splitInstance.setSizes([clampedToc, Math.max(contentPct, 1), clampedRight]);
         });
     }
 
