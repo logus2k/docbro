@@ -202,17 +202,7 @@ body {
     outline: none;
 }
 
-#tocTree .wunderbaum {
-    height: auto !important;
-    overflow: visible !important;
-    border: none !important;
-    background: transparent !important;
-    outline: none !important;
-}
-
 #tocTree .wb-list-container {
-    height: auto !important;
-    overflow: visible !important;
     outline: none;
     cursor: pointer;
 }
@@ -448,6 +438,7 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
+    overflow: hidden;
     border: 0.5px solid #99999999;
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
     max-width: calc(900px * var(--pdf-zoom, 1));

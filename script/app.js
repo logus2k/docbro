@@ -25,6 +25,7 @@ class DocumentBrowser {
         this.selectionMode = null;
         this.contentPanel = null;
         this.pdfTocSync = new PdfTocSync();
+        this._renderVersion = 0;
         this.editMode = false;
 
         this.init();
@@ -309,7 +310,7 @@ class DocumentBrowser {
                 loaded: false,
                 content: '',
                 error: false,
-                headers: [],
+                headers: null,
                 configHeaders: doc.headers || null,
                 pdfDoc: null
             }));
@@ -609,18 +610,24 @@ class DocumentBrowser {
 
         // Only re-render and extract headers if document changed
         if (isNewDocument) {
-            // Render document content
-            await this.renderDocument(globalIndex);
             this.activeDocumentIndex = globalIndex;
-            
-            // Update hash
-            this.updateHash(doc.category, doc.name);
-            
-            // Extract headers and update tree
-            await this.extractAndUpdateHeaders(globalIndex);
-            
-            // Setup scroll sync for this document
-            this.setupScrollSync();
+            this._renderVersion++;
+
+            try {
+                // Render document content
+                await this.renderDocument(globalIndex);
+
+                // Update hash
+                this.updateHash(doc.category, doc.name);
+
+                // Extract headers and update tree
+                await this.extractAndUpdateHeaders(globalIndex);
+
+                // Setup scroll sync for this document
+                this.setupScrollSync();
+            } catch (e) {
+                console.error('Error activating document:', e);
+            }
         }
         
         // Jump to header if specified
@@ -712,9 +719,20 @@ class DocumentBrowser {
         const numPages = pdfDoc.numPages;
         const pageDivs = [];
         const overlayEntries = []; // text layers + annotation layers that need scaling
+        const renderVersion = this._renderVersion;
 
         for (let i = 1; i <= numPages; i++) {
-            const page = await pdfDoc.getPage(i);
+            // Abort if a newer render started
+            if (this._renderVersion !== renderVersion) return;
+
+            let page;
+            try {
+                page = await pdfDoc.getPage(i);
+            } catch (e) {
+                console.warn(`Failed to get page ${i}:`, e);
+                continue;
+            }
+
             const scale = 1.5;
             const viewport = page.getViewport({ scale });
             const outputScale = new OutputScale();
@@ -739,29 +757,39 @@ class DocumentBrowser {
                 viewport,
                 transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
             };
-            await page.render(renderContext).promise;
+
+            try {
+                await page.render(renderContext).promise;
+            } catch (e) {
+                console.warn(`Failed to render page ${i}:`, e);
+            }
+            if (this._renderVersion !== renderVersion) return;
 
             // Text layer — use a viewport matching the displayed size for accurate selection
-            const textContent = await page.getTextContent();
-            const displayedWidth = canvas.getBoundingClientRect().width;
-            const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
-            const textViewport = page.getViewport({ scale: textScale });
+            try {
+                const textContent = await page.getTextContent();
+                const displayedWidth = canvas.getBoundingClientRect().width;
+                const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
+                const textViewport = page.getViewport({ scale: textScale });
 
-            const textLayerDiv = document.createElement('div');
-            textLayerDiv.className = 'textLayer';
-            textLayerDiv.style.setProperty('--scale-factor', textScale);
-            pageDiv.appendChild(textLayerDiv);
+                const textLayerDiv = document.createElement('div');
+                textLayerDiv.className = 'textLayer';
+                textLayerDiv.style.setProperty('--scale-factor', textScale);
+                pageDiv.appendChild(textLayerDiv);
 
-            const textLayer = new TextLayer({
-                textContentSource: textContent,
-                container: textLayerDiv,
-                viewport: textViewport
-            });
-            await textLayer.render();
+                const textLayer = new TextLayer({
+                    textContentSource: textContent,
+                    container: textLayerDiv,
+                    viewport: textViewport
+                });
+                await textLayer.render();
 
-            // Register paragraphs for selection mode
-            if (this.selectionMode) {
-                this.selectionMode.registerPage(pageDiv, textContent, textScale, textViewport);
+                // Register paragraphs for selection mode
+                if (this.selectionMode) {
+                    this.selectionMode.registerPage(pageDiv, textContent, textScale, textViewport);
+                }
+            } catch (e) {
+                console.warn(`Failed to render text layer for page ${i}:`, e);
             }
 
             // Custom right-click menu for PDF pages (save/copy page image)
@@ -771,62 +799,66 @@ class DocumentBrowser {
             });
 
             // Link overlay (manual annotation handling)
-            const annotations = await page.getAnnotations();
-            const linkAnnotations = annotations.filter(a => a.subtype === 'Link' && (a.dest || a.url));
-            if (linkAnnotations.length > 0) {
-                const annotationDiv = document.createElement('div');
-                annotationDiv.className = 'annotationLayer';
-                annotationDiv.style.width = viewport.width + 'px';
-                annotationDiv.style.height = viewport.height + 'px';
-                pageDiv.appendChild(annotationDiv);
+            try {
+                const annotations = await page.getAnnotations();
+                const linkAnnotations = annotations.filter(a => a.subtype === 'Link' && (a.dest || a.url));
+                if (linkAnnotations.length > 0) {
+                    const annotationDiv = document.createElement('div');
+                    annotationDiv.className = 'annotationLayer';
+                    annotationDiv.style.width = viewport.width + 'px';
+                    annotationDiv.style.height = viewport.height + 'px';
+                    pageDiv.appendChild(annotationDiv);
 
-                for (const annot of linkAnnotations) {
-                    const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(annot.rect);
-                    const left = Math.min(x1, x2);
-                    const top = Math.min(y1, y2);
-                    const width = Math.abs(x2 - x1);
-                    const height = Math.abs(y2 - y1);
+                    for (const annot of linkAnnotations) {
+                        const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(annot.rect);
+                        const left = Math.min(x1, x2);
+                        const top = Math.min(y1, y2);
+                        const width = Math.abs(x2 - x1);
+                        const height = Math.abs(y2 - y1);
 
-                    const link = document.createElement('a');
-                    link.style.position = 'absolute';
-                    link.style.left = left + 'px';
-                    link.style.top = top + 'px';
-                    link.style.width = width + 'px';
-                    link.style.height = height + 'px';
+                        const link = document.createElement('a');
+                        link.style.position = 'absolute';
+                        link.style.left = left + 'px';
+                        link.style.top = top + 'px';
+                        link.style.width = width + 'px';
+                        link.style.height = height + 'px';
 
-                    if (annot.url) {
-                        link.href = annot.url;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                    } else if (annot.dest) {
-                        link.href = '#';
-                        link.addEventListener('click', async (e) => {
-                            e.preventDefault();
-                            try {
-                                let dest = annot.dest;
-                                if (typeof dest === 'string') {
-                                    dest = await pdfDoc.getDestination(dest);
+                        if (annot.url) {
+                            link.href = annot.url;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
+                        } else if (annot.dest) {
+                            link.href = '#';
+                            link.addEventListener('click', async (e) => {
+                                e.preventDefault();
+                                try {
+                                    let dest = annot.dest;
+                                    if (typeof dest === 'string') {
+                                        dest = await pdfDoc.getDestination(dest);
+                                    }
+                                    if (!Array.isArray(dest)) return;
+                                    const ref = dest[0];
+                                    const pageIndex = typeof ref === 'number' ? ref : await pdfDoc.getPageIndex(ref);
+                                    const targetDiv = pageDivs[pageIndex];
+                                    if (targetDiv) {
+                                        const containerRect = container.getBoundingClientRect();
+                                        const targetRect = targetDiv.getBoundingClientRect();
+                                        const offset = targetRect.top - containerRect.top + container.scrollTop;
+                                        container.scrollTo({ top: offset, behavior: 'smooth' });
+                                    }
+                                } catch (err) {
+                                    console.error('PDF link navigation error:', err);
                                 }
-                                if (!Array.isArray(dest)) return;
-                                const ref = dest[0];
-                                const pageIndex = typeof ref === 'number' ? ref : await pdfDoc.getPageIndex(ref);
-                                const targetDiv = pageDivs[pageIndex];
-                                if (targetDiv) {
-                                    const containerRect = container.getBoundingClientRect();
-                                    const targetRect = targetDiv.getBoundingClientRect();
-                                    const offset = targetRect.top - containerRect.top + container.scrollTop;
-                                    container.scrollTo({ top: offset, behavior: 'smooth' });
-                                }
-                            } catch (err) {
-                                console.error('PDF link navigation error:', err);
-                            }
-                        });
+                            });
+                        }
+
+                        annotationDiv.appendChild(link);
                     }
 
-                    annotationDiv.appendChild(link);
+                    overlayEntries.push({ div: annotationDiv, viewport });
                 }
-
-                overlayEntries.push({ div: annotationDiv, viewport });
+            } catch (e) {
+                console.warn(`Failed to process annotations for page ${i}:`, e);
             }
         }
 
@@ -922,13 +954,22 @@ class DocumentBrowser {
     async extractAndUpdateHeaders(globalIndex) {
         const doc = this.documents[globalIndex];
 
-        // Skip if headers already extracted
-        if (doc.headers && doc.headers.length > 0) {
+        // Skip if headers already extracted (null = not yet attempted)
+        if (doc.headers !== null) {
             return;
         }
 
         if (this.isPdf(doc)) {
-            doc.headers = await this.pdfTocSync.extractHeaders(doc.pdfDoc, globalIndex, doc.configHeaders);
+            if (!doc.pdfDoc) {
+                doc.headers = [];
+                return;
+            }
+            try {
+                doc.headers = await this.pdfTocSync.extractHeaders(doc.pdfDoc, globalIndex, doc.configHeaders);
+            } catch (e) {
+                console.error('PDF header extraction error:', e);
+                doc.headers = [];
+            }
             if (doc.headers.length > 0) {
                 const headerTree = this.buildHeaderTree(doc.headers, globalIndex);
                 const docNode = this.treeInstance.findKey(`doc-${globalIndex}`);

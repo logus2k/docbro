@@ -6,10 +6,25 @@ export class PdfTocSync {
 
     async extractHeaders(pdfDoc, globalIndex, configHeaders) {
         // Try to get the embedded PDF outline (bookmarks)
-        const outline = await pdfDoc.getOutline();
+        let outline = null;
+        try {
+            outline = await pdfDoc.getOutline();
+        } catch (e) {
+            console.warn('Could not read PDF outline:', e);
+        }
 
         if (outline && outline.length > 0) {
+            console.log(`PDF doc-${globalIndex}: found ${outline.length} outline entries`);
             return await this._flattenOutline(pdfDoc, outline, globalIndex, 1);
+        }
+
+        console.log(`PDF doc-${globalIndex}: no embedded outline found, trying text-based extraction`);
+
+        // Fall back to parsing visible TOC text from page content
+        const textHeaders = await this._extractTocFromText(pdfDoc, globalIndex);
+        if (textHeaders.length > 0) {
+            console.log(`PDF doc-${globalIndex}: extracted ${textHeaders.length} headers from text`);
+            return textHeaders;
         }
 
         // Fall back to manually defined configHeaders
@@ -55,6 +70,93 @@ export class PdfTocSync {
             results.forEach((h, i) => {
                 h.id = `doc-${globalIndex}-header-${i}`;
             });
+        }
+
+        return results;
+    }
+
+    async _extractTocFromText(pdfDoc, globalIndex) {
+        const numPages = pdfDoc.numPages;
+        const maxScanPages = Math.min(numPages, 5);
+        const results = [];
+        let foundToc = false;
+        let tocFinished = false;
+
+        for (let p = 1; p <= maxScanPages && !tocFinished; p++) {
+            let page;
+            try { page = await pdfDoc.getPage(p); } catch { continue; }
+
+            let textContent;
+            try { textContent = await page.getTextContent(); } catch { continue; }
+
+            const items = textContent.items.filter(it => it.str && it.str.trim());
+            if (items.length === 0) continue;
+
+            // Group text items into lines by Y coordinate (tolerance ±3)
+            const lines = [];
+            for (const item of items) {
+                const y = Math.round(item.transform[5]);
+                let line = lines.find(l => Math.abs(l.y - y) <= 3);
+                if (!line) {
+                    line = { y, items: [] };
+                    lines.push(line);
+                }
+                line.items.push({ str: item.str.trim(), x: item.transform[4] });
+            }
+            // Sort lines top-to-bottom (higher Y = higher on page in PDF coords)
+            lines.sort((a, b) => b.y - a.y);
+
+            for (const line of lines) {
+                // Sort items left-to-right within the line
+                line.items.sort((a, b) => a.x - b.x);
+                const fullText = line.items.map(it => it.str).join(' ');
+
+                // Detect "Table of Contents" header
+                if (!foundToc) {
+                    if (/table\s+of\s+contents/i.test(fullText)) {
+                        foundToc = true;
+                    }
+                    continue;
+                }
+
+                // Skip lines that are only dots/leaders
+                if (/^[.\s_\-─…]+$/.test(fullText)) continue;
+
+                // Try to parse a TOC entry: title text + page number
+                // The rightmost item that's a pure number is the page reference
+                const rightItem = line.items[line.items.length - 1];
+                const pageNum = parseInt(rightItem.str, 10);
+                if (isNaN(pageNum) || pageNum < 1 || pageNum > numPages) {
+                    // No valid page number — likely end of TOC section
+                    if (results.length > 0) tocFinished = true;
+                    continue;
+                }
+
+                // Build title from items excluding trailing dots and page number
+                const titleParts = [];
+                for (let i = 0; i < line.items.length - 1; i++) {
+                    const s = line.items[i].str;
+                    if (!/^[.\s_\-─…]+$/.test(s)) titleParts.push(s);
+                }
+                // Also check if the second-to-last item is the page number
+                // (sometimes dots are merged with surrounding text)
+                let title = titleParts.join(' ').replace(/[.\s_\-─…]+$/, '').trim();
+                if (!title) continue;
+
+                // Determine heading level from numbering pattern
+                let level = 1;
+                const numMatch = title.match(/^(\d+(?:\.\d+)*)[.\s)]/);
+                if (numMatch) {
+                    level = numMatch[1].split('.').length;
+                }
+
+                results.push({
+                    id: `doc-${globalIndex}-header-${results.length}`,
+                    level,
+                    text: title,
+                    page: pageNum - 1 // Convert to 0-indexed
+                });
+            }
         }
 
         return results;
