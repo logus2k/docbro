@@ -286,6 +286,21 @@
 			"location": "categories/webots/physics.guide.md"
 		},
 		{
+			"name": "DRL - DQN and PPO",
+			"category": "Reports",
+			"location": "categories/reports/taap/pdf/01_dqn_ppo.pdf"
+		},
+		{
+			"name": "DRL - DQN and PPO Annex 1",
+			"category": "Reports",
+			"location": "categories/reports/taap/pdf/02_annex1_genetic.pdf"
+		},
+		{
+			"name": "DRL - DQN and PPO Annex 2",
+			"category": "Reports",
+			"location": "categories/reports/taap/pdf/03_annex2_comparison.pdf"
+		},
+		{
 			"name": "Implementing a cGAN",
 			"category": "Reports",
 			"location": "categories/reports/taap/pdf/taap_mp1_group1_report.pdf"

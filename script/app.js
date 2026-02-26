@@ -19,7 +19,8 @@ class DocumentBrowser {
         this.contentContainer = document.getElementById('contentContainer');
         this.scrollSyncEnabled = true;
         this.closedTabs = new Set();
-        this.pageLayoutMode = 'auto';
+        this.pageLayoutMode = 'single';
+        this.pdfZoom = 1;
         this.selectionMode = null;
         this.contentPanel = null;
         this.editMode = false;
@@ -111,6 +112,14 @@ class DocumentBrowser {
                 this.applyPageLayout();
             });
         });
+
+        const zoomSlider = document.getElementById('pdfZoomSlider');
+        const zoomValue = document.getElementById('pdfZoomValue');
+        zoomSlider.addEventListener('input', (e) => {
+            this.pdfZoom = parseInt(e.target.value, 10) / 100;
+            zoomValue.textContent = e.target.value + '%';
+            this.applyZoom();
+        });
     }
 
     applyPageLayout() {
@@ -123,6 +132,12 @@ class DocumentBrowser {
         } else if (this.pageLayoutMode === 'dual') {
             pdfContent.classList.add('dual-page');
         }
+    }
+
+    applyZoom() {
+        const pdfContent = this.contentContainer.querySelector('.pdf-content');
+        if (!pdfContent) return;
+        pdfContent.style.setProperty('--pdf-zoom', this.pdfZoom);
     }
 
     setupModeToggle() {
@@ -654,6 +669,7 @@ class DocumentBrowser {
             this.contentContainer.appendChild(contentDiv);
             this.renderPdfPages(doc.pdfDoc, innerDiv);
             this.applyPageLayout();
+            this.applyZoom();
             // Re-activate selection mode overlays if edit mode is on
             if (this.editMode && this.selectionMode) {
                 this.selectionMode.activate();
