@@ -2,6 +2,7 @@ export class PdfTocSync {
 
     constructor() {
         this._scrollHandler = null;
+        this.syncEnabled = true;
     }
 
     async extractHeaders(pdfDoc, globalIndex, configHeaders) {
@@ -80,6 +81,8 @@ export class PdfTocSync {
         const maxScanPages = Math.min(numPages, 10);
         const results = [];
         let foundToc = false;
+        let tocFoundOnPage = 0; // 1-indexed physical page where TOC was found
+        let lastTocPage = 0;   // last physical page that had TOC entries
         let missCount = 0; // consecutive lines without a page number
         let tocFinished = false;
 
@@ -116,6 +119,7 @@ export class PdfTocSync {
                 if (!foundToc) {
                     if (/table\s+of\s+contents/i.test(fullText)) {
                         foundToc = true;
+                        tocFoundOnPage = p;
                     }
                     continue;
                 }
@@ -134,6 +138,7 @@ export class PdfTocSync {
                     continue;
                 }
                 missCount = 0; // reset on successful parse
+                lastTocPage = p;
 
                 // Build title from items excluding trailing dots and page number
                 const titleParts = [];
@@ -157,8 +162,25 @@ export class PdfTocSync {
                     id: `doc-${globalIndex}-header-${results.length}`,
                     level,
                     text: title,
-                    page: pageNum - 1 // Convert to 0-indexed
+                    page: pageNum // store raw 1-indexed for now
                 });
+            }
+        }
+
+        // Compute offset between logical page numbers and physical page indices.
+        // Content starts on the physical page after the last TOC page.
+        // The first TOC entry's page number tells us what the PDF calls that page.
+        if (results.length > 0 && lastTocPage > 0) {
+            const firstLogicalPage = results[0].page;
+            const firstPhysicalPage = lastTocPage; // 0-indexed: lastTocPage (content starts after)
+            const offset = firstPhysicalPage - firstLogicalPage + 1;
+            for (const h of results) {
+                h.page = h.page - 1 + offset; // convert to 0-indexed physical page
+            }
+        } else {
+            // No offset info, just convert to 0-indexed
+            for (const h of results) {
+                h.page = h.page - 1;
             }
         }
 
@@ -171,6 +193,7 @@ export class PdfTocSync {
 
         const pages = scrollContainer.querySelectorAll('.pdf-page');
         const targetPage = pages[header.page];
+
         if (!targetPage) return;
 
         const containerRect = scrollContainer.getBoundingClientRect();
@@ -189,6 +212,7 @@ export class PdfTocSync {
         if (headersByPage.length === 0) return;
 
         this._scrollHandler = () => {
+            if (!this.syncEnabled) return;
             const pages = scrollContainer.querySelectorAll('.pdf-page');
             if (pages.length === 0) return;
 

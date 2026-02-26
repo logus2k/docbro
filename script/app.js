@@ -591,6 +591,8 @@ class DocumentBrowser {
                     if (node.children && node.children.length > 0) {
                         node.setExpanded(!node.isExpanded());
                     }
+                    // Activate the clicked node (return false prevents Wunderbaum's default)
+                    node.setActive(true, { noEvents: true });
                     return false;
                 }
                 
@@ -1248,6 +1250,7 @@ class DocumentBrowser {
 
     jumpToHeader(headerId) {
         this.scrollSyncEnabled = false;
+        this.pdfTocSync.syncEnabled = false;
 
         const doc = this.documents[this.activeDocumentIndex];
         const scrollContainer = this.getScrollContainer();
@@ -1264,7 +1267,11 @@ class DocumentBrowser {
             }
         }
 
-        this.scrollSyncEnabled = true;
+        // Re-enable scroll sync after scroll settles (scrollTo is async)
+        setTimeout(() => {
+            this.scrollSyncEnabled = true;
+            this.pdfTocSync.syncEnabled = true;
+        }, 300);
     }
 
     setupScrollSync() {
