@@ -2,6 +2,7 @@
 import { getDocument, GlobalWorkerOptions, TextLayer, OutputScale } from '../libraries/pdf.js/pdf.min.mjs';
 import { SelectionMode } from './selection-mode.js';
 import { ContentPanel } from './content-panel.js';
+import { PdfTocSync } from './pdf-toc-sync.js';
 GlobalWorkerOptions.workerSrc = './libraries/pdf.js/pdf.worker.min.mjs';
 
 class DocumentBrowser {
@@ -23,6 +24,7 @@ class DocumentBrowser {
         this.pdfZoom = 1;
         this.selectionMode = null;
         this.contentPanel = null;
+        this.pdfTocSync = new PdfTocSync();
         this.editMode = false;
 
         this.init();
@@ -608,14 +610,14 @@ class DocumentBrowser {
         // Only re-render and extract headers if document changed
         if (isNewDocument) {
             // Render document content
-            this.renderDocument(globalIndex);
+            await this.renderDocument(globalIndex);
             this.activeDocumentIndex = globalIndex;
             
             // Update hash
             this.updateHash(doc.category, doc.name);
             
             // Extract headers and update tree
-            this.extractAndUpdateHeaders(globalIndex);
+            await this.extractAndUpdateHeaders(globalIndex);
             
             // Setup scroll sync for this document
             this.setupScrollSync();
@@ -635,7 +637,7 @@ class DocumentBrowser {
         }
     }
 
-    renderDocument(globalIndex) {
+    async renderDocument(globalIndex) {
         const doc = this.documents[globalIndex];
 
         // Reset selection mode when document changes
@@ -667,7 +669,7 @@ class DocumentBrowser {
         } else if (this.isPdf(doc) && doc.pdfDoc) {
             contentDiv.appendChild(innerDiv);
             this.contentContainer.appendChild(contentDiv);
-            this.renderPdfPages(doc.pdfDoc, innerDiv);
+            await this.renderPdfPages(doc.pdfDoc, innerDiv);
             this.applyPageLayout();
             this.applyZoom();
             // Re-activate selection mode overlays if edit mode is on
@@ -917,7 +919,7 @@ class DocumentBrowser {
         }, 0);
     }
 
-    extractAndUpdateHeaders(globalIndex) {
+    async extractAndUpdateHeaders(globalIndex) {
         const doc = this.documents[globalIndex];
 
         // Skip if headers already extracted
@@ -926,20 +928,13 @@ class DocumentBrowser {
         }
 
         if (this.isPdf(doc)) {
-            // Use manually defined headers from documents.json
-            if (doc.configHeaders && doc.configHeaders.length > 0) {
-                doc.headers = doc.configHeaders.map((h, i) => ({
-                    id: `doc-${globalIndex}-header-${i}`,
-                    level: h.level,
-                    text: h.text
-                }));
+            doc.headers = await this.pdfTocSync.extractHeaders(doc.pdfDoc, globalIndex, doc.configHeaders);
+            if (doc.headers.length > 0) {
                 const headerTree = this.buildHeaderTree(doc.headers, globalIndex);
                 const docNode = this.treeInstance.findKey(`doc-${globalIndex}`);
                 if (docNode) {
                     docNode.removeChildren();
-                    if (headerTree.length > 0) {
-                        docNode.addChildren(headerTree);
-                    }
+                    docNode.addChildren(headerTree);
                 }
             }
             return;
@@ -1003,10 +998,14 @@ class DocumentBrowser {
     jumpToHeader(headerId) {
         this.scrollSyncEnabled = false;
 
-        const header = document.getElementById(headerId);
-        if (header) {
-            const scrollContainer = this.getScrollContainer();
-            if (scrollContainer) {
+        const doc = this.documents[this.activeDocumentIndex];
+        const scrollContainer = this.getScrollContainer();
+
+        if (doc && this.isPdf(doc) && doc.headers) {
+            this.pdfTocSync.jumpToPage(doc.headers, headerId, scrollContainer);
+        } else {
+            const header = document.getElementById(headerId);
+            if (header && scrollContainer) {
                 const containerRect = scrollContainer.getBoundingClientRect();
                 const headerRect = header.getBoundingClientRect();
                 const offset = headerRect.top - containerRect.top + scrollContainer.scrollTop;
@@ -1021,13 +1020,17 @@ class DocumentBrowser {
         const scrollContainer = this.getScrollContainer();
         if (!scrollContainer) return;
 
+        const doc = this.documents[this.activeDocumentIndex];
+
+        // For PDFs, delegate to PdfTocSync
+        if (doc && this.isPdf(doc)) {
+            this.pdfTocSync.setupScrollSync(doc.headers, scrollContainer, this.treeInstance);
+            return;
+        }
+
         if (this._scrollHandler) {
             scrollContainer.removeEventListener('scroll', this._scrollHandler);
         }
-
-        // Skip scroll sync for PDF documents (no DOM header elements to track)
-        const doc = this.documents[this.activeDocumentIndex];
-        if (doc && this.isPdf(doc)) return;
 
         this._scrollHandler = () => {
             if (!this.scrollSyncEnabled) return;
@@ -1037,7 +1040,7 @@ class DocumentBrowser {
 
             const scrollTop = scrollContainer.scrollTop;
             const containerTop = scrollContainer.offsetTop;
-            
+
             let currentHeaderId = null;
             for (const h of doc.headers) {
                 const headerEl = document.getElementById(h.id);
@@ -1055,7 +1058,6 @@ class DocumentBrowser {
                 const headerNode = this.treeInstance.findKey(currentHeaderId);
                 if (headerNode && !headerNode.isActive()) {
                     try {
-                        // Expand all parent nodes so the header is visible
                         headerNode.visitParents((p) => {
                             if (!p.isExpanded()) {
                                 p.setExpanded(true);

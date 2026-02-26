@@ -94,8 +94,8 @@ body {
     position: fixed;
     bottom: 28px;
     left: 45px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #fffcd8;
+    border: 0.5px solid #9c9c9c;
     border-radius: 6px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     padding: 8px 0;
