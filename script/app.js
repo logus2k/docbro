@@ -132,8 +132,6 @@ class DocumentBrowser {
                 this.pageLayoutMode = 'custom';
                 const customRadio = settingsMenu.querySelector('input[name="pageLayout"][value="custom"]');
                 if (customRadio) customRadio.checked = true;
-                const sliderItem = zoomSlider.closest('.zoom-slider-item');
-                if (sliderItem) sliderItem.classList.remove('zoom-auto');
                 this.applyPageLayout();
                 this._setupLayoutResizeObserver(); // disconnects the observer
             }
@@ -158,12 +156,34 @@ class DocumentBrowser {
     computeFitZoom(mode) {
         const pdfContent = this.contentContainer.querySelector('.pdf-content');
         if (!pdfContent) return 1;
-        const availableWidth = pdfContent.clientWidth;
+
+        const style = getComputedStyle(pdfContent);
+        const padLeft = parseFloat(style.paddingLeft) || 0;
+        const padRight = parseFloat(style.paddingRight) || 0;
+        const padTop = parseFloat(style.paddingTop) || 0;
+        const padBottom = parseFloat(style.paddingBottom) || 0;
+        const availableWidth = pdfContent.clientWidth - padLeft - padRight;
+        const availableHeight = pdfContent.clientHeight - padTop - padBottom;
+
+        // Use first page's aspect ratio (width/height) for height-fitting
+        let pageAspect = 900 / 1165; // default ~letter proportions
+        const firstDiv = this._pdfPageDivs[0];
+        if (firstDiv && firstDiv._pdfViewport) {
+            const vp = firstDiv._pdfViewport;
+            pageAspect = vp.width / vp.height;
+        }
+
         if (mode === 'single') {
-            return availableWidth / 900;
+            // Page width = 900 * zoom, page height = 900 * zoom / pageAspect
+            const zoomByWidth = availableWidth / 900;
+            const zoomByHeight = (availableHeight * pageAspect) / 900;
+            return Math.min(zoomByWidth, zoomByHeight);
         }
         if (mode === 'dual') {
-            return (availableWidth - 6) / 900; // 2×450 = 900, minus 6px gap
+            // Each page width = 450 * zoom, height = 450 * zoom / pageAspect
+            const zoomByWidth = (availableWidth - 6) / 900; // 2 × 450
+            const zoomByHeight = (availableHeight * pageAspect) / 450;
+            return Math.min(zoomByWidth, zoomByHeight);
         }
         return this.pdfZoom;
     }
@@ -171,13 +191,12 @@ class DocumentBrowser {
     applyLayoutAndZoom() {
         const zoomSlider = document.getElementById('pdfZoomSlider');
         const zoomValue = document.getElementById('pdfZoomValue');
-        const sliderItem = zoomSlider?.closest('.zoom-slider-item');
+
+        // Apply layout class first so container dimensions are correct for zoom computation
+        this.applyPageLayout();
 
         if (this.pageLayoutMode === 'single' || this.pageLayoutMode === 'dual') {
             this.pdfZoom = this.computeFitZoom(this.pageLayoutMode);
-            if (sliderItem) sliderItem.classList.add('zoom-auto');
-        } else {
-            if (sliderItem) sliderItem.classList.remove('zoom-auto');
         }
 
         // Update slider and label to reflect current zoom
@@ -187,7 +206,6 @@ class DocumentBrowser {
             if (zoomValue) zoomValue.textContent = pct + '%';
         }
 
-        this.applyPageLayout();
         this.applyZoom();
         this._setupLayoutResizeObserver();
     }
@@ -206,7 +224,10 @@ class DocumentBrowser {
 
         this._layoutResizeObserver = new ResizeObserver(() => {
             if (this.pageLayoutMode !== 'single' && this.pageLayoutMode !== 'dual') return;
-            this.pdfZoom = this.computeFitZoom(this.pageLayoutMode);
+            const newZoom = this.computeFitZoom(this.pageLayoutMode);
+            // Only apply if zoom changed meaningfully (prevents scrollbar oscillation loop)
+            if (Math.abs(newZoom - this.pdfZoom) < 0.005) return;
+            this.pdfZoom = newZoom;
             this.applyZoom();
 
             const zoomSlider = document.getElementById('pdfZoomSlider');
