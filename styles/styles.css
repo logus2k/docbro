@@ -222,7 +222,8 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    margin: 10px 10px 10px 0px;
+    border-radius: 7px;
 }
 
 /* Split.js gutter */
