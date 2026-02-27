@@ -20,6 +20,7 @@ class DocumentBrowser {
         this.activeCategory = null;
         this.activeDocumentIndex = null;
         this.editMode = false;
+        this._activationVersion = 0;
         this.contentContainer = document.getElementById('contentContainer');
 
         this.loader = new DocumentLoader(configPath);
@@ -284,6 +285,8 @@ class DocumentBrowser {
         const doc = this.documents[globalIndex];
         if (!doc) return;
 
+        const activationVersion = ++this._activationVersion;
+
         const wasClosed = this.tabManager.closedTabs.has(globalIndex);
         if (wasClosed) {
             this.tabManager.closedTabs.delete(globalIndex);
@@ -304,19 +307,26 @@ class DocumentBrowser {
             await this.loader.loadDocument(globalIndex);
         }
 
+        // A newer activation started while loading — bail out
+        if (this._activationVersion !== activationVersion) return;
+
         if (isNewDocument) {
             this.activeDocumentIndex = globalIndex;
             this.pdfRenderer.incrementRenderVersion();
 
             try {
                 await this.renderDocument(globalIndex);
+                if (this._activationVersion !== activationVersion) return;
                 this.updateHash(doc.category, doc.name);
                 await this.tocManager.extractAndUpdateHeaders(globalIndex, doc);
+                if (this._activationVersion !== activationVersion) return;
                 this.tocManager.setupScrollSync(doc, () => this.documents[this.activeDocumentIndex]);
             } catch (e) {
                 console.error('Error activating document:', e);
             }
         }
+
+        if (this._activationVersion !== activationVersion) return;
 
         if (headerId) {
             this.tocManager.jumpToHeader(headerId, doc);
@@ -358,6 +368,8 @@ class DocumentBrowser {
             contentDiv.appendChild(innerDiv);
             this.contentContainer.appendChild(contentDiv);
             await this.pdfRenderer.setupPlaceholders(doc.pdfDoc, innerDiv);
+            // Bail if a newer document activation superseded this one
+            if (this.activeDocumentIndex !== globalIndex) return;
             this.layoutManager.applyLayoutAndZoom();
             if (this.editMode && this.selectionMode) {
                 this.selectionMode.activate();

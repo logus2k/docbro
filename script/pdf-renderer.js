@@ -29,6 +29,7 @@ export class PdfRenderer {
     async setupPlaceholders(pdfDoc, container) {
         const numPages = pdfDoc.numPages;
         const scale = 1.5;
+        const renderVersion = this._renderVersion;
 
         this.cleanup();
         this._pdfDoc = pdfDoc;
@@ -42,6 +43,9 @@ export class PdfRenderer {
                 })
             )
         );
+
+        // A newer render started while we were fetching pages — discard results
+        if (this._renderVersion !== renderVersion) return;
 
         const pageDivs = [];
         for (let i = 0; i < pages.length; i++) {
