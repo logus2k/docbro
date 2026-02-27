@@ -137,8 +137,6 @@ export class PdfTocSync {
                     if (missCount >= 6) { tocFinished = true; break; }
                     continue;
                 }
-                missCount = 0; // reset on successful parse
-                lastTocPage = p;
 
                 // Build title from items excluding trailing dots and page number
                 const titleParts = [];
@@ -146,10 +144,16 @@ export class PdfTocSync {
                     const s = line.items[i].str;
                     if (!/^[.\s_\-─…]+$/.test(s)) titleParts.push(s);
                 }
-                // Also check if the second-to-last item is the page number
-                // (sometimes dots are merged with surrounding text)
                 let title = titleParts.join(' ').replace(/[.\s_\-─…]+$/, '').trim();
-                if (!title) continue;
+                if (!title) {
+                    // A valid number but no title (e.g. page footer or section heading)
+                    // means we likely left the TOC area — count as a miss
+                    if (results.length > 0) missCount++;
+                    if (missCount >= 6) { tocFinished = true; break; }
+                    continue;
+                }
+                missCount = 0; // reset only for complete TOC entries
+                lastTocPage = p;
 
                 // Determine heading level from numbering pattern
                 let level = 1;
@@ -168,12 +172,16 @@ export class PdfTocSync {
         }
 
         // Compute offset between logical page numbers and physical page indices.
-        // Content starts on the physical page after the last TOC page.
-        // The first TOC entry's page number tells us what the PDF calls that page.
+        // If the first entry's page number is AFTER the last TOC page, page numbers
+        // are absolute (match physical pages) — no offset needed.
+        // Otherwise, content numbering is relative (e.g. front matter excluded from
+        // numbering), so compute the offset from the last TOC page.
         if (results.length > 0 && lastTocPage > 0) {
             const firstLogicalPage = results[0].page;
-            const firstPhysicalPage = lastTocPage; // 0-indexed: lastTocPage (content starts after)
-            const offset = firstPhysicalPage - firstLogicalPage + 1;
+            let offset = 0;
+            if (firstLogicalPage <= lastTocPage) {
+                offset = lastTocPage - firstLogicalPage + 1;
+            }
             for (const h of results) {
                 h.page = h.page - 1 + offset; // convert to 0-indexed physical page
             }

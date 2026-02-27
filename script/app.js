@@ -21,6 +21,7 @@ class DocumentBrowser {
         this.activeDocumentIndex = null;
         this.editMode = false;
         this._activationVersion = 0;
+        this._isRendering = false;
         this.contentContainer = document.getElementById('contentContainer');
 
         this.loader = new DocumentLoader(configPath);
@@ -90,7 +91,7 @@ class DocumentBrowser {
                             }
                         }
                     } else if (docIndex !== null && docIndex !== undefined) {
-                        if (headerId && this.activeDocumentIndex === docIndex) {
+                        if (headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
                             this.tocManager.jumpToHeader(headerId, this.documents[docIndex]);
                         } else {
                             this.activateDocument(docIndex, headerId);
@@ -292,7 +293,7 @@ class DocumentBrowser {
             this.tabManager.closedTabs.delete(globalIndex);
         }
 
-        const isNewDocument = this.activeDocumentIndex !== globalIndex;
+        const isNewDocument = this.activeDocumentIndex !== globalIndex || this._isRendering;
 
         if (this.activeCategory !== doc.category) {
             this.activeCategory = doc.category;
@@ -313,15 +314,20 @@ class DocumentBrowser {
         if (isNewDocument) {
             this.activeDocumentIndex = globalIndex;
             this.pdfRenderer.incrementRenderVersion();
+            this._isRendering = true;
 
             try {
                 await this.renderDocument(globalIndex);
                 if (this._activationVersion !== activationVersion) return;
+                this._isRendering = false;
                 this.updateHash(doc.category, doc.name);
                 await this.tocManager.extractAndUpdateHeaders(globalIndex, doc);
                 if (this._activationVersion !== activationVersion) return;
                 this.tocManager.setupScrollSync(doc, () => this.documents[this.activeDocumentIndex]);
             } catch (e) {
+                if (this._activationVersion === activationVersion) {
+                    this._isRendering = false;
+                }
                 console.error('Error activating document:', e);
             }
         }
@@ -332,7 +338,9 @@ class DocumentBrowser {
             this.tocManager.jumpToHeader(headerId, doc);
         }
 
-        this.tocManager.setNodeActive(`doc-${globalIndex}`);
+        if (!headerId) {
+            this.tocManager.setNodeActive(`doc-${globalIndex}`);
+        }
     }
 
     async renderDocument(globalIndex) {
