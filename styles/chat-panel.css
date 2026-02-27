@@ -77,6 +77,154 @@
     border: 0.5px solid #d8d4c4;
     border-bottom-left-radius: 3px;
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    white-space: normal;
+}
+
+/* Markdown inside assistant messages */
+.chat-message-assistant p {
+    margin: 0 0 8px 0;
+}
+
+.chat-message-assistant p:last-child {
+    margin-bottom: 0;
+}
+
+.chat-message-assistant h1,
+.chat-message-assistant h2,
+.chat-message-assistant h3,
+.chat-message-assistant h4 {
+    margin: 10px 0 6px 0;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.chat-message-assistant h1 { font-size: 16px; }
+.chat-message-assistant h2 { font-size: 15px; }
+.chat-message-assistant h3 { font-size: 14px; }
+.chat-message-assistant h4 { font-size: 13px; }
+
+.chat-message-assistant ul,
+.chat-message-assistant ol {
+    margin: 4px 0 8px 0;
+    padding-left: 20px;
+}
+
+.chat-message-assistant li {
+    margin-bottom: 2px;
+}
+
+.chat-message-assistant code {
+    background-color: rgba(0, 0, 0, 0.06);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.chat-message-assistant pre {
+    background-color: #fff;
+    border: 1px solid #e0dcc8;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 6px 0;
+    overflow-x: auto;
+}
+
+.chat-message-assistant pre code {
+    background-color: transparent;
+    padding: 0;
+    color: #24292e;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* GitHub highlight theme scoped to chat */
+.chat-message-assistant .hljs { color: #24292e; background: #fff; }
+.chat-message-assistant .hljs-doctag,
+.chat-message-assistant .hljs-keyword,
+.chat-message-assistant .hljs-meta .hljs-keyword,
+.chat-message-assistant .hljs-template-tag,
+.chat-message-assistant .hljs-template-variable,
+.chat-message-assistant .hljs-type,
+.chat-message-assistant .hljs-variable.language_ { color: #d73a49; }
+.chat-message-assistant .hljs-title,
+.chat-message-assistant .hljs-title.class_,
+.chat-message-assistant .hljs-title.class_.inherited__,
+.chat-message-assistant .hljs-title.function_ { color: #6f42c1; }
+.chat-message-assistant .hljs-attr,
+.chat-message-assistant .hljs-attribute,
+.chat-message-assistant .hljs-literal,
+.chat-message-assistant .hljs-meta,
+.chat-message-assistant .hljs-number,
+.chat-message-assistant .hljs-operator,
+.chat-message-assistant .hljs-selector-attr,
+.chat-message-assistant .hljs-selector-class,
+.chat-message-assistant .hljs-selector-id,
+.chat-message-assistant .hljs-variable { color: #005cc5; }
+.chat-message-assistant .hljs-meta .hljs-string,
+.chat-message-assistant .hljs-regexp,
+.chat-message-assistant .hljs-string { color: #032f62; }
+.chat-message-assistant .hljs-built_in,
+.chat-message-assistant .hljs-symbol { color: #e36209; }
+.chat-message-assistant .hljs-code,
+.chat-message-assistant .hljs-comment,
+.chat-message-assistant .hljs-formula { color: #6a737d; }
+.chat-message-assistant .hljs-name,
+.chat-message-assistant .hljs-quote,
+.chat-message-assistant .hljs-selector-pseudo,
+.chat-message-assistant .hljs-selector-tag { color: #22863a; }
+.chat-message-assistant .hljs-subst { color: #24292e; }
+.chat-message-assistant .hljs-section { color: #005cc5; font-weight: 700; }
+.chat-message-assistant .hljs-bullet { color: #735c0f; }
+.chat-message-assistant .hljs-emphasis { color: #24292e; font-style: italic; }
+.chat-message-assistant .hljs-strong { color: #24292e; font-weight: 700; }
+.chat-message-assistant .hljs-addition { color: #22863a; background-color: #f0fff4; }
+.chat-message-assistant .hljs-deletion { color: #b31d28; background-color: #ffeef0; }
+
+.chat-message-assistant blockquote {
+    margin: 6px 0;
+    padding: 4px 10px;
+    border-left: 3px solid #d4a944;
+    background-color: rgba(0, 0, 0, 0.03);
+    color: #555;
+}
+
+.chat-message-assistant table {
+    border-collapse: collapse;
+    margin: 6px 0;
+    font-size: 12px;
+    width: 100%;
+}
+
+.chat-message-assistant th,
+.chat-message-assistant td {
+    border: 1px solid #d8d4c4;
+    padding: 4px 8px;
+    text-align: left;
+}
+
+.chat-message-assistant th {
+    background-color: rgba(0, 0, 0, 0.04);
+    font-weight: 600;
+}
+
+.chat-message-assistant strong {
+    font-weight: 600;
+}
+
+.chat-message-assistant a {
+    color: #2a7ab5;
+    text-decoration: none;
+}
+
+.chat-message-assistant a:hover {
+    text-decoration: underline;
+}
+
+.chat-message-assistant hr {
+    border: none;
+    border-top: 1px solid #d8d4c4;
+    margin: 8px 0;
 }
 
 /* Typing indicator */

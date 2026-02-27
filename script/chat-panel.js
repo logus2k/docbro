@@ -108,7 +108,15 @@ export class ChatPanel {
     addMessage(role, text) {
         const msg = document.createElement('div');
         msg.className = `chat-message chat-message-${role}`;
-        msg.textContent = text;
+
+        if (role === 'assistant') {
+            msg.innerHTML = marked.parse(text);
+            msg.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        } else {
+            msg.textContent = text;
+        }
 
         // Insert before typing indicator
         this._messagesArea.insertBefore(msg, this._typingIndicator);
