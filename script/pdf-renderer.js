@@ -37,10 +37,16 @@ export class PdfRenderer {
 
         const pages = await Promise.all(
             Array.from({ length: numPages }, (_, i) =>
-                pdfDoc.getPage(i + 1).catch(e => {
-                    console.warn(`Failed to get page ${i + 1}:`, e);
-                    return null;
-                })
+                pdfDoc.getPage(i + 1).then(
+                    page => this._renderVersion === renderVersion ? page : null,
+                    e => {
+                        // Only log errors for the current render, not stale ones
+                        if (this._renderVersion === renderVersion) {
+                            console.warn(`Failed to get page ${i + 1}:`, e);
+                        }
+                        return null;
+                    }
+                )
             )
         );
 

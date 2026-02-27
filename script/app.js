@@ -93,6 +93,10 @@ class DocumentBrowser {
                     } else if (docIndex !== null && docIndex !== undefined) {
                         if (headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
                             this.tocManager.jumpToHeader(headerId, this.documents[docIndex]);
+                        } else if (!headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
+                            // Document root node clicked — scroll to top (cover/first page)
+                            const sc = this.tocManager.getScrollContainer(this.documents[docIndex]);
+                            if (sc) sc.scrollTo({ top: 0 });
                         } else {
                             this.activateDocument(docIndex, headerId);
                         }
