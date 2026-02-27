@@ -63,17 +63,19 @@
 
 .chat-message-user {
     align-self: flex-end;
-    background-color: #e8dfc4;
+    background-color: #c2eefadb;
     color: #1a1a1a;
     border-bottom-right-radius: 3px;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 .chat-message-assistant {
     align-self: flex-start;
-    background-color: #ffffff;
+    background-color: #f0ffef;
     color: #333;
     border: 0.5px solid #d8d4c4;
     border-bottom-left-radius: 3px;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 /* Typing indicator */
