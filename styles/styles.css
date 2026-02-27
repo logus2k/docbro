@@ -189,7 +189,12 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    margin: 10px 0px 10px 10px;
+    margin: 8px 2px 8px 8px;
+    padding: 8px;
+    border: 1px solid #999999;
+    border-radius: 7px;
+    background-color: #f3fffb99;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
 }
 
 #tocTree {
@@ -224,7 +229,7 @@ body {
     flex-direction: column;
     margin: 8px 8px 8px 2px;
     border-radius: 7px;
-    box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
 }
 
 /* Split.js gutter */
