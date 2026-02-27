@@ -46,9 +46,15 @@ export class TabManager {
         });
     }
 
-    closeTab(globalIndex, documents, activeCategory, activeDocumentIndex) {
+    closeTab(globalIndex, documents, activeCategory) {
         const categoryDocs = documents.filter(d => d.category === activeCategory);
         const openDocs = categoryDocs.filter(d => !this.closedTabs.has(d.globalIndex));
+
+        // Determine which tab is currently active from the DOM
+        const activeTab = this.tabsContainer.querySelector('.tab.active');
+        const activeDocumentIndex = activeTab
+            ? parseInt(activeTab.getAttribute('data-doc-index'), 10)
+            : null;
 
         if (openDocs.length <= 1) return;
 

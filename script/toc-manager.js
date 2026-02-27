@@ -138,6 +138,7 @@ export class TocManager {
                 if (docNode) {
                     docNode.removeChildren();
                     docNode.addChildren(headerTree);
+                    docNode.setExpanded(true);
                 }
             }
             return;
@@ -164,6 +165,7 @@ export class TocManager {
             docNode.removeChildren();
             if (headerTree.length > 0) {
                 docNode.addChildren(headerTree);
+                docNode.setExpanded(true);
             }
         }
     }

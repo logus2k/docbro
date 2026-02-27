@@ -192,6 +192,16 @@ export class PdfTocSync {
             }
         }
 
+        // Add a "Table of Contents" entry pointing to the TOC page itself
+        if (results.length > 0 && tocFoundOnPage > 0) {
+            results.unshift({
+                id: `doc-${globalIndex}-header-toc`,
+                level: 1,
+                text: 'Table of Contents',
+                page: tocFoundOnPage - 1 // 0-indexed
+            });
+        }
+
         return results;
     }
 
