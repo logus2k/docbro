@@ -85,6 +85,9 @@ export class ChatService {
         });
 
         console.log('[ChatService] Connected to agent server');
+
+        // Kick off the first interaction silently
+        this.sendMessage('Hello!');
     }
 
     // --- Text chat ---
