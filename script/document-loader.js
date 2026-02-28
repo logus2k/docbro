@@ -52,15 +52,8 @@ export class DocumentLoader {
             if (doc.pdfDoc) return true;
 
             try {
-                if (!doc._pdfData) {
-                    const response = await fetch(doc.location);
-                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                    doc._pdfData = await response.arrayBuffer();
-                }
                 doc.pdfDoc = await getDocument({
-                    data: doc._pdfData.slice(0),
-                    disableRange: true,
-                    disableStream: true,
+                    url: doc.location,
                 }).promise;
                 doc.error = false;
                 doc.loaded = true;

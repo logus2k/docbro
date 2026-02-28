@@ -22,6 +22,19 @@ export class SelectionMode {
         }
     }
 
+    unregisterPage(pageDiv) {
+        const paragraphs = this.paragraphMap.get(pageDiv);
+        if (paragraphs) {
+            for (const para of paragraphs) {
+                if (para.overlayEl) {
+                    this.selectedParagraphs.delete(para.overlayEl);
+                    para.overlayEl.remove();
+                }
+            }
+        }
+        this.paragraphMap.delete(pageDiv);
+    }
+
     activate() {
         this.active = true;
         for (const [pageDiv] of this.paragraphMap) {

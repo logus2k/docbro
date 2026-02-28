@@ -386,7 +386,7 @@ class DocumentBrowser {
             if (this.editMode && this.selectionMode) {
                 this.selectionMode.activate();
             }
-            this.pdfRenderer.renderPagesProgressively(doc.pdfDoc, innerDiv);
+            this.pdfRenderer.startLazyRendering(doc.pdfDoc, innerDiv);
             return;
         } else {
             innerDiv.innerHTML = doc.content;

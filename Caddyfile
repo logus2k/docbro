@@ -1,13 +1,21 @@
 :8765 {
-	root * /usr/share/caddy
-	encode gzip zstd
+    root * /usr/share/caddy
 
-	@static {
-		path *.js *.css *.png *.jpg *.jpeg *.svg *.webp *.ico *.json *.wasm
-	}
-	header @static Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
-	header @static Pragma "no-cache"
-	header @static Expires "0"
+    # Define a matcher for everything EXCEPT PDFs
+    @notPDF {
+        not path *.pdf
+    }
+
+    # Apply encoding only to non-PDF files
+    encode @notPDF gzip zstd
+
+    # Ensure headers are exposed for PDF.js streaming
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Expose-Headers "Content-Length, Content-Range, Accept-Ranges"
+        # Explicitly tell the proxy/browser ranges are supported
+        Accept-Ranges bytes
+    }
 
 	@html {
 		path *.html
@@ -15,6 +23,6 @@
 	header @html Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
 	header @html Pragma "no-cache"
 	header @html Expires "0"
-
-	file_server
+    
+    file_server
 }

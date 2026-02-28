@@ -11,6 +11,14 @@ export class PdfRenderer {
         this._pdfOverlayEntries = [];
         this._pdfResizeObserver = null;
         this._renderVersion = 0;
+
+        // Lazy rendering state
+        this._intersectionObserver = null;
+        this._unloadObserver = null;
+        this._renderQueue = [];
+        this._activeRenders = 0;
+        this._maxConcurrentRenders = 2;
+        this._intersectingIndices = new Set();
     }
 
     get pdfPageDivs() {
@@ -40,7 +48,6 @@ export class PdfRenderer {
                 pdfDoc.getPage(i + 1).then(
                     page => this._renderVersion === renderVersion ? page : null,
                     e => {
-                        // Only log errors for the current render, not stale ones
                         if (this._renderVersion === renderVersion) {
                             console.warn(`Failed to get page ${i + 1}:`, e);
                         }
@@ -69,6 +76,11 @@ export class PdfRenderer {
                 pageDiv.style.aspectRatio = '8.5 / 11';
             }
 
+            // Lazy rendering state per page
+            pageDiv._renderState = 'idle';
+            pageDiv._pageRenderVersion = 0;
+            pageDiv._pageIndex = i;
+
             container.appendChild(pageDiv);
             pageDivs.push(pageDiv);
         }
@@ -90,149 +102,289 @@ export class PdfRenderer {
         this._pdfResizeObserver.observe(container);
     }
 
-    async renderPagesProgressively(pdfDoc, container) {
+    // --- Lazy rendering system ---
+
+    startLazyRendering(pdfDoc, container) {
         const renderVersion = this._renderVersion;
         const pageDivs = this._pdfPageDivs;
 
-        for (let i = 0; i < pageDivs.length; i++) {
+        this._disconnectObservers();
+
+        // Render observer: trigger rendering when pages approach viewport
+        this._intersectionObserver = new IntersectionObserver((entries) => {
             if (this._renderVersion !== renderVersion) return;
 
-            const pageDiv = pageDivs[i];
-            const page = pageDiv._pdfPage;
-            if (!page) continue;
-
-            const viewport = pageDiv._pdfViewport;
-            const outputScale = pageDiv._pdfOutputScale;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.floor(viewport.width * outputScale.sx);
-            canvas.height = Math.floor(viewport.height * outputScale.sy);
-            const ctx = canvas.getContext('2d');
-
-            try {
-                await page.render({
-                    canvasContext: ctx,
-                    viewport,
-                    transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
-                }).promise;
-            } catch (e) {
-                console.warn(`Failed to render page ${i + 1}:`, e);
-            }
-            if (this._renderVersion !== renderVersion) return;
-
-            const img = document.createElement('img');
-            img.style.width = Math.floor(viewport.width) + 'px';
-            img.style.height = Math.floor(viewport.height) + 'px';
-            try {
-                const blob = await new Promise((resolve, reject) => {
-                    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.92);
-                });
-                img.src = URL.createObjectURL(blob);
-            } catch (e) {
-                console.warn(`Failed to convert page ${i + 1} to image:`, e);
-            }
-            canvas.width = 0;
-            canvas.height = 0;
-
-            pageDiv.appendChild(img);
-            pageDiv.style.aspectRatio = '';
-
-            // Text layer
-            try {
-                const textContent = await page.getTextContent();
-                const displayedWidth = pageDiv.clientWidth || img.getBoundingClientRect().width;
-                const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
-                const textViewport = page.getViewport({ scale: textScale });
-
-                const textLayerDiv = document.createElement('div');
-                textLayerDiv.className = 'textLayer';
-                textLayerDiv.style.setProperty('--scale-factor', textScale);
-                pageDiv.appendChild(textLayerDiv);
-
-                const textLayer = new TextLayer({
-                    textContentSource: textContent,
-                    container: textLayerDiv,
-                    viewport: textViewport
-                });
-                await textLayer.render();
-
-                if (this.selectionMode) {
-                    this.selectionMode.registerPage(pageDiv, textContent, textScale, textViewport);
+            for (const entry of entries) {
+                const pageDiv = entry.target;
+                if (entry.isIntersecting) {
+                    this._intersectingIndices.add(pageDiv._pageIndex);
+                    if (pageDiv._renderState === 'idle' || pageDiv._renderState === 'unloaded') {
+                        this._enqueueRender(pageDiv);
+                    }
+                } else {
+                    this._intersectingIndices.delete(pageDiv._pageIndex);
                 }
-            } catch (e) {
-                console.warn(`Failed to render text layer for page ${i + 1}:`, e);
             }
 
-            // Context menu
+            this._processRenderQueue(pdfDoc, container, renderVersion);
+        }, {
+            root: container,
+            rootMargin: '200% 0px'
+        });
+
+        // Unload observer: reclaim memory when pages are far from viewport
+        this._unloadObserver = new IntersectionObserver((entries) => {
+            if (this._renderVersion !== renderVersion) return;
+
+            for (const entry of entries) {
+                if (!entry.isIntersecting && entry.target._renderState === 'rendered') {
+                    this._unloadPage(entry.target);
+                }
+            }
+        }, {
+            root: container,
+            rootMargin: '500% 0px'
+        });
+
+        for (const pageDiv of pageDivs) {
+            this._intersectionObserver.observe(pageDiv);
+            this._unloadObserver.observe(pageDiv);
+        }
+    }
+
+    _enqueueRender(pageDiv) {
+        if (pageDiv._renderState === 'rendering') return;
+        if (this._renderQueue.includes(pageDiv)) return;
+        this._renderQueue.push(pageDiv);
+    }
+
+    _processRenderQueue(pdfDoc, container, renderVersion) {
+        while (this._activeRenders < this._maxConcurrentRenders && this._renderQueue.length > 0) {
+            if (this._renderVersion !== renderVersion) return;
+
+            // Sort: pages closest to current scroll center first
+            const scrollCenter = container.scrollTop + container.clientHeight / 2;
+            this._renderQueue.sort((a, b) => {
+                const aDist = Math.abs(a.offsetTop + a.offsetHeight / 2 - scrollCenter);
+                const bDist = Math.abs(b.offsetTop + b.offsetHeight / 2 - scrollCenter);
+                return aDist - bDist;
+            });
+
+            const pageDiv = this._renderQueue.shift();
+
+            // Skip if no longer eligible
+            if (pageDiv._renderState === 'rendered' || pageDiv._renderState === 'rendering') continue;
+            if (!pageDiv._pdfPage) continue;
+
+            this._activeRenders++;
+            pageDiv._renderState = 'rendering';
+
+            this._renderSinglePage(pageDiv, pdfDoc, container, renderVersion).then(() => {
+                this._activeRenders--;
+                this._processRenderQueue(pdfDoc, container, renderVersion);
+            });
+        }
+    }
+
+    async _renderSinglePage(pageDiv, pdfDoc, container, renderVersion) {
+        const page = pageDiv._pdfPage;
+        const viewport = pageDiv._pdfViewport;
+        const outputScale = pageDiv._pdfOutputScale;
+        const pageRenderVersion = ++pageDiv._pageRenderVersion;
+        const pageDivs = this._pdfPageDivs;
+
+        if (!page || !viewport || !outputScale) {
+            pageDiv._renderState = 'idle';
+            return;
+        }
+
+        // --- Canvas render (kept in DOM, no JPEG conversion) ---
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(viewport.width * outputScale.sx);
+        canvas.height = Math.floor(viewport.height * outputScale.sy);
+        const ctx = canvas.getContext('2d');
+
+        try {
+            await page.render({
+                canvasContext: ctx,
+                viewport,
+                transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
+            }).promise;
+        } catch (e) {
+            console.warn(`Failed to render page ${pageDiv._pageIndex + 1}:`, e);
+            pageDiv._renderState = pageDiv._renderState === 'rendering' ? 'idle' : pageDiv._renderState;
+            return;
+        }
+
+        // Staleness checks
+        if (this._renderVersion !== renderVersion) return;
+        if (pageDiv._pageRenderVersion !== pageRenderVersion) return;
+        if (pageDiv._renderState !== 'rendering') return;
+
+        pageDiv.appendChild(canvas);
+        pageDiv.style.aspectRatio = '';
+
+        // --- Text layer ---
+        try {
+            const textContent = await page.getTextContent();
+            if (this._renderVersion !== renderVersion || pageDiv._pageRenderVersion !== pageRenderVersion) return;
+
+            const displayedWidth = pageDiv.clientWidth || viewport.width;
+            const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
+            const textViewport = page.getViewport({ scale: textScale });
+
+            const textLayerDiv = document.createElement('div');
+            textLayerDiv.className = 'textLayer';
+            textLayerDiv.style.setProperty('--scale-factor', textScale);
+            pageDiv.appendChild(textLayerDiv);
+
+            const textLayer = new TextLayer({
+                textContentSource: textContent,
+                container: textLayerDiv,
+                viewport: textViewport
+            });
+            await textLayer.render();
+
+            if (this._renderVersion !== renderVersion || pageDiv._pageRenderVersion !== pageRenderVersion) return;
+
+            if (this.selectionMode) {
+                this.selectionMode.registerPage(pageDiv, textContent, textScale, textViewport);
+            }
+        } catch (e) {
+            console.warn(`Failed to render text layer for page ${pageDiv._pageIndex + 1}:`, e);
+        }
+
+        // --- Context menu (attach once) ---
+        if (!pageDiv._hasContextMenu) {
             pageDiv.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 this._showPageContextMenu(e.clientX, e.clientY, pageDiv);
             });
+            pageDiv._hasContextMenu = true;
+        }
 
-            // Link overlay (annotations)
-            try {
-                const annotations = await page.getAnnotations();
-                const linkAnnotations = annotations.filter(a => a.subtype === 'Link' && (a.dest || a.url));
-                if (linkAnnotations.length > 0) {
-                    const annotationDiv = document.createElement('div');
-                    annotationDiv.className = 'annotationLayer';
-                    annotationDiv.style.width = viewport.width + 'px';
-                    annotationDiv.style.height = viewport.height + 'px';
-                    pageDiv.appendChild(annotationDiv);
+        // --- Annotation overlay (links) ---
+        try {
+            const annotations = await page.getAnnotations();
+            if (this._renderVersion !== renderVersion || pageDiv._pageRenderVersion !== pageRenderVersion) return;
 
-                    for (const annot of linkAnnotations) {
-                        const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(annot.rect);
-                        const left = Math.min(x1, x2);
-                        const top = Math.min(y1, y2);
-                        const width = Math.abs(x2 - x1);
-                        const height = Math.abs(y2 - y1);
+            const linkAnnotations = annotations.filter(a => a.subtype === 'Link' && (a.dest || a.url));
+            if (linkAnnotations.length > 0) {
+                const annotationDiv = document.createElement('div');
+                annotationDiv.className = 'annotationLayer';
+                annotationDiv.style.width = viewport.width + 'px';
+                annotationDiv.style.height = viewport.height + 'px';
+                pageDiv.appendChild(annotationDiv);
 
-                        const link = document.createElement('a');
-                        link.style.position = 'absolute';
-                        link.style.left = left + 'px';
-                        link.style.top = top + 'px';
-                        link.style.width = width + 'px';
-                        link.style.height = height + 'px';
+                for (const annot of linkAnnotations) {
+                    const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(annot.rect);
+                    const left = Math.min(x1, x2);
+                    const top = Math.min(y1, y2);
+                    const width = Math.abs(x2 - x1);
+                    const height = Math.abs(y2 - y1);
 
-                        if (annot.url) {
-                            link.href = annot.url;
-                            link.target = '_blank';
-                            link.rel = 'noopener noreferrer';
-                        } else if (annot.dest) {
-                            link.href = '#';
-                            link.addEventListener('click', async (e) => {
-                                e.preventDefault();
-                                try {
-                                    let dest = annot.dest;
-                                    if (typeof dest === 'string') {
-                                        dest = await pdfDoc.getDestination(dest);
-                                    }
-                                    if (!Array.isArray(dest)) return;
-                                    const ref = dest[0];
-                                    const pageIndex = typeof ref === 'number' ? ref : await pdfDoc.getPageIndex(ref);
-                                    const targetDiv = pageDivs[pageIndex];
-                                    if (targetDiv) {
-                                        const containerRect = container.getBoundingClientRect();
-                                        const targetRect = targetDiv.getBoundingClientRect();
-                                        const offset = targetRect.top - containerRect.top + container.scrollTop;
-                                        container.scrollTo({ top: offset, behavior: 'smooth' });
-                                    }
-                                } catch (err) {
-                                    console.error('PDF link navigation error:', err);
+                    const link = document.createElement('a');
+                    link.style.position = 'absolute';
+                    link.style.left = left + 'px';
+                    link.style.top = top + 'px';
+                    link.style.width = width + 'px';
+                    link.style.height = height + 'px';
+
+                    if (annot.url) {
+                        link.href = annot.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                    } else if (annot.dest) {
+                        link.href = '#';
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            try {
+                                let dest = annot.dest;
+                                if (typeof dest === 'string') {
+                                    dest = await pdfDoc.getDestination(dest);
                                 }
-                            });
-                        }
-
-                        annotationDiv.appendChild(link);
+                                if (!Array.isArray(dest)) return;
+                                const ref = dest[0];
+                                const pageIndex = typeof ref === 'number' ? ref : await pdfDoc.getPageIndex(ref);
+                                const targetDiv = pageDivs[pageIndex];
+                                if (targetDiv) {
+                                    const containerRect = container.getBoundingClientRect();
+                                    const targetRect = targetDiv.getBoundingClientRect();
+                                    const offset = targetRect.top - containerRect.top + container.scrollTop;
+                                    container.scrollTo({ top: offset, behavior: 'smooth' });
+                                }
+                            } catch (err) {
+                                console.error('PDF link navigation error:', err);
+                            }
+                        });
                     }
 
-                    this._pdfOverlayEntries.push({ div: annotationDiv, viewport });
+                    annotationDiv.appendChild(link);
                 }
-            } catch (e) {
-                console.warn(`Failed to process annotations for page ${i + 1}:`, e);
+
+                this._pdfOverlayEntries.push({ div: annotationDiv, viewport });
             }
+        } catch (e) {
+            console.warn(`Failed to process annotations for page ${pageDiv._pageIndex + 1}:`, e);
         }
+
+        pageDiv._renderState = 'rendered';
     }
+
+    _unloadPage(pageDiv) {
+        if (pageDiv._renderState !== 'rendered') return;
+
+        // Cancel any lingering async work for this page
+        pageDiv._pageRenderVersion++;
+
+        // Remove canvas and release GPU memory
+        const canvas = pageDiv.querySelector('canvas');
+        if (canvas) {
+            canvas.width = 0;
+            canvas.height = 0;
+            canvas.remove();
+        }
+
+        // Remove text layer
+        const textLayer = pageDiv.querySelector('.textLayer');
+        if (textLayer) textLayer.remove();
+
+        // Remove annotation layer
+        const annotLayer = pageDiv.querySelector('.annotationLayer');
+        if (annotLayer) {
+            this._pdfOverlayEntries = this._pdfOverlayEntries.filter(e => e.div !== annotLayer);
+            annotLayer.remove();
+        }
+
+        // Unregister from selection mode
+        if (this.selectionMode) {
+            this.selectionMode.unregisterPage(pageDiv);
+        }
+
+        // Restore aspect-ratio placeholder
+        if (pageDiv._pdfViewport) {
+            const vp = pageDiv._pdfViewport;
+            pageDiv.style.aspectRatio = `${vp.width} / ${vp.height}`;
+        }
+
+        pageDiv._renderState = 'unloaded';
+    }
+
+    _disconnectObservers() {
+        if (this._intersectionObserver) {
+            this._intersectionObserver.disconnect();
+            this._intersectionObserver = null;
+        }
+        if (this._unloadObserver) {
+            this._unloadObserver.disconnect();
+            this._unloadObserver = null;
+        }
+        this._renderQueue = [];
+        this._activeRenders = 0;
+        this._intersectingIndices.clear();
+    }
+
+    // --- Context menu ---
 
     async _showPageContextMenu(x, y, pageDiv) {
         const page = pageDiv._pdfPage;
@@ -240,6 +392,14 @@ export class PdfRenderer {
         const outputScale = pageDiv._pdfOutputScale;
         if (!page || !viewport || !outputScale) return;
 
+        // Reuse in-DOM canvas if the page is currently rendered
+        const existingCanvas = pageDiv.querySelector('canvas');
+        if (existingCanvas && pageDiv._renderState === 'rendered') {
+            this._showContextMenu(x, y, existingCanvas);
+            return;
+        }
+
+        // Otherwise render to a temporary canvas
         const canvas = document.createElement('canvas');
         canvas.width = Math.floor(viewport.width * outputScale.sx);
         canvas.height = Math.floor(viewport.height * outputScale.sy);
@@ -308,15 +468,26 @@ export class PdfRenderer {
         }, 0);
     }
 
+    // --- Cleanup ---
+
     cleanup() {
+        this._disconnectObservers();
+
         if (this._pdfResizeObserver) {
             this._pdfResizeObserver.disconnect();
             this._pdfResizeObserver = null;
         }
         for (const pageDiv of this._pdfPageDivs) {
+            // Revoke any remaining blob URLs (from pre-migration renders)
             const img = pageDiv.querySelector('img');
             if (img && img.src.startsWith('blob:')) {
                 URL.revokeObjectURL(img.src);
+            }
+            // Release canvas GPU memory
+            const canvas = pageDiv.querySelector('canvas');
+            if (canvas) {
+                canvas.width = 0;
+                canvas.height = 0;
             }
         }
         this._pdfOverlayEntries = [];
