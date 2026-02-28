@@ -252,7 +252,7 @@ body {
 .content-container {
     position: relative;
     flex: 1;
-    padding: 7px 7px 7px 3px;
+    padding: 7px 0px 7px 3px;
     min-height: 0;
     height: 100%;
     width: 100%;
