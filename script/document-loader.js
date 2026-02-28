@@ -37,21 +37,46 @@ export class DocumentLoader {
 
     async loadDocument(globalIndex) {
         const doc = this.documents[globalIndex];
-        if (doc.loaded) return true;
 
-        try {
-            if (this.isPdf(doc)) {
-                const pdfDoc = await getDocument({
-                    url: doc.location,
+        if (this.isPdf(doc)) {
+            // pdf.js uses a PagesMapper singleton shared across all document
+            // proxies — only one proxy may be alive at a time, otherwise page
+            // validation breaks when switching between documents.
+            for (const d of this.documents) {
+                if (d.globalIndex !== globalIndex && d.pdfDoc) {
+                    d.pdfDoc.destroy();
+                    d.pdfDoc = null;
+                }
+            }
+
+            if (doc.pdfDoc) return true;
+
+            try {
+                if (!doc._pdfData) {
+                    const response = await fetch(doc.location);
+                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                    doc._pdfData = await response.arrayBuffer();
+                }
+                doc.pdfDoc = await getDocument({
+                    data: doc._pdfData.slice(0),
                     disableRange: true,
                     disableStream: true,
                 }).promise;
-                doc.pdfDoc = pdfDoc;
                 doc.error = false;
                 doc.loaded = true;
                 return true;
+            } catch (error) {
+                console.error(`Error loading document ${doc.name}:`, error);
+                doc.content = '';
+                doc.error = true;
+                doc.loaded = true;
+                return false;
             }
+        }
 
+        if (doc.loaded) return true;
+
+        try {
             const response = await fetch(doc.location);
             if (!response.ok) {
                 throw new Error(`HTTP error ${response.status}`);

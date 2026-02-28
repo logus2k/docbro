@@ -308,7 +308,7 @@ class DocumentBrowser {
 
         this.tabManager.updateActiveState(globalIndex);
 
-        if (!doc.loaded) {
+        if (!doc.loaded || (this.isPdf(doc) && !doc.pdfDoc)) {
             await this.loader.loadDocument(globalIndex);
         }
 
