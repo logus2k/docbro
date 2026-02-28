@@ -51,6 +51,11 @@
 			"location": "categories/cupy/glossary.md"
 		},	
 		{
+			"name": "Deep Learning",
+			"category": "Deep Learning",
+			"location": "categories/dl/deep_learning_book.pdf"
+		},		
+		{
 			"name": "Hyperparameters Guide",
 			"category": "Deep Learning",
 			"location": "categories/dl/hyperparameters_guide_v2.md"
@@ -184,7 +189,7 @@
 			"name": "Human Side",
 			"category": "MLOps",
 			"location": "categories/mlops/human_side.md"
-		},			
+		},
 		{
 			"name": "Overview",
 			"category": "Numba",
@@ -290,6 +295,11 @@
 			"category": "Threading and Multiprocessing",
 			"location": "categories/threading/glossary.md"
 		},
+		{
+			"name": "Version Control",
+			"category": "Version Control",
+			"location": "categories/version_control/version_control_book.pdf"
+		},			
 		{
 			"name": "Physics Guide",
 			"category": "Webots",
