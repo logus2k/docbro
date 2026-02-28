@@ -37,7 +37,7 @@ export class TocManager {
             iconMap: {
                 folder: "fa-solid fa-folder",
                 folderOpen: "fa-solid fa-folder-open",
-                doc: "fa-regular fa-file",
+                doc: "fa-solid fa-file",
                 expanderExpanded: "fa-solid fa-chevron-down",
                 expanderCollapsed: "fa-solid fa-chevron-right",
             },
@@ -112,6 +112,18 @@ export class TocManager {
             stack[stack.length - 1].children.push(node);
             stack.push({ level: h.level, children: node.children });
         });
+
+        // Remove empty children arrays so leaf nodes render with a file icon
+        const stripLeaves = (nodes) => {
+            for (const n of nodes) {
+                if (n.children.length === 0) {
+                    delete n.children;
+                } else {
+                    stripLeaves(n.children);
+                }
+            }
+        };
+        stripLeaves(root);
 
         return root;
     }

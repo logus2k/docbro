@@ -203,6 +203,7 @@ body {
     overflow-y: auto;
     min-height: 0;
     outline: none;
+    padding-top: 5px;
 }
 
 #tocTree .wb-list-container {
@@ -630,12 +631,27 @@ body {
 
 /* Folder icons color */
 #tocTree .wunderbaum i.fa-folder,
-#tocTree .wunderbaum i.fa-folder-open,
 #tocTree .wunderbaum .fa-folder,
+#tocTree .fa-folder {
+    color: #d4a944 !important;
+    -webkit-text-stroke: 1px #666666;
+    paint-order: stroke fill;
+}
+
+#tocTree .wunderbaum i.fa-folder-open,
 #tocTree .wunderbaum .fa-folder-open,
-#tocTree .fa-folder,
 #tocTree .fa-folder-open {
     color: #d4a944 !important;
+    -webkit-text-stroke: 1px #666666;
+    paint-order: stroke fill;
+}
+
+/* File (doc) icons color */
+#tocTree .wunderbaum .fa-file,
+#tocTree .fa-file {
+    color: #fff9ddab !important;
+    -webkit-text-stroke: 1px #666666;
+    paint-order: stroke fill;
 }
 
 #tocTree .wunderbaum span.wb-node {
