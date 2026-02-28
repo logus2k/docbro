@@ -17,8 +17,8 @@ export class LayoutManager {
         const container = tocPane.parentElement;
         const containerWidth = container.getBoundingClientRect().width;
 
-        const tocPct = 20;
-        const rightPct = containerWidth > 0 ? (300 / containerWidth) * 100 : 20;
+        const tocPct = 16;
+        const rightPct = containerWidth > 0 ? (450 / containerWidth) * 100 : 30;
         const contentPct = 100 - tocPct - rightPct;
 
         this._splitInstance = Split(['#tocPane', '#contentPane', '#rightPane'], {
