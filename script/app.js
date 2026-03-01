@@ -411,7 +411,31 @@ class DocumentBrowser {
         });
 
         this.renderMermaidBlocks(innerDiv);
+        this.renderDrawioBlocks(innerDiv);
         this.setupCodeCopyButtons();
+    }
+
+    renderDrawioBlocks(container) {
+        const drawioBlocks = container.querySelectorAll('.mxgraph');
+        if (drawioBlocks.length === 0 || typeof GraphViewer === 'undefined') return;
+
+        // Use createViewerForElement directly (instead of processElements)
+        // so we get a reference to each viewer instance for live resizing.
+        const viewers = [];
+        for (const block of drawioBlocks) {
+            block.innerText = '';
+            GraphViewer.createViewerForElement(block, (viewer) => {
+                viewers.push(viewer);
+            });
+        }
+
+        // Call fitGraph on each viewer when the container resizes
+        const ro = new ResizeObserver(() => {
+            for (const v of viewers) {
+                if (v.fitGraph) v.fitGraph();
+            }
+        });
+        ro.observe(container);
     }
 
     renderMermaidBlocks(container) {

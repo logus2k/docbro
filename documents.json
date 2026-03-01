@@ -269,7 +269,17 @@
 			"name": "VLM",
 			"category": "Robotics",
 			"location": "categories/robotics/vlmaps.md"
-		},			
+		},	
+		{
+			"name": "STT, TTS and LLM",
+			"category": "Robotics",
+			"location": "categories/robotics/robotics1.md"
+		},	
+		{
+			"name": "Warehouse Patrolling",
+			"category": "Robotics",
+			"location": "categories/robotics/robotics2.md"
+		},							
 		{
 			"name": "Communication Stack",
 			"category": "ROS 2",
@@ -285,6 +295,11 @@
 			"category": "ROS 2",
 			"location": "categories/ros2/ros2.glossary.md"
 		},
+		{
+			"name": "Agent Server",
+			"category": "Software Development Kit",
+			"location": "categories/sdk/agent_server/technical_architecture.md"
+		},		
 		{
 			"name": "Overview",
 			"category": "Threading and Multiprocessing",
