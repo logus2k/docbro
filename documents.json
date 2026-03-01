@@ -296,6 +296,16 @@
 			"location": "categories/ros2/ros2.glossary.md"
 		},
 		{
+			"name": "Speech-to-Text Agent",
+			"category": "Software Development Kit",
+			"location": "categories/sdk/stt_server/technical_architecture.md"
+		},		
+		{
+			"name": "Text-to-Speech Agent",
+			"category": "Software Development Kit",
+			"location": "categories/sdk/tts_server/technical_architecture.md"
+		},		
+		{
 			"name": "Agent Server",
 			"category": "Software Development Kit",
 			"location": "categories/sdk/agent_server/technical_architecture.md"

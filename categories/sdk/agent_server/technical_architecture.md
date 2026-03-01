@@ -1,4 +1,4 @@
-# Agent Server Technical Architecture
+# Agent Server
 
 The diagram illustrates the layered architecture of the Agent Server, a local-first AI orchestration backend running on port 7701.
 
