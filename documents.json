@@ -6,6 +6,11 @@
 			"location": "categories/airflow/installation.md"
 		},
 		{
+			"name": "Airflow",
+			"category": "Apache Airflow",
+			"location": "categories/airflow/airflow.pdf"
+		},		
+		{
 			"name": "Overview",
 			"category": "CRISP-ML(Q)",
 			"location": "categories/crisp_mlq/overview.md"
@@ -75,6 +80,13 @@
 			"category": "Deep Learning",
 			"location": "categories/dl/transfer_learning.md"
 		},
+
+		{
+			"name": "DVC",
+			"category": "DVC",
+			"location": "categories/dvc/dvc.pdf"
+		},		
+
 		{
 			"name": "Introduction",
 			"category": "GAN",
@@ -130,6 +142,18 @@
 			"category": "Gymnasium",
 			"location": "categories/gymnasium/overview.md"
 		},
+		{
+			"name": "Hydra",
+			"category": "Hydra",
+			"location": "categories/hydra/hydra.pdf"
+		},
+
+		{
+			"name": "MLflow",
+			"category": "MLflow",
+			"location": "categories/mlflow/mlflow.pdf"
+		},	
+
 		{
 			"name": "What is MLOps",
 			"category": "MLOps",
@@ -190,6 +214,7 @@
 			"category": "MLOps",
 			"location": "categories/mlops/human_side.md"
 		},
+
 		{
 			"name": "Overview",
 			"category": "Numba",
