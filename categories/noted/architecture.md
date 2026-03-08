@@ -1,4 +1,4 @@
-### Project Overview - Integrated MLOps Platform**
+# Project Overview - Integrated MLOps Platform**
 
 **noted** is a collaborative, web-based MLOps platform designed to unify the fragmented landscape of machine learning tools into a **single, integrated interface**. It evolves from an interactive notebook environment into a comprehensive cockpit for managing the full ML lifecycle—from raw data ingestion to production deployment.
 
