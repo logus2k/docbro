@@ -22,6 +22,7 @@ class DocumentBrowser {
         this.editMode = false;
         this._activationVersion = 0;
         this._isRendering = false;
+        this._showingIntro = false;
         this.contentContainer = document.getElementById('contentContainer');
 
         this.loader = new DocumentLoader(configPath);
@@ -62,7 +63,13 @@ class DocumentBrowser {
             // Modules that depend on data
             this.tabManager = new TabManager({
                 tabsContainer: document.getElementById('tabsContainer'),
-                onActivateDocument: (i) => this.activateDocument(i)
+                onActivateDocument: (globalIndex, headerId, category, isIntro) => {
+                    if (isIntro || (category && globalIndex === null)) {
+                        this.activateCategoryIntro(category || this.activeCategory);
+                    } else if (globalIndex !== null && globalIndex !== undefined) {
+                        this.activateDocument(globalIndex, headerId);
+                    }
+                }
             });
 
             this.pdfRenderer = new PdfRenderer({
@@ -79,22 +86,28 @@ class DocumentBrowser {
                 contentContainer: this.contentContainer,
                 pdfTocSync: this.pdfTocSync,
                 isPdf: (doc) => this.isPdf(doc),
-                onActivateDocument: (docIndex, headerId, category) => {
+                onActivateDocument: (docIndex, headerId, category, isIntro, isDoubleClick) => {
                     if (category !== undefined && category !== null) {
-                        // Category click
-                        if (this.activeCategory !== category) {
-                            this.activeCategory = category;
-                            this.tabManager.renderTabs(this.documents, this.activeCategory);
-                            const firstDoc = this.documents.find(d => d.category === category);
-                            if (firstDoc) {
-                                this.activateDocument(firstDoc.globalIndex);
-                            }
+                        // Category click — show intro
+                        this.activeCategory = category;
+                        if (isDoubleClick && this._showingIntro) {
+                            // Double-click on category while showing intro — make intro sticky
+                            // (intro is virtual, no doc index to pin)
                         }
+                        this.activateCategoryIntro(category);
                     } else if (docIndex !== null && docIndex !== undefined) {
+                        // Double-click on a document — make it sticky
+                        if (isDoubleClick) {
+                            this.tabManager.state.makeSticky(docIndex);
+                            const introInfo = this._introCacheSync(this.activeCategory);
+                            this.tabManager.renderTabs(this.documents, this.activeCategory, docIndex, introInfo);
+                            this.tabManager.updateActiveState(docIndex);
+                            return;
+                        }
+
                         if (headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
                             this.tocManager.jumpToHeader(headerId, this.documents[docIndex]);
                         } else if (!headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
-                            // Document root node clicked — scroll to top (cover/first page)
                             const sc = this.tocManager.getScrollContainer(this.documents[docIndex]);
                             if (sc) sc.scrollTo({ top: 0 });
                         } else {
@@ -116,23 +129,13 @@ class DocumentBrowser {
             // Navigate to initial document
             const hashParams = this.parseHash();
             if (hashParams.category && this.categories.includes(hashParams.category)) {
-                this.activeCategory = hashParams.category;
-                this.tabManager.renderTabs(this.documents, this.activeCategory);
                 if (hashParams.tab !== null) {
                     await this.navigateToDocument(hashParams.category, hashParams.tab);
                 } else {
-                    const firstDoc = this.documents.find(d => d.category === hashParams.category);
-                    if (firstDoc) {
-                        await this.activateDocument(firstDoc.globalIndex);
-                    }
+                    await this.activateCategoryIntro(hashParams.category);
                 }
             } else if (this.categories.length > 0) {
-                this.activeCategory = this.categories[0];
-                this.tabManager.renderTabs(this.documents, this.activeCategory);
-                const firstDoc = this.documents.find(d => d.category === this.activeCategory);
-                if (firstDoc) {
-                    await this.activateDocument(firstDoc.globalIndex);
-                }
+                await this.activateCategoryIntro(this.categories[0]);
             }
         } catch (error) {
             console.error('Initialization error:', error);
@@ -291,21 +294,23 @@ class DocumentBrowser {
         if (!doc) return;
 
         const activationVersion = ++this._activationVersion;
-
-        const wasClosed = this.tabManager.closedTabs.has(globalIndex);
-        if (wasClosed) {
-            this.tabManager.closedTabs.delete(globalIndex);
-        }
+        this._showingIntro = false;
 
         const isNewDocument = this.activeDocumentIndex !== globalIndex || this._isRendering;
+        const categoryChanged = this.activeCategory !== doc.category;
 
-        if (this.activeCategory !== doc.category) {
+        if (categoryChanged) {
             this.activeCategory = doc.category;
-            this.tabManager.renderTabs(this.documents, this.activeCategory);
-        } else if (wasClosed) {
-            this.tabManager.renderTabs(this.documents, this.activeCategory);
         }
 
+        // Ensure the intro cache is populated for this category (non-blocking if already cached).
+        if (!(doc.category in this.loader._introCache)) {
+            await this.loader.loadCategoryIntro(doc.category);
+        }
+        if (this._activationVersion !== activationVersion) return;
+
+        const introInfo = this._introCacheSync(doc.category);
+        this.tabManager.renderTabs(this.documents, this.activeCategory, globalIndex, introInfo);
         this.tabManager.updateActiveState(globalIndex);
 
         if (!doc.loaded || (this.isPdf(doc) && !doc.pdfDoc)) {
@@ -344,6 +349,67 @@ class DocumentBrowser {
 
         if (!headerId) {
             this.tocManager.setNodeActive(`doc-${globalIndex}`);
+        }
+    }
+
+    async _getIntroInfo(category) {
+        const intro = await this.loader.loadCategoryIntro(category);
+        if (intro) {
+            return { category, label: category };
+        }
+        return null;
+    }
+
+    /** Synchronous version — only works if the intro was already fetched and cached. */
+    _introCacheSync(category) {
+        const cached = this.loader._introCache[category];
+        return cached ? { category, label: category } : null;
+    }
+
+    async activateCategoryIntro(category) {
+        this.activeCategory = category;
+        this._showingIntro = true;
+        this.activeDocumentIndex = null;
+
+        const introInfo = await this._getIntroInfo(category);
+        this.tabManager.renderTabs(this.documents, category, null, introInfo);
+
+        if (introInfo) {
+            this.tabManager.setIntroActive();
+
+            // Render the intro content
+            const intro = await this.loader.loadCategoryIntro(category);
+            if (intro && !intro.error) {
+                this.pdfRenderer.cleanup();
+                this.layoutManager.disconnectLayoutObserver();
+                this.contentContainer.innerHTML = '';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'document-content active md-doc';
+
+                const innerDiv = document.createElement('div');
+                innerDiv.className = 'document-content-inner';
+                innerDiv.innerHTML = intro.content;
+
+                contentDiv.appendChild(innerDiv);
+                this.contentContainer.appendChild(contentDiv);
+
+                this.contentContainer.querySelectorAll('pre code').forEach((block) => {
+                    if (!block.classList.contains('language-mermaid')) {
+                        hljs.highlightElement(block);
+                    }
+                });
+                this.renderMermaidBlocks(innerDiv);
+                this.renderDrawioBlocks(innerDiv);
+                this.setupCodeCopyButtons();
+            }
+        } else {
+            // No intro — fall back to first document
+            const firstDoc = this.documents.find(d => d.category === category);
+            if (firstDoc) {
+                this._showingIntro = false;
+                this.activateDocument(firstDoc.globalIndex);
+            }
         }
     }
 

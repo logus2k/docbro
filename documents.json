@@ -1,4 +1,9 @@
 {
+	"categories": {
+		"noted": {
+			"intro": "categories/noted/intro.md"
+		}
+	},
 	"documents": [
 		{
 			"name": "Installation",
@@ -214,6 +219,27 @@
 			"category": "MLOps",
 			"location": "categories/mlops/human_side.md"
 		},
+
+		{
+			"name": "Overview",
+			"category": "noted",
+			"location": "categories/noted/architecture.md"
+		},
+		{
+			"name": "Vision",
+			"category": "noted",
+			"location": "categories/noted/noted_vision.md"
+		},
+		{
+			"name": "Scope",
+			"category": "noted",
+			"location": "categories/noted/noted_scope.md"
+		},
+		{
+			"name": "Plan",
+			"category": "noted",
+			"location": "categories/noted/noted_plan.md"
+		},		
 
 		{
 			"name": "Overview",

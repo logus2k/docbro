@@ -6,6 +6,8 @@ export class DocumentLoader {
         this.configPath = configPath;
         this.documents = [];
         this.categories = [];
+        this.categoryConfig = {};  // per-category config from documents.json
+        this._introCache = {};     // category → { content, loaded, error }
     }
 
     isPdf(doc) {
@@ -19,6 +21,7 @@ export class DocumentLoader {
                 throw new Error(`Failed to load configuration: ${response.status}`);
             }
             const config = await response.json();
+            this.categoryConfig = config.categories || {};
             this.documents = (config.documents || []).map((doc, index) => ({
                 ...doc,
                 globalIndex: index,
@@ -27,6 +30,7 @@ export class DocumentLoader {
                 error: false,
                 headers: null,
                 configHeaders: doc.headers || null,
+                openByDefault: doc.openByDefault || false,
                 pdfDoc: null
             }));
         } catch (error) {
@@ -85,6 +89,55 @@ export class DocumentLoader {
             doc.error = true;
             doc.loaded = true;
             return false;
+        }
+    }
+
+    /**
+     * Resolve the intro file location for a category.
+     * Priority: explicit categoryConfig.intro > convention (intro.md in category folder).
+     */
+    getIntroLocation(category) {
+        const catCfg = this.categoryConfig[category];
+        if (catCfg && catCfg.intro) {
+            return catCfg.intro;
+        }
+        // Convention: derive folder from the first document in the category
+        const firstDoc = this.documents.find(d => d.category === category);
+        if (firstDoc) {
+            const folder = firstDoc.location.substring(0, firstDoc.location.lastIndexOf('/') + 1);
+            return folder + 'intro.md';
+        }
+        return null;
+    }
+
+    /**
+     * Load and render the intro markdown for a category.
+     * Returns { content, error } or null if no intro exists.
+     */
+    async loadCategoryIntro(category) {
+        if (category in this._introCache) {
+            return this._introCache[category];
+        }
+
+        const location = this.getIntroLocation(category);
+        if (!location) {
+            this._introCache[category] = null;
+            return null;
+        }
+
+        try {
+            const response = await fetch(location);
+            if (!response.ok) {
+                this._introCache[category] = null;
+                return null;
+            }
+            const markdown = await response.text();
+            const entry = { content: this.renderMarkdown(markdown), error: false };
+            this._introCache[category] = entry;
+            return entry;
+        } catch {
+            this._introCache[category] = null;
+            return null;
         }
     }
 

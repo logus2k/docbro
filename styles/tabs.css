@@ -36,6 +36,11 @@
     margin-top: 1px;
 }
 
+/* Sticky tab indicator */
+.tab.sticky {
+    border-top: 2px solid #ffc630;
+}
+
 /* Close button */
 .tab-close-btn {
     position: absolute;

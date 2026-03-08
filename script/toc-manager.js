@@ -8,6 +8,8 @@ export class TocManager {
         this.treeInstance = null;
         this.scrollSyncEnabled = true;
         this._scrollHandler = null;
+        this._lastClickKey = null;
+        this._lastClickTime = 0;
     }
 
     buildTree(categories, documents) {
@@ -61,12 +63,18 @@ export class TocManager {
                     return;
                 }
 
+                // Double-click detection
+                const now = Date.now();
+                const isDoubleClick = (key === this._lastClickKey && now - this._lastClickTime < 400);
+                this._lastClickKey = key;
+                this._lastClickTime = now;
+
                 // Header node
                 if (key.match(/^doc-\d+-header-/)) {
                     const match = key.match(/^doc-(\d+)-header-/);
                     if (match) {
                         const docIndex = parseInt(match[1], 10);
-                        this.onActivateDocument(docIndex, key);
+                        this.onActivateDocument(docIndex, key, undefined, false, isDoubleClick);
                     }
                     if (node.children && node.children.length > 0) {
                         node.setExpanded(!node.isExpanded());
@@ -79,7 +87,8 @@ export class TocManager {
                 if (key.startsWith('cat-')) {
                     const category = key.replace('cat-', '');
                     node.setExpanded(!node.isExpanded());
-                    this.onActivateDocument(null, null, category);
+                    node.setActive(true, { noEvents: true });
+                    this.onActivateDocument(null, null, category, false, isDoubleClick);
                     return false;
                 }
 
@@ -87,7 +96,7 @@ export class TocManager {
                 if (key.match(/^doc-\d+$/)) {
                     const docIndex = parseInt(key.replace('doc-', ''), 10);
                     node.setExpanded(!node.isExpanded());
-                    this.onActivateDocument(docIndex);
+                    this.onActivateDocument(docIndex, undefined, undefined, false, isDoubleClick);
                     return false;
                 }
             }
