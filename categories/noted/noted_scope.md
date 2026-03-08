@@ -1,4 +1,4 @@
-# noted - Integrated MLOps Platform Scope
+# Project Scope
 
 ## Document Information
 

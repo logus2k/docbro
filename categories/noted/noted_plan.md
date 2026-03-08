@@ -1,4 +1,4 @@
-# noted - Integrated MLOps Platform Plan
+# Project Plan
 
 ## Document Information
 

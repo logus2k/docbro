@@ -1,4 +1,4 @@
-# noted - Integrated MLOps Platform Vision
+# Project Vision
 
 ## Document Information
 
