@@ -1,7 +1,5 @@
 # Apache Airflow Core Concepts
 
----
-
 ## DAG
 
 A **DAG** (Directed Acyclic Graph) is the workflow definition. It describes what tasks exist, how they depend on each other, and when the workflow should run. No execution logic lives in the DAG itself - it is purely structural.
