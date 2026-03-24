@@ -5,6 +5,12 @@
 		}
 	},
 	"documents": [
+		
+		{
+			"name": "Concepts",
+			"category": "Apache Airflow",
+			"location": "categories/airflow/airflow_concepts.md"
+		},		
 		{
 			"name": "Installation",
 			"category": "Apache Airflow",
@@ -402,6 +408,12 @@
 			"category": "ISCTE - Advanced Concepts in Deep Learning",
 			"location": "categories/reports/taap/taap_mp1_group1_report.pdf"
 		},
+		{
+			"name": "Multi-Step Temperature Forecasting",
+			"category": "ISCTE - Advanced Concepts in Deep Learning",
+			"location": "categories/reports/taap/group1_mp3_report.pdf"
+		},		
+
 
 		{
 			"name": "MNIST Digits",
