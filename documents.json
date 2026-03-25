@@ -7,6 +7,12 @@
 	"documents": [
 		
 		{
+			"name": "AI Strategy",
+			"category": "AI",
+			"location": "categories/ai/ai_strategy.md"
+		},	
+		
+		{
 			"name": "Concepts",
 			"category": "Apache Airflow",
 			"location": "categories/airflow/airflow_concepts.md"
