@@ -9,8 +9,6 @@ import { TabManager } from './tab-manager.js';
 import { LayoutManager } from './layout-manager.js';
 import { PdfRenderer } from './pdf-renderer.js';
 import { TocManager } from './toc-manager.js';
-import { ChatPanel } from './chat-panel.js';
-import { ChatService } from './chat-service.js';
 
 GlobalWorkerOptions.workerSrc = './libraries/pdf.js/pdf.worker.min.mjs';
 
@@ -119,11 +117,12 @@ class DocumentBrowser {
 
             this.layoutManager.initSplitPane();
             this.tocManager.buildTree(this.categories, this.documents);
-            this.chatPanel = new ChatPanel(document.getElementById('rightPane'));
-            this.chatService = new ChatService(this.chatPanel);
-            this.chatService.connect().catch(err => {
-                console.error('Chat service connection failed:', err);
-            });
+            // Chat panel disabled (pending rework)
+            // this.chatPanel = new ChatPanel(document.getElementById('rightPane'));
+            // this.chatService = new ChatService(this.chatPanel);
+            // this.chatService.connect().catch(err => {
+            //     console.error('Chat service connection failed:', err);
+            // });
             this.setupHashChangeListener();
 
             // Navigate to initial document

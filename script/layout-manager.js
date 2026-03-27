@@ -14,16 +14,13 @@ export class LayoutManager {
     initSplitPane() {
         const tocPane = document.getElementById('tocPane');
         const rightPane = document.getElementById('rightPane');
-        const container = tocPane.parentElement;
-        const containerWidth = container.getBoundingClientRect().width;
 
         const tocPct = 16;
-        const rightPct = containerWidth > 0 ? (450 / containerWidth) * 100 : 30;
-        const contentPct = 100 - tocPct - rightPct;
+        const contentPct = 100 - tocPct;
 
         this._splitInstance = Split(['#tocPane', '#contentPane', '#rightPane'], {
-            sizes: [tocPct, contentPct, rightPct],
-            minSize: [5, 5, 5],
+            sizes: [tocPct, contentPct, 0],
+            minSize: [5, 5, 0],
             gutterSize: 6,
             cursor: 'col-resize',
             onDragEnd: () => {
