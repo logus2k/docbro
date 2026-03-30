@@ -169,7 +169,13 @@
 			"name": "MLflow",
 			"category": "MLflow",
 			"location": "categories/mlflow/mlflow.pdf"
-		},	
+		},
+
+		{
+			"name": "noted",
+			"category": "MLOps",
+			"location": "categories/mlops/emi_tutorial2.md"
+		},		
 
 		{
 			"name": "What is MLOps",
