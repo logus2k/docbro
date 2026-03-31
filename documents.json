@@ -424,7 +424,12 @@
 			"name": "Multi-Step Temperature Forecasting",
 			"category": "ISCTE - Advanced Concepts in Deep Learning",
 			"location": "categories/reports/taap/group1_mp3_report.pdf"
-		},		
+		},
+		{
+			"name": "P4 Summary Report",
+			"category": "ISCTE - Advanced Concepts in Deep Learning",
+			"location": "categories/reports/taap/taap_p4_executive_summary.md"
+		},			
 
 
 		{
