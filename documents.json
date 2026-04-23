@@ -5,7 +5,78 @@
 		}
 	},
 	"documents": [
-		
+
+		{
+			"name": "Hydra",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/01_hydra.md"
+		},
+		{
+			"name": "MLflow",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/02_mlflow.md"
+		},
+		{
+			"name": "DVC",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/03_dvc.md"
+		},
+		{
+			"name": "Evidently",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/04_evidently.md"
+		},
+		{
+			"name": "End-to-End Scenarios",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/05_end_to_end_scenarios.md"
+		},
+		{
+			"name": "Frontend Architecture",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/06_frontend_architecture.md"
+		},
+		{
+			"name": "Backend Architecture",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/07_backend_architecture.md"
+		},
+		{
+			"name": "Notebook Execution Flow",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/08_notebook_execution_flow.md"
+		},
+		{
+			"name": "Configuration Composer + Time Machine",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/09_configuration_composer.md"
+		},
+		{
+			"name": "Model Serving",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/10_model_serving.md"
+		},
+		{
+			"name": "AI Assistant + MCP",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/11_ai_assistant_mcp.md"
+		},
+		{
+			"name": "Knowledge Graph",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/12_knowledge_graph.md"
+		},
+		{
+			"name": "Multi-Language Runtime",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/13_multi_language_runtime.md"
+		},
+		{
+			"name": "Infrastructure & Deployment",
+			"category": "noted Developer Manual",
+			"location": "categories/noted_developer_manual/14_infrastructure_deployment.md"
+		},
+
 		{
 			"name": "AI Strategy",
 			"category": "AI",
@@ -398,6 +469,83 @@
 			"name": "Physics Guide",
 			"category": "Webots",
 			"location": "categories/webots/physics.guide.md"
+		},
+
+		{
+			"name": "Syllabus",
+			"category": "Computational Optimization",
+			"location": "categories/co/syllabus.md"
+		},
+		{
+			"name": "MML",
+			"category": "Computational Optimization",
+			"location": "categories/co/books/mml-book.pdf"
+		},
+
+		{
+			"name": "Summary",
+			"category": "Time-Series",
+			"location": "categories/time_series/00_notebook_report.md"
+		},
+		{
+			"name": "Goals",
+			"category": "Time-Series",
+			"location": "categories/time_series/01_project_goal.md"
+		},
+		{
+			"name": "Dataset",
+			"category": "Time-Series",
+			"location": "categories/time_series/02_dataset_and_problem_definition.md"
+		},
+		{
+			"name": "Data Preparation",
+			"category": "Time-Series",
+			"location": "categories/time_series/03_data_preparation_and_feature_engineering.md"
+		},
+		{
+			"name": "Windowing",
+			"category": "Time-Series",
+			"location": "categories/time_series/04_split_scaling_and_windowing.md"
+		},
+		{
+			"name": "Baselines",
+			"category": "Time-Series",
+			"location": "categories/time_series/05_baseline_models.md"
+		},
+		{
+			"name": "TimeGAN",
+			"category": "Time-Series",
+			"location": "categories/time_series/06_timegan_synthetic_data.md"
+		},
+		{
+			"name": "Optimization",
+			"category": "Time-Series",
+			"location": "categories/time_series/07_evolutionary_optimization.md"
+		},
+		{
+			"name": "Retraining",
+			"category": "Time-Series",
+			"location": "categories/time_series/08_retraining_and_model_selection.md"
+		},
+		{
+			"name": "Explainability",
+			"category": "Time-Series",
+			"location": "categories/time_series/09_explainable_ai.md"
+		},
+		{
+			"name": "Efficiency",
+			"category": "Time-Series",
+			"location": "categories/time_series/10_efficiency_analysis.md"
+		},
+		{
+			"name": "Conclusion",
+			"category": "Time-Series",
+			"location": "categories/time_series/11_discussion_and_conclusion.md"
+		},
+		{
+			"name": "Q&A",
+			"category": "Time-Series",
+			"location": "categories/time_series/12_notebook_q_and_a.md"
 		},
 
 		{
