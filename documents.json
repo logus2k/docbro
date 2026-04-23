@@ -7,77 +7,6 @@
 	"documents": [
 
 		{
-			"name": "Hydra",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/01_hydra.md"
-		},
-		{
-			"name": "MLflow",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/02_mlflow.md"
-		},
-		{
-			"name": "DVC",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/03_dvc.md"
-		},
-		{
-			"name": "Evidently",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/04_evidently.md"
-		},
-		{
-			"name": "End-to-End Scenarios",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/05_end_to_end_scenarios.md"
-		},
-		{
-			"name": "Frontend Architecture",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/06_frontend_architecture.md"
-		},
-		{
-			"name": "Backend Architecture",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/07_backend_architecture.md"
-		},
-		{
-			"name": "Notebook Execution Flow",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/08_notebook_execution_flow.md"
-		},
-		{
-			"name": "Configuration Composer + Time Machine",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/09_configuration_composer.md"
-		},
-		{
-			"name": "Model Serving",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/10_model_serving.md"
-		},
-		{
-			"name": "AI Assistant + MCP",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/11_ai_assistant_mcp.md"
-		},
-		{
-			"name": "Knowledge Graph",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/12_knowledge_graph.md"
-		},
-		{
-			"name": "Multi-Language Runtime",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/13_multi_language_runtime.md"
-		},
-		{
-			"name": "Infrastructure & Deployment",
-			"category": "noted Developer Manual",
-			"location": "categories/noted_developer_manual/14_infrastructure_deployment.md"
-		},
-
-		{
 			"name": "AI Strategy",
 			"category": "AI",
 			"location": "categories/ai/ai_strategy.md"
@@ -328,7 +257,37 @@
 			"name": "Plan",
 			"category": "noted",
 			"location": "categories/noted/noted_plan.md"
-		},		
+		},
+		{
+			"name": "Project Report",
+			"category": "noted",
+			"location": "categories/noted/project_report.pdf"
+		},
+		{
+			"name": "Developer Manual",
+			"category": "noted",
+			"location": "categories/noted/developer_manual.pdf"
+		},
+		{
+			"name": "User Manual",
+			"category": "noted",
+			"location": "categories/noted/user_manual.pdf"
+		},
+		{
+			"name": "Notebook Companion",
+			"category": "noted",
+			"location": "categories/noted/notebook_companion.pdf"
+		},
+		{
+			"name": "Technical Architecture",
+			"category": "noted",
+			"location": "categories/noted/technical_architecture.pdf"
+		},
+		{
+			"name": "Setup and Installation Manual",
+			"category": "noted",
+			"location": "categories/noted/setup_and_installation_manual.pdf"
+		},
 
 		{
 			"name": "Overview",
@@ -574,10 +533,15 @@
 			"location": "categories/reports/taap/group1_mp3_report.pdf"
 		},
 		{
-			"name": "P4 Summary Report",
+			"name": "ATS Summary",
 			"category": "ISCTE - Advanced Concepts in Deep Learning",
 			"location": "categories/reports/taap/taap_p4_executive_summary.md"
-		},			
+		},
+		{
+			"name": "Advanced Time Series",
+			"category": "ISCTE - Advanced Concepts in Deep Learning",
+			"location": "categories/reports/taap/final_project_v8.pdf"
+		},
 
 
 		{
