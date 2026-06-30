@@ -228,7 +228,10 @@ export class PdfRenderer {
         // refresh re-rasterizes an already-rendered page in place).
         this._clearPageContent(pageDiv);
         pageDiv.appendChild(canvas);
-        pageDiv.style.aspectRatio = '';
+        // Keep a deterministic box aspect-ratio so the page's height is fixed
+        // by its width (never collapses if the canvas reports no intrinsic
+        // height, e.g. inside a CSS grid row in some browsers).
+        pageDiv.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
         pageDiv._renderedCssWidth = cssWidth;
 
         // --- Text layer ---

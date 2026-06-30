@@ -6,15 +6,15 @@ export class LayoutManager {
         this.onZoomApplied = onZoomApplied;
         this.onStateChanged = onStateChanged;
 
-        // PDF view state. `columns` = pages per row (1–4). `pdfZoom` is a
-        // multiplier where 1 == fit the configured columns across the width.
-        // `fitMode` drives how zoom recomputes on resize / rotation.
+        // PDF view state. `columns` = pages per row (1–4). Page sizing is
+        // computed in pixels (pageWidthPx) and pushed to CSS; `pdfZoom` is a
+        // derived readout where 1 == fit-width. `fitMode` drives how the size
+        // recomputes on resize / rotation.
         this.columns = 1;
         this.pdfZoom = 1;
+        this.pageWidthPx = 0;
         this.fitMode = 'page'; // 'width' | 'page' | 'custom'
-
-        this.MIN_ZOOM = 0.1;
-        this.MAX_ZOOM = 5;
+        this.GAP = 6;          // px gap between pages in a row (matches CSS grid gap)
 
         this._layoutResizeObserver = null;
         this._zoomRefreshTimer = null;
@@ -58,6 +58,11 @@ export class LayoutManager {
     }
 
     // --- PDF layout (columns + zoom) ---
+    //
+    // Page sizing is computed in JS (px) and pushed to CSS via --pdf-page-width;
+    // applyColumns sets --pdf-grid-cols to repeat(N, max-content). A centred CSS
+    // grid then shows exactly N pages per row, adjacent, with spare width on the
+    // outer edges — regardless of how tall/short the pages are.
 
     _pdfContent() {
         return this.contentContainer.querySelector('.pdf-content');
@@ -67,112 +72,108 @@ export class LayoutManager {
         const pdfContent = this._pdfContent();
         if (!pdfContent) return;
         pdfContent.classList.add('pdf-cols');
-        pdfContent.style.setProperty('--pdf-columns', this.columns);
-    }
-
-    applyZoom() {
-        const pdfContent = this._pdfContent();
-        if (!pdfContent) return;
-        pdfContent.style.setProperty('--pdf-zoom', this.pdfZoom);
-
-        // After layout settles, re-rasterize visible pages at the new size so
-        // zoomed-in text is rendered sharp rather than CSS-upscaled. Debounced
-        // because the zoom buttons/resize can fire a stream of updates.
-        if (this.onZoomApplied) {
-            clearTimeout(this._zoomRefreshTimer);
-            this._zoomRefreshTimer = setTimeout(() => this.onZoomApplied(), 150);
-        }
-    }
-
-    // Zoom multiplier for a fit mode. 1 == one page exactly fills its column
-    // ('width'); 'page' shrinks further so a whole page fits the height.
-    computeFitZoom(mode) {
-        const pdfContent = this._pdfContent();
-        if (!pdfContent) return 1;
-        if (mode === 'width') return 1;
-
-        const style = getComputedStyle(pdfContent);
-        const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-        const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-        const availableWidth = pdfContent.clientWidth - padX;
-        const availableHeight = pdfContent.clientHeight - padY;
-
-        let pageAspect = 900 / 1165; // width / height fallback
-        const firstDiv = this.getPdfPageDivs()[0];
-        if (firstDiv && firstDiv._pdfViewport) {
-            const vp = firstDiv._pdfViewport;
-            pageAspect = vp.width / vp.height;
-        }
-
-        const gap = 6;
-        const colWidth = (availableWidth - (this.columns - 1) * gap) / this.columns;
-        if (colWidth <= 0) return 1;
-        const pageHeightAtFitWidth = colWidth / pageAspect;
-        if (pageHeightAtFitWidth <= 0) return 1;
-        return Math.min(1, availableHeight / pageHeightAtFitWidth);
-    }
-
-    _clampZoom(z) {
-        return Math.min(this.MAX_ZOOM, Math.max(this.MIN_ZOOM, z));
+        // N fixed content-sized columns => exactly N pages per row; the grid is
+        // centred so spare width sits on the outer edges, not between pages.
+        pdfContent.style.setProperty('--pdf-grid-cols', `repeat(${this.columns}, max-content)`);
     }
 
     _notify() {
         if (this.onStateChanged) this.onStateChanged();
     }
 
+    // Available content box + first page aspect (width / height) + per-column slot.
+    _metrics() {
+        const pdfContent = this._pdfContent();
+        if (!pdfContent) return null;
+        const style = getComputedStyle(pdfContent);
+        const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+        const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+        const availW = Math.max(1, pdfContent.clientWidth - padX);
+        const availH = Math.max(1, pdfContent.clientHeight - padY);
+
+        let aspect = 900 / 1165; // width / height fallback
+        const firstDiv = this.getPdfPageDivs()[0];
+        if (firstDiv && firstDiv._pdfViewport) {
+            aspect = firstDiv._pdfViewport.width / firstDiv._pdfViewport.height;
+        }
+        // Per-column width: the available width split into N columns with a
+        // GAP between them, minus 1px slack so rounding never overflows.
+        const slot = Math.max(20, Math.floor((availW - (this.columns - 1) * this.GAP) / this.columns) - 1);
+        return { availW, availH, aspect, slot };
+    }
+
+    // Push a concrete page width (px) to CSS. The grid (N max-content columns,
+    // centred) keeps exactly N pages per row, adjacent, with the spare width on
+    // the outer edges — so no per-page margin is needed here.
+    _applyPageWidth(pageWidth, m) {
+        const pdfContent = this._pdfContent();
+        if (!pdfContent) return;
+        const pw = Math.max(20, Math.floor(pageWidth));
+        this.pageWidthPx = pw;
+        // Readout: 100% == fit-width (page fills its column).
+        this.pdfZoom = pw / Math.max(1, m.slot);
+
+        pdfContent.style.setProperty('--pdf-page-width', pw + 'px');
+
+        if (this.onZoomApplied) {
+            clearTimeout(this._zoomRefreshTimer);
+            this._zoomRefreshTimer = setTimeout(() => this.onZoomApplied(), 150);
+        }
+        this._notify();
+    }
+
+    _fitWidthPx(m) {
+        return m.slot;
+    }
+
+    _fitPagePx(m) {
+        // Largest page that fits both its column width and the viewport height.
+        return Math.max(20, Math.min(m.slot, Math.floor(m.availH * m.aspect)));
+    }
+
     // Called when a PDF is first shown: one column, whole first page visible.
     initForDocument() {
         this.columns = 1;
-        this.fitMode = 'page';
         this.applyColumns();
-        this.pdfZoom = this._clampZoom(this.computeFitZoom('page'));
-        this.applyZoom();
+        this.fitPage();
         this._setupLayoutResizeObserver();
-        this._notify();
     }
 
     setColumns(n) {
         this.columns = Math.min(4, Math.max(1, Math.round(n)));
         this.applyColumns();
-        // Refit to width so the new column count fills the area cleanly.
-        this.fitMode = 'width';
-        this.pdfZoom = this._clampZoom(this.computeFitZoom('width'));
-        this.applyZoom();
-        this._notify();
+        this.fitPage(); // each column count defaults to whole-page-visible
     }
 
     fitWidth() {
+        const m = this._metrics();
+        if (!m) return;
         this.fitMode = 'width';
-        this.pdfZoom = this._clampZoom(this.computeFitZoom('width'));
-        this.applyZoom();
-        this._notify();
+        this._applyPageWidth(this._fitWidthPx(m), m);
     }
 
     fitPage() {
+        const m = this._metrics();
+        if (!m) return;
         this.fitMode = 'page';
-        this.pdfZoom = this._clampZoom(this.computeFitZoom('page'));
-        this.applyZoom();
-        this._notify();
-    }
-
-    setZoom(z) {
-        this.fitMode = 'custom';
-        this.pdfZoom = this._clampZoom(z);
-        this.applyZoom();
-        this._notify();
+        this._applyPageWidth(this._fitPagePx(m), m);
     }
 
     zoomBy(factor) {
-        this.setZoom(this.pdfZoom * factor);
+        const m = this._metrics();
+        if (!m) return;
+        this.fitMode = 'custom';
+        const base = this.pageWidthPx || this._fitPagePx(m);
+        this._applyPageWidth(Math.max(20, base * factor), m);
     }
 
     // Re-fit after an external geometry change (e.g. rotation) using current mode.
     refit() {
-        if (this.fitMode !== 'custom') {
-            this.pdfZoom = this._clampZoom(this.computeFitZoom(this.fitMode));
-        }
-        this.applyZoom();
-        this._notify();
+        const m = this._metrics();
+        if (!m) return;
+        if (this.fitMode === 'width') this._applyPageWidth(this._fitWidthPx(m), m);
+        else if (this.fitMode === 'custom') this._applyPageWidth(this.pageWidthPx || this._fitPagePx(m), m);
+        else this._applyPageWidth(this._fitPagePx(m), m);
     }
 
     _setupLayoutResizeObserver() {
@@ -183,16 +184,8 @@ export class LayoutManager {
         const pdfContent = this._pdfContent();
         if (!pdfContent) return;
 
-        this._layoutResizeObserver = new ResizeObserver(() => {
-            // 'width'/'custom' are handled by the %-based CSS automatically;
-            // just refresh raster + readouts. 'page' must recompute fit zoom.
-            if (this.fitMode === 'page') {
-                const z = this._clampZoom(this.computeFitZoom('page'));
-                if (Math.abs(z - this.pdfZoom) > 0.005) this.pdfZoom = z;
-            }
-            this.applyZoom();
-            this._notify();
-        });
+        // Recompute pixel widths against the new content box for every mode.
+        this._layoutResizeObserver = new ResizeObserver(() => this.refit());
         this._layoutResizeObserver.observe(pdfContent);
     }
 

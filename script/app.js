@@ -52,7 +52,6 @@ class DocumentBrowser {
             });
 
             this.lightbox = new Lightbox(this.contentContainer);
-            this.setupModeToggle();
 
             // Data
             await this.loader.loadConfiguration();
@@ -116,8 +115,11 @@ class DocumentBrowser {
                         if (headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
                             this.tocManager.jumpToHeader(headerId, this.documents[docIndex]);
                         } else if (!headerId && this.activeDocumentIndex === docIndex && !this._isRendering) {
-                            const sc = this.tocManager.getScrollContainer(this.documents[docIndex]);
-                            if (sc) sc.scrollTo({ top: 0 });
+                            // Scroll to top WITHOUT letting scroll-sync snap the
+                            // selection back to the first section — keep the
+                            // document (parent) node selected.
+                            this.tocManager.scrollToTop(this.documents[docIndex]);
+                            this.tocManager.setNodeActive(`doc-${docIndex}`);
                         } else {
                             this.activateDocument(docIndex, headerId);
                         }
@@ -153,46 +155,13 @@ class DocumentBrowser {
     }
 
 
-    // --- Mode toggle ---
-
-    setupModeToggle() {
-        const container = document.createElement('div');
-        container.className = 'mode-toggle-container';
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'mode-toggle-btn';
-        editBtn.id = 'editModeBtn';
-        editBtn.title = 'Selection mode';
-        editBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M14.236 1.76386C13.2123 0.740172 11.5525 0.740171 10.5289 1.76386L2.65722 9.63549C2.28304 10.0097 2.01623 10.4775 1.88467 10.99L1.01571 14.3755C0.971767 14.5467 1.02148 14.7284 1.14646 14.8534C1.27144 14.9783 1.45312 15.028 1.62432 14.9841L5.00978 14.1151C5.52234 13.9836 5.99015 13.7168 6.36433 13.3426L14.236 5.47097C15.2596 4.44728 15.2596 2.78755 14.236 1.76386ZM11.236 2.47097C11.8691 1.8378 12.8957 1.8378 13.5288 2.47097C14.162 3.10413 14.162 4.1307 13.5288 4.76386L12.75 5.54269L10.4571 3.24979L11.236 2.47097ZM9.75002 3.9569L12.0429 6.24979L5.65722 12.6355C5.40969 12.883 5.10023 13.0595 4.76117 13.1465L2.19447 13.8053L2.85327 11.2386C2.9403 10.8996 3.1168 10.5901 3.36433 10.3426L9.75002 3.9569Z"/></svg>';
-        editBtn.addEventListener('click', () => this.setEditMode(true));
-
-        const readBtn = document.createElement('button');
-        readBtn.className = 'mode-toggle-btn';
-        readBtn.id = 'readModeBtn';
-        readBtn.title = 'Read mode';
-        readBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M2.5 2C1.67157 2 1 2.67157 1 3.5V12.5C1 13.3284 1.67157 14 2.5 14H6C6.8178 14 7.54389 13.6073 8 13.0002C8.45612 13.6073 9.1822 14 10 14H13.5C14.3284 14 15 13.3284 15 12.5V3.5C15 2.67157 14.3284 2 13.5 2H10C9.1822 2 8.45612 2.39267 8 2.99976C7.54389 2.39267 6.8178 2 6 2H2.5ZM7.5 4.5V11.5C7.5 12.3284 6.82843 13 6 13H2.5C2.22386 13 2 12.7761 2 12.5V3.5C2 3.22386 2.22386 3 2.5 3H6C6.82843 3 7.5 3.67157 7.5 4.5ZM8.5 11.5V4.5C8.5 3.67157 9.17157 3 10 3H13.5C13.7761 3 14 3.22386 14 3.5V12.5C14 12.7761 13.7761 13 13.5 13H10C9.17157 13 8.5 12.3284 8.5 11.5Z"/></svg>';
-        readBtn.addEventListener('click', () => this.setEditMode(false));
-
-        readBtn.classList.add('active');
-
-        container.appendChild(readBtn);
-        container.appendChild(editBtn);
-        document.body.appendChild(container);
-    }
-
     setEditMode(enabled) {
         this.editMode = enabled;
-        const editBtn = document.getElementById('editModeBtn');
-        const readBtn = document.getElementById('readModeBtn');
 
         if (enabled) {
-            editBtn.classList.add('active');
-            readBtn.classList.remove('active');
             this.selectionMode.activate();
             this.contentPanel.open();
         } else {
-            readBtn.classList.add('active');
-            editBtn.classList.remove('active');
             this.selectionMode.deactivate();
             this.contentPanel.close();
         }
@@ -373,13 +342,19 @@ class DocumentBrowser {
                 this.setupCodeCopyButtons();
             }
         } else {
-            // No intro — fall back to first document
+            // No intro — load the first document's content as a fallback, but
+            // keep the CATEGORY (root) node selected (see below).
             const firstDoc = this.documents.find(d => d.category === category);
             if (firstDoc) {
                 this._showingIntro = false;
-                this.activateDocument(firstDoc.globalIndex);
+                await this.activateDocument(firstDoc.globalIndex);
             }
         }
+
+        // Keep the clicked category (root) node selected in the tree — otherwise
+        // the no-intro fallback's activateDocument() leaves the first document
+        // node selected instead of the category the user clicked.
+        this.tocManager.setNodeActive(`cat-${category}`);
     }
 
     async renderDocument(globalIndex) {

@@ -10,6 +10,7 @@ export class TocManager {
         this._scrollHandler = null;
         this._lastClickKey = null;
         this._lastClickTime = 0;
+        this._engagedKey = null; // doc/category node the user has actively selected
     }
 
     buildTree(categories, documents) {
@@ -71,6 +72,7 @@ export class TocManager {
 
                 // Header node
                 if (key.match(/^doc-\d+-header-/)) {
+                    this._engagedKey = null;
                     const match = key.match(/^doc-(\d+)-header-/);
                     if (match) {
                         const docIndex = parseInt(match[1], 10);
@@ -86,7 +88,14 @@ export class TocManager {
                 // Category node
                 if (key.startsWith('cat-')) {
                     const category = key.replace('cat-', '');
-                    node.setExpanded(!node.isExpanded());
+                    if (this._engagedKey === key) {
+                        // Already selected: a repeat click toggles its children.
+                        node.setExpanded(!node.isExpanded());
+                    } else {
+                        // First click: select and reveal children, never collapse.
+                        node.setExpanded(true);
+                        this._engagedKey = key;
+                    }
                     node.setActive(true, { noEvents: true });
                     this.onActivateDocument(null, null, category, false, isDoubleClick);
                     return false;
@@ -95,7 +104,15 @@ export class TocManager {
                 // Document node
                 if (key.match(/^doc-\d+$/)) {
                     const docIndex = parseInt(key.replace('doc-', ''), 10);
-                    node.setExpanded(!node.isExpanded());
+                    if (this._engagedKey === key) {
+                        // Already selected: a repeat click toggles its children.
+                        node.setExpanded(!node.isExpanded());
+                    } else {
+                        // First click: select and reveal children, never collapse.
+                        node.setExpanded(true);
+                        this._engagedKey = key;
+                    }
+                    node.setActive(true, { noEvents: true });
                     this.onActivateDocument(docIndex, undefined, undefined, false, isDoubleClick);
                     return false;
                 }
@@ -220,6 +237,20 @@ export class TocManager {
             this.scrollSyncEnabled = true;
             this.pdfTocSync.syncEnabled = true;
         }, 300);
+    }
+
+    // Scroll the document to the top while suppressing scroll-sync, so the
+    // programmatic scroll can't re-activate the first section node (keeps the
+    // document/parent node selected when the user clicks it).
+    scrollToTop(doc) {
+        this.scrollSyncEnabled = false;
+        this.pdfTocSync.syncEnabled = false;
+        const scrollContainer = this.getScrollContainer(doc);
+        if (scrollContainer) scrollContainer.scrollTo({ top: 0 });
+        setTimeout(() => {
+            this.scrollSyncEnabled = true;
+            this.pdfTocSync.syncEnabled = true;
+        }, 400);
     }
 
     setupScrollSync(doc, getActiveDoc) {

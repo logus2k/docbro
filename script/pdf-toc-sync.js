@@ -246,28 +246,40 @@ export class PdfTocSync {
                 }
             }
 
-            // Find the last header whose page <= visiblePageIndex
+            // Find the last header at/above the visible page, and its page.
             let currentHeaderId = null;
+            let currentHeaderPage = -1;
             for (const h of headersByPage) {
                 if (h.page <= visiblePageIndex) {
                     currentHeaderId = h.id;
+                    currentHeaderPage = h.page;
                 } else {
                     break;
                 }
             }
+            if (!currentHeaderId) return;
 
-            if (currentHeaderId) {
-                const headerNode = treeInstance.findKey(currentHeaderId);
-                if (headerNode && !headerNode.isActive()) {
-                    try {
-                        headerNode.visitParents((p) => {
-                            if (!p.isExpanded()) {
-                                p.setExpanded(true);
-                            }
-                        });
-                        headerNode.setActive(true, { noEvents: true });
-                    } catch (e) { /* ignore */ }
-                }
+            // If the user's currently-active section already lives on this page,
+            // keep it — don't snap to the last header on the page. This lets an
+            // explicit TOC click stick even when a late scroll event (e.g. from
+            // lazy-render reflow) re-fires this handler.
+            const activeNode = (treeInstance.getActiveNode && treeInstance.getActiveNode())
+                || treeInstance.activeNode || null;
+            if (activeNode) {
+                const activeHeader = headers.find(h => h.id === activeNode.key);
+                if (activeHeader && activeHeader.page === currentHeaderPage) return;
+            }
+
+            const headerNode = treeInstance.findKey(currentHeaderId);
+            if (headerNode && !headerNode.isActive()) {
+                try {
+                    headerNode.visitParents((p) => {
+                        if (!p.isExpanded()) {
+                            p.setExpanded(true);
+                        }
+                    });
+                    headerNode.setActive(true, { noEvents: true });
+                } catch (e) { /* ignore */ }
             }
         };
 

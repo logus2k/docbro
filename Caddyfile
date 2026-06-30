@@ -23,6 +23,13 @@
 	header @html Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate"
 	header @html Pragma "no-cache"
 	header @html Expires "0"
-    
+
+	# Always revalidate app code/config so rebuilds are picked up immediately
+	# (defeats stale browser/proxy caches of mismatched JS/CSS).
+	@appcode {
+		path *.js *.mjs *.css *.json
+	}
+	header @appcode Cache-Control "no-cache, must-revalidate"
+
     file_server
 }
