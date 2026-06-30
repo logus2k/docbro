@@ -8,6 +8,7 @@ import { DocumentLoader } from './document-loader.js';
 import { TabManager } from './tab-manager.js';
 import { LayoutManager } from './layout-manager.js';
 import { PdfRenderer } from './pdf-renderer.js';
+import { PdfControls } from './pdf-controls.js';
 import { TocManager } from './toc-manager.js';
 
 GlobalWorkerOptions.workerSrc = './libraries/pdf.js/pdf.worker.min.mjs';
@@ -51,7 +52,6 @@ class DocumentBrowser {
             });
 
             this.lightbox = new Lightbox(this.contentContainer);
-            this.setupSettings();
             this.setupModeToggle();
 
             // Data
@@ -78,8 +78,17 @@ class DocumentBrowser {
             this.layoutManager = new LayoutManager({
                 contentContainer: this.contentContainer,
                 getPdfPageDivs: () => this.pdfRenderer.pdfPageDivs,
-                onZoomApplied: () => this.pdfRenderer.refreshResolution()
+                onZoomApplied: () => this.pdfRenderer.refreshResolution(),
+                onStateChanged: () => this.pdfControls?.syncReadouts()
             });
+
+            this.pdfControls = new PdfControls({
+                contentPane: document.getElementById('contentPane'),
+                layoutManager: this.layoutManager,
+                pdfRenderer: this.pdfRenderer,
+                getScrollContainer: () => this.contentContainer.querySelector('.pdf-content')
+            });
+            this.pdfControls.attach();
 
             this.tocManager = new TocManager({
                 contentContainer: this.contentContainer,
@@ -143,46 +152,6 @@ class DocumentBrowser {
         }
     }
 
-    // --- Settings ---
-
-    setupSettings() {
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsMenu = document.getElementById('settingsMenu');
-        const layoutRadios = settingsMenu.querySelectorAll('input[name="pageLayout"]');
-
-        settingsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            settingsMenu.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!settingsMenu.contains(e.target) && e.target !== settingsBtn) {
-                settingsMenu.classList.remove('active');
-            }
-        });
-
-        layoutRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.layoutManager.pageLayoutMode = e.target.value;
-                this.layoutManager.applyLayoutAndZoom();
-            });
-        });
-
-        const zoomSlider = document.getElementById('pdfZoomSlider');
-        const zoomValue = document.getElementById('pdfZoomValue');
-        zoomSlider.addEventListener('input', (e) => {
-            if (this.layoutManager.pageLayoutMode !== 'custom') {
-                this.layoutManager.pageLayoutMode = 'custom';
-                const customRadio = settingsMenu.querySelector('input[name="pageLayout"][value="custom"]');
-                if (customRadio) customRadio.checked = true;
-                this.layoutManager.applyPageLayout();
-                this.layoutManager._setupLayoutResizeObserver();
-            }
-            this.layoutManager.pdfZoom = parseInt(e.target.value, 10) / 100;
-            zoomValue.textContent = e.target.value + '%';
-            this.layoutManager.applyZoom();
-        });
-    }
 
     // --- Mode toggle ---
 
@@ -422,6 +391,7 @@ class DocumentBrowser {
 
         this.pdfRenderer.cleanup();
         this.layoutManager.disconnectLayoutObserver();
+        this.pdfControls?.showForDocument(false);
         this.contentContainer.innerHTML = '';
 
         const contentDiv = document.createElement('div');
@@ -448,11 +418,12 @@ class DocumentBrowser {
             await this.pdfRenderer.setupPlaceholders(doc.pdfDoc, innerDiv);
             // Bail if a newer document activation superseded this one
             if (this.activeDocumentIndex !== globalIndex) return;
-            this.layoutManager.applyLayoutAndZoom();
+            this.layoutManager.initForDocument();
             if (this.editMode && this.selectionMode) {
                 this.selectionMode.activate();
             }
             this.pdfRenderer.startLazyRendering(doc.pdfDoc, innerDiv);
+            this.pdfControls.showForDocument(true);
             return;
         } else {
             innerDiv.innerHTML = doc.content;

@@ -11,6 +11,7 @@ export class PdfRenderer {
         this._pdfOverlayEntries = [];
         this._pdfResizeObserver = null;
         this._renderVersion = 0;
+        this._rotation = 0;
 
         // Lazy rendering state
         this._intersectionObserver = null;
@@ -67,7 +68,7 @@ export class PdfRenderer {
             pageDiv.className = 'pdf-page';
 
             if (page) {
-                const viewport = page.getViewport({ scale });
+                const viewport = page.getViewport({ scale, rotation: this._rotation });
                 pageDiv.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
                 pageDiv._pdfPage = page;
                 pageDiv._pdfViewport = viewport;
@@ -236,8 +237,8 @@ export class PdfRenderer {
             if (this._renderVersion !== renderVersion || pageDiv._pageRenderVersion !== pageRenderVersion) return;
 
             const displayedWidth = pageDiv.clientWidth || viewport.width;
-            const textScale = displayedWidth / page.getViewport({ scale: 1 }).width;
-            const textViewport = page.getViewport({ scale: textScale });
+            const textScale = displayedWidth / page.getViewport({ scale: 1, rotation: this._rotation }).width;
+            const textViewport = page.getViewport({ scale: textScale, rotation: this._rotation });
 
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'textLayer';
@@ -342,16 +343,17 @@ export class PdfRenderer {
     // extreme zoom levels can't allocate runaway amounts of GPU memory.
     _computeRenderViewport(page, pageDiv) {
         const dpr = window.devicePixelRatio || 1;
-        const baseWidth = page.getViewport({ scale: 1 }).width;
+        const rotation = this._rotation;
+        const baseWidth = page.getViewport({ scale: 1, rotation }).width;
         const fallbackWidth = pageDiv._pdfViewport ? pageDiv._pdfViewport.width : baseWidth;
         const cssWidth = pageDiv.clientWidth || fallbackWidth;
         let scale = (cssWidth / baseWidth) * dpr;
 
         const MAX_CANVAS_PIXELS = 16_777_216; // ~16M px memory guard
-        let vp = page.getViewport({ scale });
+        let vp = page.getViewport({ scale, rotation });
         if (vp.width * vp.height > MAX_CANVAS_PIXELS) {
             scale *= Math.sqrt(MAX_CANVAS_PIXELS / (vp.width * vp.height));
-            vp = page.getViewport({ scale });
+            vp = page.getViewport({ scale, rotation });
         }
         return { viewport: vp, cssWidth };
     }
@@ -416,6 +418,101 @@ export class PdfRenderer {
         }
         if (queued) {
             this._processRenderQueue(this._pdfDoc, this._pdfContainer, renderVersion);
+        }
+    }
+
+    get rotation() {
+        return this._rotation;
+    }
+
+    get pageCount() {
+        return this._pdfPageDivs.length;
+    }
+
+    // Rotate every page by `deg` (absolute, normalized to 0/90/180/270),
+    // updating placeholder geometry and re-rasterizing rendered pages.
+    setRotation(deg) {
+        const norm = ((Math.round(deg / 90) * 90) % 360 + 360) % 360;
+        if (norm === this._rotation) return;
+        this._rotation = norm;
+
+        const renderVersion = this._renderVersion;
+        let queued = false;
+        for (const pageDiv of this._pdfPageDivs) {
+            const page = pageDiv._pdfPage;
+            if (!page) continue;
+            const vp = page.getViewport({ scale: 1.5, rotation: norm });
+            pageDiv._pdfViewport = vp;
+            pageDiv.style.aspectRatio = `${vp.width} / ${vp.height}`;
+            if (pageDiv._renderState === 'rendered' || pageDiv._renderState === 'rendering') {
+                pageDiv._renderState = 'idle';
+                pageDiv._renderedCssWidth = 0;
+                this._enqueueRender(pageDiv);
+                queued = true;
+            }
+        }
+        if (queued && this._pdfDoc && this._pdfContainer) {
+            this._processRenderQueue(this._pdfDoc, this._pdfContainer, renderVersion);
+        }
+    }
+
+    // Index (0-based) of the page whose box currently spans the vertical centre
+    // of the scroll viewport; falls back to the nearest page.
+    getCurrentPageIndex() {
+        const container = this._pdfContainer;
+        const pageDivs = this._pdfPageDivs;
+        if (!container || pageDivs.length === 0) return 0;
+
+        const containerRect = container.getBoundingClientRect();
+        const centerY = containerRect.top + containerRect.height / 2;
+        let best = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < pageDivs.length; i++) {
+            const r = pageDivs[i].getBoundingClientRect();
+            if (centerY >= r.top && centerY <= r.bottom) return i;
+            const dist = Math.min(Math.abs(r.top - centerY), Math.abs(r.bottom - centerY));
+            if (dist < bestDist) { bestDist = dist; best = i; }
+        }
+        return best;
+    }
+
+    // Scroll the page at `index` (0-based) to the top of the scroll viewport.
+    scrollToPage(index) {
+        const container = this._pdfContainer;
+        const pageDivs = this._pdfPageDivs;
+        if (!container || pageDivs.length === 0) return;
+        const clamped = Math.min(Math.max(index, 0), pageDivs.length - 1);
+        const target = pageDivs[clamped];
+        if (!target) return;
+        const offset = target.getBoundingClientRect().top
+            - container.getBoundingClientRect().top + container.scrollTop;
+        container.scrollTo({ top: Math.max(0, offset - 4) });
+    }
+
+    // Move the viewport by one row of pages. Column-count agnostic: "next"
+    // (direction > 0) aligns the first page that begins below the top edge;
+    // "prev" aligns the nearest page that begins above it. The threshold must
+    // exceed scrollToPage's small top-alignment gap, otherwise the row already
+    // pinned to the top would be re-selected and the view wouldn't advance.
+    scrollByRow(direction) {
+        const container = this._pdfContainer;
+        const pageDivs = this._pdfPageDivs;
+        if (!container || pageDivs.length === 0) return;
+        const containerTop = container.getBoundingClientRect().top;
+        const SLACK = 12; // > scrollToPage's 4px gap, << a page's height
+
+        if (direction > 0) {
+            for (let i = 0; i < pageDivs.length; i++) {
+                const top = pageDivs[i].getBoundingClientRect().top - containerTop;
+                if (top > SLACK) { this.scrollToPage(i); return; }
+            }
+            container.scrollTo({ top: container.scrollHeight }); // already at last row
+        } else {
+            for (let i = pageDivs.length - 1; i >= 0; i--) {
+                const top = pageDivs[i].getBoundingClientRect().top - containerTop;
+                if (top < -SLACK) { this.scrollToPage(i); return; }
+            }
+            container.scrollTo({ top: 0 }); // already at first row
         }
     }
 
@@ -542,5 +639,6 @@ export class PdfRenderer {
         this._pdfPageDivs = [];
         this._pdfDoc = null;
         this._pdfContainer = null;
+        this._rotation = 0;
     }
 }

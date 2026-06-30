@@ -1,11 +1,21 @@
 export class LayoutManager {
 
-    constructor({ contentContainer, getPdfPageDivs, onZoomApplied }) {
+    constructor({ contentContainer, getPdfPageDivs, onZoomApplied, onStateChanged }) {
         this.contentContainer = contentContainer;
         this.getPdfPageDivs = getPdfPageDivs;
         this.onZoomApplied = onZoomApplied;
-        this.pageLayoutMode = 'single';
+        this.onStateChanged = onStateChanged;
+
+        // PDF view state. `columns` = pages per row (1–4). `pdfZoom` is a
+        // multiplier where 1 == fit the configured columns across the width.
+        // `fitMode` drives how zoom recomputes on resize / rotation.
+        this.columns = 1;
         this.pdfZoom = 1;
+        this.fitMode = 'page'; // 'width' | 'page' | 'custom'
+
+        this.MIN_ZOOM = 0.1;
+        this.MAX_ZOOM = 5;
+
         this._layoutResizeObserver = null;
         this._zoomRefreshTimer = null;
         this._splitInstance = null;
@@ -47,69 +57,122 @@ export class LayoutManager {
         });
     }
 
-    applyPageLayout() {
-        const pdfContent = this.contentContainer.querySelector('.pdf-content');
-        if (!pdfContent) return;
+    // --- PDF layout (columns + zoom) ---
 
-        pdfContent.classList.remove('custom-layout', 'dual-page');
-        if (this.pageLayoutMode === 'custom') {
-            pdfContent.classList.add('custom-layout');
-        } else if (this.pageLayoutMode === 'dual') {
-            pdfContent.classList.add('dual-page');
+    _pdfContent() {
+        return this.contentContainer.querySelector('.pdf-content');
+    }
+
+    applyColumns() {
+        const pdfContent = this._pdfContent();
+        if (!pdfContent) return;
+        pdfContent.classList.add('pdf-cols');
+        pdfContent.style.setProperty('--pdf-columns', this.columns);
+    }
+
+    applyZoom() {
+        const pdfContent = this._pdfContent();
+        if (!pdfContent) return;
+        pdfContent.style.setProperty('--pdf-zoom', this.pdfZoom);
+
+        // After layout settles, re-rasterize visible pages at the new size so
+        // zoomed-in text is rendered sharp rather than CSS-upscaled. Debounced
+        // because the zoom buttons/resize can fire a stream of updates.
+        if (this.onZoomApplied) {
+            clearTimeout(this._zoomRefreshTimer);
+            this._zoomRefreshTimer = setTimeout(() => this.onZoomApplied(), 150);
         }
     }
 
+    // Zoom multiplier for a fit mode. 1 == one page exactly fills its column
+    // ('width'); 'page' shrinks further so a whole page fits the height.
     computeFitZoom(mode) {
-        const pdfContent = this.contentContainer.querySelector('.pdf-content');
+        const pdfContent = this._pdfContent();
         if (!pdfContent) return 1;
+        if (mode === 'width') return 1;
 
         const style = getComputedStyle(pdfContent);
-        const padLeft = parseFloat(style.paddingLeft) || 0;
-        const padRight = parseFloat(style.paddingRight) || 0;
-        const padTop = parseFloat(style.paddingTop) || 0;
-        const padBottom = parseFloat(style.paddingBottom) || 0;
-        const availableWidth = pdfContent.clientWidth - padLeft - padRight;
-        const availableHeight = pdfContent.clientHeight - padTop - padBottom;
+        const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+        const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+        const availableWidth = pdfContent.clientWidth - padX;
+        const availableHeight = pdfContent.clientHeight - padY;
 
-        let pageAspect = 900 / 1165;
-        const pdfPageDivs = this.getPdfPageDivs();
-        const firstDiv = pdfPageDivs[0];
+        let pageAspect = 900 / 1165; // width / height fallback
+        const firstDiv = this.getPdfPageDivs()[0];
         if (firstDiv && firstDiv._pdfViewport) {
             const vp = firstDiv._pdfViewport;
             pageAspect = vp.width / vp.height;
         }
 
-        if (mode === 'single') {
-            const zoomByWidth = availableWidth / 900;
-            const zoomByHeight = (availableHeight * pageAspect) / 900;
-            return Math.min(zoomByWidth, zoomByHeight);
-        }
-        if (mode === 'dual') {
-            const zoomByWidth = (availableWidth - 6) / 900;
-            const zoomByHeight = (availableHeight * pageAspect) / 450;
-            return Math.min(zoomByWidth, zoomByHeight);
-        }
-        return this.pdfZoom;
+        const gap = 6;
+        const colWidth = (availableWidth - (this.columns - 1) * gap) / this.columns;
+        if (colWidth <= 0) return 1;
+        const pageHeightAtFitWidth = colWidth / pageAspect;
+        if (pageHeightAtFitWidth <= 0) return 1;
+        return Math.min(1, availableHeight / pageHeightAtFitWidth);
     }
 
-    applyLayoutAndZoom() {
-        const zoomSlider = document.getElementById('pdfZoomSlider');
-        const zoomValue = document.getElementById('pdfZoomValue');
+    _clampZoom(z) {
+        return Math.min(this.MAX_ZOOM, Math.max(this.MIN_ZOOM, z));
+    }
 
-        this.applyPageLayout();
+    _notify() {
+        if (this.onStateChanged) this.onStateChanged();
+    }
 
-        if (this.pageLayoutMode === 'single' || this.pageLayoutMode === 'dual') {
-            this.pdfZoom = this.computeFitZoom(this.pageLayoutMode);
-        }
-
-        if (zoomSlider) {
-            const pct = Math.round(this.pdfZoom * 100);
-            zoomSlider.value = pct;
-            if (zoomValue) zoomValue.textContent = pct + '%';
-        }
-
+    // Called when a PDF is first shown: one column, whole first page visible.
+    initForDocument() {
+        this.columns = 1;
+        this.fitMode = 'page';
+        this.applyColumns();
+        this.pdfZoom = this._clampZoom(this.computeFitZoom('page'));
         this.applyZoom();
         this._setupLayoutResizeObserver();
+        this._notify();
+    }
+
+    setColumns(n) {
+        this.columns = Math.min(4, Math.max(1, Math.round(n)));
+        this.applyColumns();
+        // Refit to width so the new column count fills the area cleanly.
+        this.fitMode = 'width';
+        this.pdfZoom = this._clampZoom(this.computeFitZoom('width'));
+        this.applyZoom();
+        this._notify();
+    }
+
+    fitWidth() {
+        this.fitMode = 'width';
+        this.pdfZoom = this._clampZoom(this.computeFitZoom('width'));
+        this.applyZoom();
+        this._notify();
+    }
+
+    fitPage() {
+        this.fitMode = 'page';
+        this.pdfZoom = this._clampZoom(this.computeFitZoom('page'));
+        this.applyZoom();
+        this._notify();
+    }
+
+    setZoom(z) {
+        this.fitMode = 'custom';
+        this.pdfZoom = this._clampZoom(z);
+        this.applyZoom();
+        this._notify();
+    }
+
+    zoomBy(factor) {
+        this.setZoom(this.pdfZoom * factor);
+    }
+
+    // Re-fit after an external geometry change (e.g. rotation) using current mode.
+    refit() {
+        if (this.fitMode !== 'custom') {
+            this.pdfZoom = this._clampZoom(this.computeFitZoom(this.fitMode));
+        }
+        this.applyZoom();
+        this._notify();
     }
 
     _setupLayoutResizeObserver() {
@@ -117,42 +180,20 @@ export class LayoutManager {
             this._layoutResizeObserver.disconnect();
             this._layoutResizeObserver = null;
         }
-
-        if (this.pageLayoutMode !== 'single' && this.pageLayoutMode !== 'dual') return;
-
-        const pdfContent = this.contentContainer.querySelector('.pdf-content');
+        const pdfContent = this._pdfContent();
         if (!pdfContent) return;
 
         this._layoutResizeObserver = new ResizeObserver(() => {
-            if (this.pageLayoutMode !== 'single' && this.pageLayoutMode !== 'dual') return;
-            const newZoom = this.computeFitZoom(this.pageLayoutMode);
-            if (Math.abs(newZoom - this.pdfZoom) < 0.005) return;
-            this.pdfZoom = newZoom;
-            this.applyZoom();
-
-            const zoomSlider = document.getElementById('pdfZoomSlider');
-            const zoomValue = document.getElementById('pdfZoomValue');
-            if (zoomSlider) {
-                const pct = Math.round(this.pdfZoom * 100);
-                zoomSlider.value = pct;
-                if (zoomValue) zoomValue.textContent = pct + '%';
+            // 'width'/'custom' are handled by the %-based CSS automatically;
+            // just refresh raster + readouts. 'page' must recompute fit zoom.
+            if (this.fitMode === 'page') {
+                const z = this._clampZoom(this.computeFitZoom('page'));
+                if (Math.abs(z - this.pdfZoom) > 0.005) this.pdfZoom = z;
             }
+            this.applyZoom();
+            this._notify();
         });
         this._layoutResizeObserver.observe(pdfContent);
-    }
-
-    applyZoom() {
-        const pdfContent = this.contentContainer.querySelector('.pdf-content');
-        if (!pdfContent) return;
-        pdfContent.style.setProperty('--pdf-zoom', this.pdfZoom);
-
-        // After layout settles, re-rasterize visible pages at the new size so
-        // zoomed-in text is rendered sharp rather than CSS-upscaled. Debounced
-        // because the zoom slider fires a stream of input events.
-        if (this.onZoomApplied) {
-            clearTimeout(this._zoomRefreshTimer);
-            this._zoomRefreshTimer = setTimeout(() => this.onZoomApplied(), 150);
-        }
     }
 
     disconnectLayoutObserver() {

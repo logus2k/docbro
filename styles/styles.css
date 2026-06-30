@@ -64,93 +64,127 @@ body {
 }
 
 /* Settings button and menu */
-.settings-btn {
-    position: fixed;
-    bottom: 26px;
-    left: 13px;
-    width: 24px;
-    height: 24px;
+/* Floating PDF control box (bottom-centre of the rendering area) */
+.pdf-controlbox {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
     display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 9px;
+    background: rgba(31, 31, 31, 0.92);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #e6e6e6;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    user-select: none;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.pdf-controlbox.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.pcb-btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    color: #a8a8a8;
-    border-radius: 50%;
-    transition: color 0.2s, background-color 0.2s;
-    z-index: 100;
-}
-
-.settings-btn:hover {
-    color: #fff;
-    background-color: rgba(0, 0, 0, 0.08);
-}
-
-.settings-btn svg {
-    width: 24px;
-    height: 24px;
-}
-
-.settings-menu {
-    position: fixed;
-    bottom: 28px;
-    left: 45px;
-    background: #fffcd8;
-    border: 0.5px solid #9c9c9c;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    background: transparent;
+    border: none;
     border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    padding: 8px 0;
-    display: none;
-    z-index: 101;
-    min-width: 170px;
+    color: #e6e6e6;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
 }
 
-.settings-menu.active {
-    display: block;
+.pcb-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffc630;
 }
 
-.settings-item {
-    display: flex;
+.pcb-btn.pcb-glyph {
+    font-size: 15px;
+}
+
+.pcb-sep {
+    width: 1px;
+    align-self: stretch;
+    margin: 2px 4px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.pcb-page {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    cursor: pointer;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.pcb-page-input {
+    width: 34px;
+    height: 22px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    border-radius: 5px;
+    color: #fff;
     font-size: 13px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #333;
-    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    outline: none;
 }
 
-.settings-item:hover {
-    background-color: #f5f5f5;
+.pcb-page-input:focus {
+    border-color: #ffc630;
 }
 
-.settings-group-label {
-    padding: 4px 14px 2px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.pcb-page-sep {
+    color: #9a9a9a;
 }
 
-.settings-item input[type="radio"] {
-    accent-color: #d4a944;
+.pcb-page-total {
+    min-width: 14px;
+    color: #cfcfcf;
+}
+
+.pcb-zoom {
+    min-width: 40px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: #cfcfcf;
+}
+
+.pcb-cols-icon {
+    font-size: 15px;
+    color: #cfcfcf;
+    line-height: 1;
+}
+
+.pcb-cols {
+    width: 70px;
+    accent-color: #ffc630;
     cursor: pointer;
 }
 
-.zoom-slider-item {
-    gap: 10px;
-}
-
-.zoom-slider-item input[type="range"] {
-    flex: 1;
-    accent-color: #d4a944;
-    cursor: pointer;
-}
-
-.zoom-slider-item span {
-    min-width: 36px;
-    text-align: right;
+.pcb-cols-value {
+    min-width: 10px;
+    text-align: center;
+    color: #cfcfcf;
     font-variant-numeric: tabular-nums;
 }
 
@@ -231,6 +265,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    position: relative;
 }
 
 .right-pane {
@@ -473,10 +508,6 @@ body {
     margin: 0 auto 5px auto;
 }
 
-.document-content-inner.pdf-content.dual-page .pdf-page {
-    margin-bottom: 0;
-}
-
 .pdf-page:empty {
     background-color: #f0f0f0;
 }
@@ -553,48 +584,30 @@ body {
     background-color: #f5f5f5;
 }
 
-/* Dual-page PDF layout */
-.document-content-inner.pdf-content.dual-page {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: flex-start;
-    align-content: flex-start;
-    gap: 6px;
-}
-
-.document-content-inner.pdf-content.dual-page .pdf-page {
-    width: calc(450px * var(--pdf-zoom, 1));
-    max-width: calc(50% - 3px);
-    flex: 0 0 auto;
-    margin: 0;
-}
-
-.document-content-inner.pdf-content.dual-page .pdf-page canvas,
-.document-content-inner.pdf-content.dual-page .pdf-page img {
-    width: 100% !important;
-    height: auto !important;
-}
-
-.document-content-inner.pdf-content.custom-layout {
+/* Columns PDF layout (1–4 pages per row, continuous scroll).
+   At zoom 1 a page exactly fills its column; zoom > 1 grows pages and the
+   row reflows / scrolls horizontally. --pdf-columns and --pdf-zoom are set
+   by LayoutManager. */
+.document-content-inner.pdf-content.pdf-cols {
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: flex-start;
     align-content: flex-start;
     gap: 6px;
+    overflow-x: auto;
 }
 
-.document-content-inner.pdf-content.custom-layout .pdf-page {
-    width: calc(450px * var(--pdf-zoom, 1));
-    max-width: calc(450px * var(--pdf-zoom, 1));
+.document-content-inner.pdf-content.pdf-cols .pdf-page {
     flex: 0 0 auto;
+    width: calc((100% - (var(--pdf-columns, 1) - 1) * 6px) / var(--pdf-columns, 1) * var(--pdf-zoom, 1));
+    max-width: none;
     margin: 0;
 }
 
-.document-content-inner.pdf-content.custom-layout .pdf-page canvas,
-.document-content-inner.pdf-content.custom-layout .pdf-page img {
+.document-content-inner.pdf-content.pdf-cols .pdf-page canvas,
+.document-content-inner.pdf-content.pdf-cols .pdf-page img {
     width: 100% !important;
     height: auto !important;
 }
