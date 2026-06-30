@@ -1,4 +1,4 @@
-import { TextLayer, OutputScale } from '../libraries/pdf.js/pdf.min.mjs';
+import { TextLayer } from '../libraries/pdf.js/pdf.min.mjs';
 
 export class PdfRenderer {
 
@@ -71,7 +71,6 @@ export class PdfRenderer {
                 pageDiv.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
                 pageDiv._pdfPage = page;
                 pageDiv._pdfViewport = viewport;
-                pageDiv._pdfOutputScale = new OutputScale();
             } else {
                 pageDiv.style.aspectRatio = '8.5 / 11';
             }
@@ -189,26 +188,29 @@ export class PdfRenderer {
     async _renderSinglePage(pageDiv, pdfDoc, container, renderVersion) {
         const page = pageDiv._pdfPage;
         const viewport = pageDiv._pdfViewport;
-        const outputScale = pageDiv._pdfOutputScale;
         const pageRenderVersion = ++pageDiv._pageRenderVersion;
         const pageDivs = this._pdfPageDivs;
 
-        if (!page || !viewport || !outputScale) {
+        if (!page || !viewport) {
             pageDiv._renderState = 'idle';
             return;
         }
 
         // --- Canvas render (kept in DOM, no JPEG conversion) ---
+        // Rasterize at the page's true on-screen width and full device-pixel
+        // density (devicePixelRatio) so text stays sharp at any zoom level or
+        // display DPI, instead of CSS-upscaling a fixed-resolution bitmap.
+        const { viewport: renderViewport, cssWidth } = this._computeRenderViewport(page, pageDiv);
+
         const canvas = document.createElement('canvas');
-        canvas.width = Math.floor(viewport.width * outputScale.sx);
-        canvas.height = Math.floor(viewport.height * outputScale.sy);
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
         const ctx = canvas.getContext('2d');
 
         try {
             await page.render({
                 canvasContext: ctx,
-                viewport,
-                transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
+                viewport: renderViewport
             }).promise;
         } catch (e) {
             console.warn(`Failed to render page ${pageDiv._pageIndex + 1}:`, e);
@@ -221,8 +223,12 @@ export class PdfRenderer {
         if (pageDiv._pageRenderVersion !== pageRenderVersion) return;
         if (pageDiv._renderState !== 'rendering') return;
 
+        // Swap in the fresh canvas, discarding any previous render (a zoom
+        // refresh re-rasterizes an already-rendered page in place).
+        this._clearPageContent(pageDiv);
         pageDiv.appendChild(canvas);
         pageDiv.style.aspectRatio = '';
+        pageDiv._renderedCssWidth = cssWidth;
 
         // --- Text layer ---
         try {
@@ -331,13 +337,28 @@ export class PdfRenderer {
         pageDiv._renderState = 'rendered';
     }
 
-    _unloadPage(pageDiv) {
-        if (pageDiv._renderState !== 'rendered') return;
+    // Build a render viewport matched to the page's current on-screen size at
+    // full device-pixel density, capped to a sane maximum canvas area so that
+    // extreme zoom levels can't allocate runaway amounts of GPU memory.
+    _computeRenderViewport(page, pageDiv) {
+        const dpr = window.devicePixelRatio || 1;
+        const baseWidth = page.getViewport({ scale: 1 }).width;
+        const fallbackWidth = pageDiv._pdfViewport ? pageDiv._pdfViewport.width : baseWidth;
+        const cssWidth = pageDiv.clientWidth || fallbackWidth;
+        let scale = (cssWidth / baseWidth) * dpr;
 
-        // Cancel any lingering async work for this page
-        pageDiv._pageRenderVersion++;
+        const MAX_CANVAS_PIXELS = 16_777_216; // ~16M px memory guard
+        let vp = page.getViewport({ scale });
+        if (vp.width * vp.height > MAX_CANVAS_PIXELS) {
+            scale *= Math.sqrt(MAX_CANVAS_PIXELS / (vp.width * vp.height));
+            vp = page.getViewport({ scale });
+        }
+        return { viewport: vp, cssWidth };
+    }
 
-        // Remove canvas and release GPU memory
+    // Tear down a page's rendered DOM (canvas, text, annotations) and release
+    // its selection registration. Shared by unload and in-place re-render.
+    _clearPageContent(pageDiv) {
         const canvas = pageDiv.querySelector('canvas');
         if (canvas) {
             canvas.width = 0;
@@ -345,21 +366,27 @@ export class PdfRenderer {
             canvas.remove();
         }
 
-        // Remove text layer
         const textLayer = pageDiv.querySelector('.textLayer');
         if (textLayer) textLayer.remove();
 
-        // Remove annotation layer
         const annotLayer = pageDiv.querySelector('.annotationLayer');
         if (annotLayer) {
             this._pdfOverlayEntries = this._pdfOverlayEntries.filter(e => e.div !== annotLayer);
             annotLayer.remove();
         }
 
-        // Unregister from selection mode
         if (this.selectionMode) {
             this.selectionMode.unregisterPage(pageDiv);
         }
+    }
+
+    _unloadPage(pageDiv) {
+        if (pageDiv._renderState !== 'rendered') return;
+
+        // Cancel any lingering async work for this page
+        pageDiv._pageRenderVersion++;
+
+        this._clearPageContent(pageDiv);
 
         // Restore aspect-ratio placeholder
         if (pageDiv._pdfViewport) {
@@ -368,6 +395,28 @@ export class PdfRenderer {
         }
 
         pageDiv._renderState = 'unloaded';
+    }
+
+    // Re-rasterize already-rendered pages whose on-screen size has grown (e.g.
+    // after a zoom-in), keeping them pixel-sharp rather than CSS-upscaled.
+    // Shrinking needs no re-render — downscaling a hi-res canvas stays crisp.
+    refreshResolution() {
+        if (!this._pdfDoc || !this._pdfContainer) return;
+        const renderVersion = this._renderVersion;
+        let queued = false;
+        for (const pageDiv of this._pdfPageDivs) {
+            if (pageDiv._renderState !== 'rendered') continue;
+            const cssWidth = pageDiv.clientWidth;
+            if (!cssWidth) continue;
+            const prev = pageDiv._renderedCssWidth || 0;
+            if (prev > 0 && cssWidth <= prev * 1.02) continue;
+            pageDiv._renderState = 'idle';
+            this._enqueueRender(pageDiv);
+            queued = true;
+        }
+        if (queued) {
+            this._processRenderQueue(this._pdfDoc, this._pdfContainer, renderVersion);
+        }
     }
 
     _disconnectObservers() {
@@ -389,8 +438,7 @@ export class PdfRenderer {
     async _showPageContextMenu(x, y, pageDiv) {
         const page = pageDiv._pdfPage;
         const viewport = pageDiv._pdfViewport;
-        const outputScale = pageDiv._pdfOutputScale;
-        if (!page || !viewport || !outputScale) return;
+        if (!page || !viewport) return;
 
         // Reuse in-DOM canvas if the page is currently rendered
         const existingCanvas = pageDiv.querySelector('canvas');
@@ -399,16 +447,16 @@ export class PdfRenderer {
             return;
         }
 
-        // Otherwise render to a temporary canvas
+        // Otherwise render to a temporary canvas at display resolution
+        const { viewport: renderViewport } = this._computeRenderViewport(page, pageDiv);
         const canvas = document.createElement('canvas');
-        canvas.width = Math.floor(viewport.width * outputScale.sx);
-        canvas.height = Math.floor(viewport.height * outputScale.sy);
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
         const ctx = canvas.getContext('2d');
         try {
             await page.render({
                 canvasContext: ctx,
-                viewport,
-                transform: outputScale.scaled ? [outputScale.sx, 0, 0, outputScale.sy, 0, 0] : null
+                viewport: renderViewport
             }).promise;
         } catch (e) {
             console.warn('Failed to re-render page for context menu:', e);

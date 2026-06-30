@@ -1,11 +1,13 @@
 export class LayoutManager {
 
-    constructor({ contentContainer, getPdfPageDivs }) {
+    constructor({ contentContainer, getPdfPageDivs, onZoomApplied }) {
         this.contentContainer = contentContainer;
         this.getPdfPageDivs = getPdfPageDivs;
+        this.onZoomApplied = onZoomApplied;
         this.pageLayoutMode = 'single';
         this.pdfZoom = 1;
         this._layoutResizeObserver = null;
+        this._zoomRefreshTimer = null;
         this._splitInstance = null;
         this._tocPixelWidth = null;
         this._rightPanePixelWidth = null;
@@ -143,6 +145,14 @@ export class LayoutManager {
         const pdfContent = this.contentContainer.querySelector('.pdf-content');
         if (!pdfContent) return;
         pdfContent.style.setProperty('--pdf-zoom', this.pdfZoom);
+
+        // After layout settles, re-rasterize visible pages at the new size so
+        // zoomed-in text is rendered sharp rather than CSS-upscaled. Debounced
+        // because the zoom slider fires a stream of input events.
+        if (this.onZoomApplied) {
+            clearTimeout(this._zoomRefreshTimer);
+            this._zoomRefreshTimer = setTimeout(() => this.onZoomApplied(), 150);
+        }
     }
 
     disconnectLayoutObserver() {

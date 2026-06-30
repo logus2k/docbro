@@ -77,7 +77,8 @@ class DocumentBrowser {
 
             this.layoutManager = new LayoutManager({
                 contentContainer: this.contentContainer,
-                getPdfPageDivs: () => this.pdfRenderer.pdfPageDivs
+                getPdfPageDivs: () => this.pdfRenderer.pdfPageDivs,
+                onZoomApplied: () => this.pdfRenderer.refreshResolution()
             });
 
             this.tocManager = new TocManager({

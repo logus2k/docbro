@@ -543,6 +543,22 @@
 			"location": "categories/reports/taap/final_project_v8.pdf"
 		},
 
+		{
+			"name": "Domain Adaptation",
+			"category": "ISCTE - Advanced Techniques for Language Models",
+			"location": "categories/reports/atlm/atlm_ma1.pdf"
+		},
+		{
+			"name": "RLAIF and DPO Alignment",
+			"category": "ISCTE - Advanced Techniques for Language Models",
+			"location": "categories/reports/atlm/atlm_ma2.pdf"
+		},
+		{
+			"name": "Agentic RAG System",
+			"category": "ISCTE - Advanced Techniques for Language Models",
+			"location": "categories/reports/atlm/atlm_ma3.pdf"
+		},
+
 
 		{
 			"name": "MNIST Digits",
