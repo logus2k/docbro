@@ -633,6 +633,36 @@
 			"name": "SDLC Executive Briefing",
 			"category": "SDLC/Articles",
 			"location": "categories/sdlc/articles/sdlc-ai-executive-slides-final.pdf"
+		},
+		{
+			"name": "Phase 1",
+			"category": "SDLC/Phases",
+			"location": "categories/sdlc/phases/01_requirements.md"
+		},
+		{
+			"name": "Phase 2",
+			"category": "SDLC/Phases",
+			"location": "categories/sdlc/phases/02_design.md"
+		},
+		{
+			"name": "Phase 3",
+			"category": "SDLC/Phases",
+			"location": "categories/sdlc/phases/03_build.md"
+		},
+		{
+			"name": "Phase 4",
+			"category": "SDLC/Phases",
+			"location": "categories/sdlc/phases/04_test.md"
+		},
+		{
+			"name": "Phase 5",
+			"category": "SDLC/Phases",
+			"location": "categories/sdlc/phases/05_release.md"
+		},
+		{
+			"name": "Phase 6",
+			"category": "SDLC/Phases",
+			"location": "categories/sdlc/phases/06_operate.md"
 		}
 	]
 }
