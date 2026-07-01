@@ -479,6 +479,20 @@ export class PdfRenderer {
         return best;
     }
 
+    // Index of the topmost page still visible at (or below) the viewport top —
+    // i.e. the first page in the row currently anchored at the top.
+    getTopPageIndex() {
+        const container = this._pdfContainer;
+        const pageDivs = this._pdfPageDivs;
+        if (!container || pageDivs.length === 0) return 0;
+        const containerTop = container.getBoundingClientRect().top;
+        for (let i = 0; i < pageDivs.length; i++) {
+            const r = pageDivs[i].getBoundingClientRect();
+            if (r.bottom - containerTop > 6) return i; // first page not scrolled past
+        }
+        return pageDivs.length - 1;
+    }
+
     // Scroll the page at `index` (0-based) to the top of the scroll viewport.
     scrollToPage(index) {
         const container = this._pdfContainer;
@@ -489,7 +503,9 @@ export class PdfRenderer {
         if (!target) return;
         const offset = target.getBoundingClientRect().top
             - container.getBoundingClientRect().top + container.scrollTop;
-        container.scrollTo({ top: Math.max(0, offset - 4) });
+        // Align the row's top exactly to the viewport top. A small negative
+        // nudge here would push a full-height page's bottom border out of view.
+        container.scrollTo({ top: Math.max(0, Math.round(offset)) });
     }
 
     // Move the viewport by one row of pages. Column-count agnostic: "next"

@@ -66,7 +66,13 @@ export class PdfControls {
         this.el.zoomOut?.addEventListener('click', () => this.layoutManager.zoomBy(1 / 1.1));
         this.el.zoomIn?.addEventListener('click', () => this.layoutManager.zoomBy(1.1));
         this.el.fitWidth?.addEventListener('click', () => this.layoutManager.fitWidth());
-        this.el.fitPage?.addEventListener('click', () => this.layoutManager.fitPage());
+        // Fit page: after resizing, snap the current spread's row to the top so
+        // you see complete pages rather than a partial row + a slice of the next.
+        this.el.fitPage?.addEventListener('click', () => {
+            const top = this.pdfRenderer.getTopPageIndex();
+            this.layoutManager.fitPage();
+            requestAnimationFrame(() => this.pdfRenderer.scrollToPage(top));
+        });
 
         // --- Columns (pages per row) ---
         this.el.columns?.addEventListener('input', (e) => {
