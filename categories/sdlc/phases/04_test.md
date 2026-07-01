@@ -1,89 +1,86 @@
-# Phase 4 - Test & Quality Assurance
+# Phase 4 — Test & Quality Assurance
 
 ### How AI is applied to testing, QA, and security scanning (mid‑2026)
 
-*Audience: technical leadership. Part of the per‑phase SDLC series. Cross‑references: [Business Benchmark](../analysis/01_business_benchmark.md), [Technical Architecture](../analysis/02_technical_architecture.md), [Implementation Planning](../analysis/03_implementation_planning.md). Reliability tags: **[RCT/PEER]** · **[PRIMARY]** · **[VENDOR]** · **[3P]** · ⚠️ contested.*
+---
+
+## 1. What this phase is for
+
+This phase verifies that the build meets the spec — unit, integration, and end‑to‑end tests, test data, self‑healing UI tests, risk‑based test selection, AI‑assisted code review, and security scanning. It has a second, strategic job in an AI‑accelerated lifecycle: **it's the release valve that absorbs the extra change volume the build phase now generates.** If generation speeds up and verification doesn't, the extra throughput just becomes faster‑arriving defects.
+
+It's also the best place to *start* with AI, for a simple reason: the work here is **bounded and instantly verifiable** — a test either passes or it doesn't — and it replaces work developers dislike. That combination (clear value, cheap verification, small blast radius) makes it the highest‑ROI, lowest‑risk entry point in the whole SDLC. If you pilot AI in exactly one phase, pilot it here.
+
+## 2. Where AI genuinely helps (and where it doesn't)
+
+**What works.** AI generates unit, integration, regression, and API tests — including the null/negative/overflow/boundary edge cases a human tends to skip — from requirements, code, or even observed user sessions. **Self‑healing** test execution repairs broken UI locators automatically when an element changes, cutting maintenance meaningfully. **Risk‑based selection** runs only the tests a change is likely to affect, keeping suite runtime flat as coverage grows. And AI **code review** as a first pass gives a modest, useful speed‑up on PR triage.
+
+**Where it doesn't — plan for this.** The most important thing to understand is that **raw generation is a funnel, not a faucet.** Of the tests a model generates, roughly 75% build, ~57% pass reliably, and only ~25% actually increase coverage — and across a large industrial run it improved barely 11% of the classes it touched. Most generated tests are *not* useful. The value comes from *filtering*, not volume — which is the whole design of activity (a) below. Two further limits:
+
+- **Strong on benchmarks, weaker on your real code.** The same generators that score well on public benchmarks do poorly on real projects, because they struggle to reason about actual control flow and execution state.
+- **AI review augments, it doesn't replace, human review.** In a large study, code‑review‑agent‑only PRs merged at 45% versus 68% for human‑reviewed, and about 60% of agent feedback was low‑signal. Use it as a first pass, not a gate.
+
+Two traps worth naming: **plausible‑but‑wrong tests** that create false confidence, and **circular validation**, where tests quietly encode the same wrong assumptions as the code they're testing.
+
+## 3. The activities — what to actually do
+
+**a) Adopt "assured‑improvement filtration" — the single most transferable pattern in the whole SDLC.** Don't surface generated tests on trust. Run every candidate through deterministic filters and keep only the ones that **(1) build, (2) pass reliably (not flaky), and (3) measurably increase coverage** — and silently discard the rest. This inverts the usual risk: instead of trusting the model's output, the system *proves* the test is an improvement before a human ever sees it, which is also what neutralises hallucination. This is the concrete, provable form of the principle that runs through this entire project — **verification‑driven, not trust‑driven** — and you can apply the same shape to any AI‑generation task.
+
+**b) Turn on self‑healing for the existing suite, behind PR‑time gates.** Enable self‑healing so a changed locator is repaired automatically, but surface every fix as a reviewable diff and block merges on failure. Then have the build agent author tests for the features it ships, so coverage tracks generation throughput rather than falling behind it. This is exactly what counters the review/quality bottleneck coming out of [Build](03_build.md).
+
+**c) Make "AI authors, human approves" the explicit rule.** The engineer accepts, modifies, or rejects each recommended test — nothing enters the regression suite unreviewed. Under this model, industrial deployments see high acceptance rates *because* a human is curating; it's the discipline, not the autonomy, that makes it work.
+
+**d) Keep the test‑writing agent separate from the code‑writing agent.** Use an **independent harness**: the agent that writes tests must not be the one that wrote the code. This prevents cross‑bias and mechanically catches correctness requirements the coding agent quietly assumed. (Google's SRE practice mandates exactly this for the agentic SDLC.)
+
+**e) Run risk‑based test selection** to keep CI fast as the suite grows — execute only the tests a change is likely to affect rather than the whole suite on every push.
+
+**f) Generate synthetic test data and pipeline‑resilience tests.** Use AI to produce large, varied, realistic datasets for stress and edge‑case testing, and — for data‑heavy systems — point an agent at your Airflow DAGs or DVC scripts to synthesise tests that simulate data anomalies and execution failures, posted as PR comments for review.
+
+**g) Shift security left, and let AI accelerate threat modelling.** Put SAST and dependency/secret scanning on every PR, with AI explaining vulnerabilities and proposing patches for a human to accept. Add **AI‑augmented threat modelling**: an LLM reads the design or the diff, extracts the relevant context, and proposes STRIDE‑style attack scenarios for a human to triage — which makes the threat‑modelling step teams usually skip actually happen.
+
+> **The umbrella name for all of this is "Harness Engineering"** — building the control systems *around* AI‑generated code (tests, monitors, architectural constraints, orchestration) so its output is safe to trust. It's the named form of this project's verification‑driven spine, and it's a Scale‑ring (proven, standardise‑now) practice.
+
+## 4. How to pilot this
+
+**Pilot this phase first.** The sequence that works: start with **test generation in CI behind coverage gates** (the assured‑improvement filter), add **AI‑assisted PR review as an augment** (humans still merge), and bring in **self‑healing UI tests** in a second wave. Because everything here is bounded and instantly verifiable, you get fast, low‑risk wins that build organisational confidence for the harder phases.
+
+## 5. Guardrails & what to watch for
+
+- **Review the generated tests** — they can be plausible‑but‑wrong, and an unreviewed bad test is worse than no test because it manufactures false confidence.
+- **Keep tests in your repo, in portable formats.** Many platforms store non‑portable tests; that's a lock‑in risk you can avoid up front.
+- **Don't let AI review replace humans** — it's a first pass, not a merge gate.
+- **Treat security scanning as first‑class** — the same gates for AI and human code, and stay alert to hallucinated dependencies.
+
+## 6. How you'll know it's working
+
+- **Coverage** and, more tellingly, **edge cases found** that the team wasn't testing before.
+- **Production‑defect reduction** and **flaky‑test rate**.
+- **False‑positive rate** on AI review and security findings (a noisy tool gets ignored).
+- **Mean time to detect** security issues.
+- Not "number of tests generated" — volume is the wrong target here; *verified improvement* is the product.
+
+## 7. Tools to reach for
+
+| Need | Options |
+| --- | --- |
+| **Self‑healing E2E** | Mabl, Functionize, Testim (Tricentis), Katalon (auditable), testRigor — surface fixes as reviewable diffs |
+| **Unit‑test generation** | Diffblue Cover (Java; symbolic/deterministic, reproducible), Qodo (multi‑language LLM; Qodo Cover is open‑source), Early (JS/TS/Python) — prefer deterministic where audit matters, LLM for breadth |
+| **CI integration** | Qodo Cover as a PR‑triggered step, Diffblue as a build step; enforce coverage gates so AI fills the gaps the gate exposes |
+| **Security scanning** | SAST + dependency/secret scanning on every PR; AI explain‑and‑patch (Snyk DeepCode, GitHub Advanced Security) |
+| **Models** | Frontier for complex test reasoning; local models are fine for routine generation — kept in an independent harness from the build agent |
+
+## 8. Evidence & sources
+
+*Reliability tags: [PRIMARY] · [RCT/PEER] · [VENDOR] (treat as a ceiling) · [3P].*
+
+- **Adoption:** ~89% of orgs are piloting or deploying GenAI in QA, but only ~15% at enterprise scale, with an average ~19% productivity boost (World Quality Report 2025) [PRIMARY‑ish survey]; 68% of DevOps teams use AI in delivery (Tricentis 2026) [VENDOR].
+- **The funnel:** of generated tests ~75% build / ~57% pass reliably / ~25% increase coverage, improving ~11.5% of classes (Meta TestGen‑LLM) [VENDOR, industrial]. Raw LLM generation reaches ~70% statement / ~53% branch coverage on benchmarks but does poorly on real projects (TestPilot) [RCT/PEER].
+- **AI review ≠ human review:** agent‑only PRs merged 45.2% vs 68.4% human‑only; ~60% of agent feedback low‑signal (MSR 2026) [RCT/PEER].
+- **Grounding sources** (full reviews in [references/sdlc_phases.md](../references/sdlc_phases.md)):
+  1. **"Automated Unit Test Improvement using LLMs at Meta" (TestGen‑LLM)** (arXiv, Feb 2024) — the assured‑improvement‑filter pattern and the honest funnel numbers. https://arxiv.org/abs/2402.09171
+  2. **"An Empirical Evaluation of Using LLMs for Automated Unit Test Generation" (TestPilot)** (IEEE TSE / arXiv 2302.06527) — the coverage baseline and the "poor on real projects" caveat. https://arxiv.org/abs/2302.06527
+  3. **Shiplight — "AI in Test Automation: The Complete 2026 Guide"** [VENDOR] — the "supervised autonomy" framing and the production‑ready‑vs‑maturing split. https://www.shiplight.ai/blog/ai-in-test-automation
+  4. **LTM — "SDLC AI Radar 2026"** [VENDOR] — *Harness Engineering* (per Martin Fowler) and *AI‑Augmented Threat Modelling*. `../articles/ltm_sdlc_ai_radar_2026.md`
 
 ---
 
-## 1. What this phase covers
-
-Verifying that the build meets the spec: unit/integration/E2E test generation, synthetic test data, self‑healing UI tests, risk‑based test selection, flaky‑test detection, and AI‑assisted code review and security scanning. **This is the single highest‑ROI phase for AI** — and the recommended first pilot.
-
-## 2. Adoption status & evidence
-
-- **High and rising.** ~89% of orgs are piloting or deploying GenAI in QA (World Quality Report 2025, 2,000+ executives) but only **15% at enterprise scale**, with an average **19% productivity boost** **[PRIMARY‑ish survey]**. Tricentis 2026: **68%** of DevOps teams use AI in delivery **[VENDOR]**.
-- **Why it's the best risk‑adjusted bet:** the task is **bounded and instantly verifiable** (a test passes or fails), and it replaces work developers dislike. Generative AI is now ranked the #1 skill for quality engineers.
-
-## 3. What works
-
-- **Test generation** from requirements, code, or observed user sessions — unit, integration, regression, API tests; edge cases (null/negative/overflow/boundary) a human might miss. Empirical grounding: the TestPilot study ([source ②](#10-grounding--further-reading)) reports **median 70.2% statement / 52.8% branch coverage** from raw LLM generation — beating prior automated tools — and Meta's industrial TestGen‑LLM ([source ①](#10-grounding--further-reading)) had **73% of its recommendations accepted by engineers** for production.
-- **Self‑healing execution** (most production‑proven) — when a UI element changes, the tool repairs the broken locator automatically (rule‑based fallback or intent‑based re‑resolution). Defensible maintenance reduction **25–50%** (vendor claims of 85–95% ⚠️ are unaudited).
-- **Risk‑based / intelligent test selection** — run only the tests a change is likely to affect, keeping suite runtime flat as coverage grows.
-- **Synthetic test data** — generate large, realistic, varied datasets for stress and edge‑case testing.
-- **Pipeline‑aware test generation** — point an agent at Airflow DAGs / DVC scripts to synthesize tests simulating data anomalies and execution failures (the source‑notes pattern), posted as PR comments for review.
-- **AI code review (first pass)** — Microsoft internal: ~10–20% PR‑time improvement **[VENDOR]**; useful as an *augment*.
-
-## 4. What doesn't work (yet)
-
-- **Raw generation is a funnel, not a faucet.** Meta's TestGen‑LLM data is the honest yardstick: of generated tests, **~75% built, ~57% passed reliably, and only ~25% increased coverage** — and across a test‑a‑thon it improved just **11.5% of the classes** it was applied to ([source ①](#10-grounding--further-reading)). Most generated tests are *not* useful; the value comes from filtering, not volume.
-- **Strong on benchmarks, weaker on your real code.** The same LLM test generators that score well on public benchmarks have *"poor performance for open‑source projects based on coverage"* ([source ②](#10-grounding--further-reading)) — deep reasoning about control flow and execution state is the limiter.
-- **Fully autonomous testing with zero oversight** remains "conference‑demo magic." What is production‑ready in 2026 is **supervised autonomy** — agents that explore, generate, and *flag*, with humans reviewing before tests enter the regression suite; still‑maturing are fully autonomous test interpretation and complex business‑logic generation ([source ③](#10-grounding--further-reading)). The reliable model is **"AI authors and heals; human approves."**
-- **Plausible‑but‑wrong tests** create false confidence — keep generated tests in your repo and review them.
-- **AI review cannot replace human review:** MSR 2026 (3,109 PRs) — code‑review‑agent‑only PRs merged **45.2% vs 68.4% human‑only**; ~60% of agent feedback was low‑signal **[RCT/PEER]**.
-- **"Circular validation"** — tests that mirror the same flawed assumptions as the code; mitigate with independent generation harnesses (the test‑authoring agent isolated from the code‑authoring agent).
-- **Security false confidence** — Snyk: >75% of devs think AI code is more secure while ~48% is insecure; only ~10% scan most AI code.
-
-## 5. Tools, models & frameworks
-
-| Category | Options | Notes |
-| --- | --- | --- |
-| **Self‑healing E2E** | Mabl, Functionize, Testim (Tricentis), Katalon (auditable), testRigor | Commercial SaaS; surface fixes as reviewable diffs |
-| **Unit‑test generation** | **Diffblue Cover** (Java; symbolic/deterministic, reproducible), **Qodo** (multi‑lang LLM; **Qodo Cover OSS**), Early (JS/TS/Py) | Deterministic where audit matters; LLM for breadth |
-| **CI integration** | Qodo Cover as PR‑triggered step; Diffblue as build step; enforce **coverage gates** | AI fills gaps so gates pass |
-| **Security scanning** | SAST + dependency/secret scanning on every PR; AI explains+patches (Snyk DeepCode, GitHub Advanced Security) | Same gates for AI and human code |
-| **Models** | Frontier for complex test reasoning; local models fine for routine generation | Independent harness from the build agent |
-
-## 6. Concrete patterns to adopt
-
-1. **Assured‑improvement filtration — the single most transferable pattern (Meta TestGen‑LLM, [source ①](#10-grounding--further-reading)).** Don't surface generated tests on trust; surface only those that *provably improve* the suite. Run every candidate through deterministic filters — **(a) it builds, (b) it passes reliably (not flaky), (c) it measurably increases coverage** — and silently discard the rest. This *"inverts the typical LLM deployment risk: rather than trusting generated output, the system proves improvement before surfacing it,"* which is also what neutralizes hallucination. The principle generalizes to any AI‑generation task in the SDLC: **verification‑driven deployment, not trust‑driven deployment.**
-2. **Self‑healing on the existing suite + PR‑time gates** — enable healing (fixes as reviewable PR diffs), block merge on failure, then let the build agent author tests for features it ships so coverage tracks generation throughput. Directly counters the review/quality bottleneck from [build](03_build.md).
-3. **"AI authors, human approves"** as the explicit operating rule — the engineer accepts/modifies/rejects each recommendation (Meta saw 73% acceptance under this model).
-4. **Independent test harness** — the agent that writes tests is isolated from the agent that writes code (prevents cross‑bias; catches untested correctness requirements mechanically). This is also a Google‑SRE‑mandated practice for the agentic SDLC.
-5. **Risk‑based selection** to keep CI fast as suites grow.
-6. **Pipeline‑resilience tests** for data workflows (Airflow/DVC anomaly + failure simulation).
-7. **Shift security left** — continuous threat modeling in the IDE/PR; auto‑patch suggestions with human accept. **AI‑augmented threat modelling** (an LLM extracts context from the design/diff and proposes STRIDE‑style attack scenarios for a human to triage) accelerates the modelling step teams usually skip.
-
-## 7. Implementation priorities (80/20)
-
-- **Value/effort:** **High value, low effort — pilot this FIRST.** Bounded, instantly verifiable, replaces disliked work, small blast radius.
-- **Sequence:** test generation in CI (coverage gates) → AI‑assisted PR review (augment, human merges) → self‑healing UI tests (Phase 2).
-- **Metrics:** test coverage, manual test‑creation time saved, edge cases found, production‑defect reduction, flaky‑test rate, false‑positive rate, MTTD for security issues. Avoid treating raw "tests generated" as success.
-
-## 8. Risks & governance
-
-- **Review generated tests** — they can be plausible‑but‑wrong.
-- **Avoid vendor lock‑in** — keep tests in your repo in portable formats (many platforms store non‑portable tests).
-- **Don't let AI review replace humans** — augment only.
-- **Treat security scanning as first‑class** — uniform gates, scan AI suggestions, watch hallucinated dependencies.
-
-## 9. Key takeaways
-
-1. **Testing/QA is the best risk‑adjusted place to start with AI** — bounded, verifiable, high‑ROI.
-2. **"AI authors and heals; human approves"** — self‑healing + coverage gates is the proven operating model, and it directly absorbs the extra change volume AI generates upstream.
-3. **Independent harnesses and uniform security gates** keep generated tests and code honest — verifiability is what makes this phase win.
-4. **Filter, don't trust.** The defining lesson from the best industrial deployment: generate many candidates, keep only the ones that provably build, pass, and raise coverage. Volume is cheap; *verified* improvement is the product.
-5. **This discipline has a name: "Harness Engineering"** — building the control systems *around* AI‑generated code (tests, monitors, architectural constraints, orchestration) so its output is safe to trust. Coined by Martin Fowler; a Scale‑ring trend in the LTM SDLC AI Radar — and effectively the named form of this project's *verification‑driven, not trust‑driven* spine.
-
-## 10. Grounding & further reading
-
-*Curated, quality‑reviewed sources behind this phase (full review in [references/sdlc_phases.md](../references/sdlc_phases.md)).*
-
-① **"Automated Unit Test Improvement using LLMs at Meta" (TestGen‑LLM)** (arXiv, Feb 2024) — https://arxiv.org/abs/2402.09171
-   *Gold‑standard industrial primary source.* First report of industrial‑scale deployment of LLM‑generated tests with assured‑improvement guarantees. The transferable principle — **verification‑driven, not trust‑driven deployment** (build → pass reliably → increase coverage filters) — plus honest funnel numbers (75%/57%/25%; 11.5% of classes improved; 73% engineer acceptance). Open‑source reimplementation: Qodo Cover.
-
-② **"An Empirical Evaluation of Using LLMs for Automated Unit Test Generation" (TestPilot)** (IEEE TSE 2023 / arXiv 2302.06527) — https://arxiv.org/abs/2302.06527
-   *Citable academic baseline.* Median 70.2% statement / 52.8% branch coverage, beating prior tools — with the honest caveat that performance is *poor on real open‑source projects* and that complete suites need deep control‑flow/execution‑state reasoning. (See also the 2026 survey arXiv 2511.21382 for achievements/challenges/opportunities.)
-
-③ **Shiplight — "AI in Test Automation: The Complete 2026 Guide"** — https://www.shiplight.ai/blog/ai-in-test-automation
-   *Practitioner state‑of‑the‑art, unusually balanced for a vendor.* Clear "production‑ready vs still‑maturing" split (self‑healing/test‑gen/intent‑authoring work; fully autonomous interpretation + complex business logic don't), "supervised autonomy" framing, measurable benefits (5–10× authoring throughput, maintenance 40–60%→<5%), and limitations (hallucinated tests, opaque failures, false confidence). ⚠️ Vendor blog — treat throughput/maintenance figures as directional.
+*Cross‑references: [Business Benchmark](../analysis/01_business_benchmark.md) · [Technical Architecture](../analysis/02_technical_architecture.md) · [Implementation Planning](../analysis/03_implementation_planning.md) · previous → [Build](03_build.md) · next → [Release](05_release.md).*

@@ -1,99 +1,94 @@
-# Phase 1 - Requirements & Planning
+# Phase 1 — Requirements & Planning
 
 ### How AI is applied to requirements engineering, planning, and specification (mid‑2026)
 
-*Audience: technical leadership. Part of the per‑phase SDLC series. Cross‑references: [Business Benchmark](../analysis/01_business_benchmark.md), [Technical Architecture](../analysis/02_technical_architecture.md), [Implementation Planning](../analysis/03_implementation_planning.md). Reliability tags: **[PRIMARY]** · **[RCT/PEER]** · **[ANALYST]** · **[VENDOR]** · **[3P]** · ⚠️ contested.*
+---
+
+## 1. What this phase is for
+
+The job of this phase is to turn a rough intention — a feature idea, a business ask, a pile of meeting notes — into a **clear, agreed, machine‑readable definition of what to build.** That has always mattered, but in an AI‑accelerated lifecycle it becomes the single highest‑leverage thing you do, for one blunt reason: **the specification is now the contract that every downstream agent implements against.** When a coding agent turns your requirements into code in minutes, the quality of the result is bounded almost entirely by the quality of the spec it was given. Ambiguity that used to be caught by a developer thinking it through is now faithfully implemented as a bug.
+
+This is what people mean when they say *"planning is the new coding."* The bottleneck has moved off the keyboard and onto the question of *knowing what to build and stating it precisely.* Historically this was one of the weakest phases in most teams' SDLC — vague stories, missing acceptance criteria, requirements that contradict each other. AI makes that weakness far more expensive, and also gives you the best tools yet to fix it.
+
+The output you are aiming for is a **living, version‑controlled specification** — user stories with real acceptance criteria, API and data contracts, and the non‑functional constraints (security, performance, compliance) written down — that the design and build phases can consume directly.
+
+## 2. Where AI genuinely helps (and where it doesn't)
+
+**What works today.** AI is very good at the mechanical, high‑volume parts of requirements work that humans find tedious and therefore skip. It can take unstructured inputs — a meeting transcript, a Slack thread, a legacy document — and turn them into structured epics, user stories, and acceptance criteria, flagging duplicates and contradictions between stakeholders along the way. It can draft a first‑pass PRD that a product manager then curates rather than authors from scratch. And it can act as a **gate**: before a ticket is marked "ready for development," an LLM can cross‑check it against your existing architecture‑decision records and API docs and flag conflicts — for example, a new request that quietly violates a security rule you established last month.
+
+**What doesn't work yet — and this is important for planning.** Do not expect AI to make the hard calls. Prioritisation, business trade‑offs, and genuine product strategy stay firmly human; the model has no view of your org's politics, constraints, or intent. Two failure modes are worth designing around from the start:
+
+- **Spec drift.** A spec that isn't actively kept in sync with the code rots quickly, and most tools still treat specs as write‑once documents. If you don't plan to maintain the spec, don't build heavy process around it.
+- **Over‑engineering small work.** Heavyweight spec‑driven workflows badly over‑specify trivial tasks — in one practitioner's test a one‑point bug fix ballooned into four user stories and sixteen acceptance criteria. The tooling won't tell you when to stop; *you* have to decide when a spec is worth the effort.
+
+There is also a subtler trap: **a passing spec test proves only that the software matches the spec, not that the spec was right.** A wrong requirement, faithfully implemented, is still wrong. So human review of the specification itself remains non‑negotiable.
+
+## 3. The activities — what to actually do
+
+This is the core of the plan. These are the concrete pieces of work to stand up, roughly in the order you'd introduce them.
+
+**a) Create a version‑controlled home for specifications.** Make a `specs/` folder a first‑class part of the repository, sitting next to the code. Put the machine‑readable artefacts there — OpenAPI definitions, JSON Schemas, structured requirements — and validate them in CI against the implementation so drift shows up as a failed build rather than a surprise in production. This one structural decision does more than any tool choice to make the phase work.
+
+**b) Decide, deliberately, how much rigour each piece of work gets.** Not everything deserves a full specification. A useful model distinguishes three levels: **spec‑first** (the spec guides the first generation, then can be discarded — fine for prototypes), **spec‑anchored** (the spec persists and evolves with the code, with tests enforcing alignment — the sweet spot for most production systems), and **spec‑as‑source** (humans edit only the spec and the code is fully regenerated — powerful in theory, still immature, don't rely on it yet). The governing rule is *use the minimum rigour that removes the ambiguity for this particular piece of work.* Reserve real spec‑driven development for greenfield builds and legacy‑modernisation efforts, where capturing intent pays off; skip it for small fixes.
+
+**c) Use AI to synthesise and expand requirements — then have a human clarify.** The everyday workflow: feed the model the raw material (transcripts, tickets, existing docs), ask it to produce structured stories with explicit acceptance criteria, and then review. The value is easiest to see in the expansion. A thin story like *"As a user I can upload files"* becomes something a team can actually build against:
+
+> *As a recruiter, I can upload candidate CVs up to 20 MB in PDF or DOCX, so that candidate profiles are created automatically.*
+> **Acceptance criteria:** upload succeeds for valid files · duplicates are detected · files are virus‑scanned · extraction is validated · oversized/wrong‑format files are rejected with a clear message.
+
+**d) Run requirements as a team loop with a "don't assume — ask" rule.** Instead of one person prompting an AI in isolation, run a short synchronous session where the AI proposes a plan *and asks clarifying questions*, and the team validates before anything proceeds. Give the agent a standing instruction to **ask rather than assume**, because models rush toward an answer and will invent a plausible requirement rather than admit a gap. This is where ambiguity gets caught cheaply. (Amazon's AI‑DLC calls this "Mob Elaboration.")
+
+**e) Gate compliance and security at spec time, not release time.** Write the non‑functional requirements — security rules, design‑system constraints, performance budgets, configuration contracts — *into the spec itself*, so they become part of the plan every downstream agent reads and are enforced from day one. This matters more as velocity rises: if you leave governance to a release‑time gate, that gate gets overwhelmed by the volume of AI‑generated changes. Encoding it upstream keeps it from becoming the bottleneck. A concrete pattern: a **"requirements‑gap analyser"** that runs on ticket transition and automatically comments when a story conflicts with an ADR, an API contract, or a security protocol.
+
+**f) Write requirements in a form that's testable — consider EARS.** The *Easy Approach to Requirements Syntax* uses a handful of constrained‑English templates (`The <system> shall…`; `WHEN <trigger> the <system> shall…`; `WHILE <state>…`; `WHERE <feature>…`; `IF <unwanted condition> THEN…`). The point isn't ceremony — it's that rigid templates produce **atomic, unambiguous, testable** requirements that an LLM can translate reliably into both design and tests. It's a small habit with a large downstream payoff.
+
+## 4. How to pilot this
+
+Don't try to do all of the above at once. A sensible sequence:
+
+1. **Quick win first:** PRD and user‑story drafting with human curation. Low risk, immediate improvement in backlog quality, and it builds the team's trust in the workflow.
+2. **Then the structural move:** stand up the `specs/` folder with CI validation.
+3. **Then go deeper, selectively:** apply full spec‑driven development to the next greenfield service or a legacy‑modernisation effort — not to routine tickets.
+
+A useful target to set and track: aim to spend roughly **30–40% of a task's time in specification before generation begins**, and reward spec quality alongside code quality. That ratio is the practical expression of "planning is the new coding." It's a directional benchmark from industry commentary rather than a hard rule, but it's a good forcing function.
+
+## 5. Guardrails & what to watch for
+
+- **Humans own the trade‑offs and priorities.** AI drafts; people decide. Keep that line bright.
+- **Treat spec drift as a build failure.** If the spec and the implementation diverge, CI should complain.
+- **Don't slide back into waterfall.** Writing the entire specification up front assumes you'll learn nothing during implementation — which is false. Keep specs lightweight and iterative, revised as you learn.
+- **Watch the verbosity tax.** If reviewing the generated spec artefacts costs more than reviewing the code would have, you've over‑specified — dial the rigour down.
+
+## 6. How you'll know it's working
+
+Track outcomes, not activity:
+
+- **Ambiguity / completeness of specs** going into development (fewer clarifying questions mid‑build).
+- **Downstream rework attributable to unclear requirements** — this should fall.
+- **First‑pass agent success rate** on work done under spec‑driven development versus ad‑hoc prompting.
+- **Share of task time spent planning** (moving toward the 30–40% target), watched alongside delivered quality so it doesn't become planning for its own sake.
+
+## 7. Tools to reach for
+
+| Need | Options |
+| --- | --- |
+| **Spec‑driven development** | GitHub Spec Kit (agent‑agnostic: `Constitution → Specify → Clarify → Plan → Tasks → Implement`), AWS Kiro (generates `requirements.md`/`design.md`/`tasks.md`, uses EARS), Tessl (spec‑as‑source), BMAD‑METHOD (multi‑agent) |
+| **Requirements notation** | EARS templates (see activity f) |
+| **Synthesis & drafting** | General frontier LLMs (Claude, Gemini, GPT) for PRDs; transcription (Otter.ai, Gong) feeding LLM extraction; Notion AI, ChatPRD — pair with RAG over your wiki/ADRs for grounding |
+| **Models** | 1M‑token‑context models can ingest a full requirements set at once; a local model (Qwen3‑Coder / DeepSeek via vLLM) is fine for privacy‑sensitive drafting |
+
+## 8. Evidence & sources
+
+*Reliability tags: [PRIMARY] primary survey/report · [RCT/PEER] randomized or peer‑reviewed · [ANALYST] Gartner/McKinsey · [VENDOR] vendor‑sourced (treat as a ceiling) · [3P] aggregator.*
+
+- **Adoption / trust:** Requirements‑and‑design AI use is around ~53% versus ~72% for code generation [3P]; **69.2% of developers would not use AI for project planning** — the second‑least‑trusted task after deployment (Stack Overflow 2025) [PRIMARY]. AI‑assisted planning has been credited with ~40% PM‑productivity gains [ANALYST], directional.
+- **The 30–40% planning‑time target** is a vendor‑briefing benchmark (LTM SDLC AI Radar) [VENDOR], consistent with our broader finding that spec quality gates downstream ROI.
+- **Grounding sources** (full reviews in [references/sdlc_phases.md](../references/sdlc_phases.md)):
+  1. **Böckeler / Fowler — "Understanding Spec‑Driven Development: Kiro, spec‑kit, and Tessl"** (Thoughtworks) — the honest, hands‑on account of the failure modes (verbosity tax, problem‑size misfit, waterfall risk). https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html
+  2. **"Spec‑Driven Development: From Code to Contract in the Age of AI"** (arXiv, Feb 2026) — the spec‑first/anchored/as‑source taxonomy and the "minimum rigour" rule. https://arxiv.org/html/2602.00180v1
+  3. **AWS — "AI‑Driven Development Life Cycle (AI‑DLC)"** — the Mob Elaboration and "ask‑don't‑assume" / persistent‑context practices. https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/
+  - Also: GitHub Spec Kit, AWS Kiro docs, Alistair Mavin's EARS guide.
 
 ---
 
-## 1. What this phase covers
-
-Turning intent into a structured, agreed, machine‑readable definition of *what to build*: eliciting and clarifying requirements, synthesizing unstructured inputs (meetings, tickets, docs) into epics/user stories/acceptance criteria, drafting Product Requirements Documents (PRDs), and — the genuinely novel 2026 practice — **spec‑driven development (SDD)**, where a version‑controlled specification becomes the source of truth that downstream agents implement against.
-
-This phase historically one of the weakest in the SDLC (ambiguous requirements, incomplete stories, inconsistent acceptance criteria) and is now one of the highest‑leverage places to apply AI — *but it is also one of the least trusted for autonomy.*
-
-## 2. Adoption status & evidence
-
-- **Lagging coding, but rising.** Requirements/design AI use sits around **~53%** (Techreviewer 2025 **[3P]**) versus ~72% for code generation. Stack Overflow 2025 found **69.2% would not use AI for project planning** **[PRIMARY]** — the second‑least‑trusted task after deployment.
-- **Specification quality is becoming "the new bottleneck and control plane."** As agents get better at implementation, the precision of the spec increasingly determines output quality — a recurring theme across the source analyses.
-- **Spec‑driven development emerged in 2025** as the industry's answer to "vibe coding" (agents producing plausible code that drifts from intent). The recurring slogan: *"intent is the source of truth"* / *"the spec is the prompt."* By mid‑2026 every major coding tool ships an SDD flavor.
-
-## 3. What works
-
-- **Requirement synthesis from unstructured inputs.** Converting meeting transcripts, Slack threads, emails, and legacy docs into structured epics, user stories, and acceptance criteria — including de‑duplication and conflict detection between stakeholders. Concrete pattern from the source corpus: expand a thin story ("As a user I can upload files") into a complete one with size limits, formats, duplicate detection, virus scan, and explicit acceptance criteria.
-- **PRD first‑drafting.** AI drafts the PRD; humans curate and validate rather than author from scratch. McKinsey cites ~40% PM‑productivity improvement on AI‑assisted planning **[ANALYST]** (directional).
-- **Requirements‑gap analysis as a gate.** Before a ticket moves to "Ready for Dev," an LLM cross‑references the new story against existing ADRs and API docs and flags contradictions (e.g., a request that violates a newly established security protocol) — preventing costly late‑stage rework.
-- **Multi‑variant exploration.** Because the spec is decoupled from any one implementation, you can cheaply ask for several approaches and compare — a practical way to de‑risk decisions early.
-
-## 4. What doesn't work (yet)
-
-*The sharpest field evidence here is Birgitta Böckeler's Thoughtworks write‑up of actually running Kiro, Spec Kit, and Tessl on real code ([grounding source ①](#10-grounding--further-reading)) and the arXiv "nine pitfalls" catalog ([source ②](#10-grounding--further-reading)).*
-
-- **Large‑scale trade‑off and business‑context judgment.** AI is weak on org constraints, prioritization politics, and genuine product strategy. Keep humans authoritative here.
-- **Spec drift / spec rot.** Specs drift out of sync with code unless tooling actively maintains them; most tools still treat specs as static documents. This is SDD's primary failure mode (one of the arXiv "nine pitfalls").
-- **The verbosity tax.** Spec Kit generated 8+ markdown files per spec plus repetitive research notes; Böckeler's verdict: *"I'd rather review code than all these markdown files."* Reviewing the artifacts can cost more than reviewing the code — the opposite of the intended benefit.
-- **Problem‑size misfit.** Heavyweight SDD workflows over‑specify small work: in Böckeler's test a **1‑point bug fix ballooned into 4 user stories with 16 acceptance criteria.** Current tooling has no flexible scope handling — *you* must decide when to skip it.
-- **Functional/technical blurring.** Practitioners (and the agents) repeatedly lose track of *"when to stay on the functional level and when to add technical details,"* muddying the what/how separation that gives SDD its power.
-- **Waterfall regression.** Writing the whole spec before implementation encodes the assumption that *you won't learn anything during implementation that changes the spec* — conflicting with proven iterative, small‑batch delivery. ThoughtWorks flags "reverting to waterfall" as a real risk.
-- **False confidence.** Per the arXiv paper: *"a passing spec test doesn't guarantee correct software — it only guarantees that the software matches the spec."* A wrong spec faithfully implemented is still wrong.
-- **Hallucinated requirements & instruction non‑compliance.** AI invents plausible‑but‑wrong acceptance criteria, and agents observably *ignore* constraints in one place while *over‑following* them elsewhere — undermining the control SDD promises. Human review remains mandatory.
-
-## 5. Tools, models & frameworks
-
-| Category | Options | Notes |
-| --- | --- | --- |
-| **Spec‑driven dev** | **GitHub Spec Kit** (MIT, agent‑agnostic: `Constitution → Specify → Clarify → Plan → Tasks → Implement`), **AWS Kiro** (EARS notation, generates `requirements.md`/`design.md`/`tasks.md`), **Tessl** (spec‑as‑source + Spec Registry), **BMAD‑METHOD** (MIT, multi‑agent) | Keep specs version‑controlled and CI‑validated |
-| **Requirements notation** | **EARS** (Easy Approach to Requirements Syntax): Ubiquitous `The <system> shall…`, Event‑driven **WHEN**, State‑driven **WHILE**, Optional **WHERE**, Unwanted **IF/THEN** | Rigid templates → atomic, testable requirements LLMs translate reliably |
-| **Synthesis tools** | General LLMs (Claude, Gemini, GPT) for PRD drafting; transcription (Otter.ai, Gong) feeding LLM extraction; Notion AI; ChatPRD | Pair with RAG over internal wiki/ADRs for grounding |
-| **Models** | 1M‑token context models (Claude Opus 4.8, GPT‑5.5, Gemini 3.1 Pro) ingest a full requirements set at once; local‑first option: Qwen3‑Coder / DeepSeek via llama.cpp/vLLM for privacy | Stable formats (OpenAPI, JSON Schema, structured PRDs) parse best |
-
-## 6. Concrete patterns to adopt
-
-1. **Choose a rigor level deliberately — "minimum rigor that removes ambiguity."** The arXiv taxonomy ([source ②](#10-grounding--further-reading)) gives a usable decision model:
-   - **Spec‑first** — spec guides initial generation, then may be discarded. Good for prototypes / AI‑assisted one‑offs with low maintenance burden. *(Where essentially all current tools actually operate.)*
-   - **Spec‑anchored** — spec persists and evolves with the code; tests enforce alignment (BDD scenarios exemplify it). Described as *"the sweet spot for most production systems."*
-   - **Spec‑as‑source** — humans edit only the spec; code is fully generated/regenerated (Tessl's aspiration, still beta). Eliminates drift by construction but needs mature, trusted generation tooling — and risks repeating Model‑Driven Development's "too much overhead" failure. Don't reach for it yet.
-   The rule: *use the minimum level that removes ambiguity for your context* — over‑specification is itself a listed pitfall.
-2. **`specs/` as a first‑class, version‑controlled folder.** Store OpenAPI/JSON Schema/EARS requirements alongside code; validate in CI against the implementation to catch drift. The single most important structural decision for this phase.
-3. **Spec‑first for the right work only.** Apply SDD to greenfield zero‑to‑one work and legacy modernization (where original intent is lost); skip it for small fixes — the 1‑point‑bug → 16‑acceptance‑criteria failure is what happens otherwise.
-4. **Persistent context as repository artifacts (AI‑DLC).** Treat requirements, assumptions, design decisions, and test plans as *versioned files in the repo, not disposable chat transcripts* ([source ③](#10-grounding--further-reading)) — enabling session continuity, auditability, and better future prompts.
-5. **"Mob Elaboration" + an explicit no‑assumptions rule (AI‑DLC).** Run requirements as a synchronous loop where *AI proposes a plan and asks clarifying questions, and the whole team validates before anything proceeds.* Give the agent a standing instruction to **ask rather than assume** — LLMs rush to outcomes and must be told to defer business decisions to humans.
-6. **Bake non‑functional requirements into the spec, not the review — gate compliance/security at *spec time*, not release time.** Security requirements, design‑system constraints, and config/parameter contracts become part of the plan the agent reads — enforced from day one rather than audited at the end. Release‑time gates get overwhelmed as AI raises deployment velocity; encoding governance into specs and templates upfront is what keeps them from becoming the bottleneck.
-7. **"Requirements Gap Analyzer" webhook.** On ticket transition, an LLM checks the story against ADRs/API docs/security protocols and comments conflicts automatically.
-8. **Mandatory AI feasibility appendix in ADRs** (see [design.md](02_design.md)) — generated by a model primed with your internal tech‑stack docs.
-
-## 7. Implementation priorities (80/20)
-
-- **Value/effort:** Medium‑high value, medium effort. Not a *first* pilot (lower verifiability than testing), but a strong **Phase 2** investment once coding/testing pilots prove out.
-- **Quick win:** PRD/user‑story drafting with human curation — low risk, immediate quality‑of‑backlog improvement.
-- **Higher‑leverage:** SDD on the next greenfield service or a legacy‑modernization effort.
-- **Target (planning‑first):** deliberately spend **~30–40% of task time in specification before code generation**, and *track planning time / reward spec quality alongside code quality* — a vendor‑briefing benchmark for "planning is the new coding" **[VENDOR]**, consistent with our finding that spec quality gates downstream ROI.
-- **Metrics:** spec completeness / ambiguity reduction, downstream rework attributable to unclear requirements, first‑pass agent success rate under SDD vs ad‑hoc prompting.
-
-## 8. Risks & governance
-
-- **Embed security in the spec/constitution files** so it propagates to every downstream agent.
-- **Keep humans authoritative on trade‑offs and prioritization** — AI drafts, humans decide.
-- **Guard against spec drift** with CI validation; treat an out‑of‑date spec as a build failure.
-- **Avoid waterfall regression** — keep specs lightweight and iterative, not big‑upfront‑design.
-
-## 9. Key takeaways
-
-1. Requirements is a high‑leverage, low‑trust phase — **AI drafts and synthesizes; humans clarify, decide, and own**.
-2. **Spec‑driven development is the defining 2026 practice here** — but selectively, on greenfield and modernization, with specs as version‑controlled, CI‑validated artifacts.
-3. The payoff is a higher‑quality, less‑ambiguous backlog that makes every downstream phase (especially [build](03_build.md) and [test](04_test.md)) more reliable — the spec is the contract the rest of the pipeline depends on.
-
-## 10. Grounding & further reading
-
-*Curated, quality‑reviewed sources behind this phase (full review in [references/sdlc_phases.md](../references/sdlc_phases.md)).*
-
-① **Birgitta Böckeler / Martin Fowler — "Understanding Spec‑Driven Development: Kiro, spec‑kit, and Tessl"** (Thoughtworks, 2025/26) — https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html
-   *Primary realism source.* A practitioner running the actual tools on real code; honest, concrete failure modes (verbosity tax, problem‑size misfit, waterfall risk, MDD parallel). Best for the "what doesn't work" rigor.
-
-② **"Spec‑Driven Development: From Code to Contract in the Age of AI"** (arXiv, Feb 2026) — https://arxiv.org/html/2602.00180v1
-   *Citable framework.* The spec‑first / spec‑anchored / spec‑as‑source taxonomy, the "minimum rigor that removes ambiguity" rule, and nine pitfalls. Caveat: thin primary evidence (leans on a cited "up to 50% error reduction"); use for framing, not hard ROI.
-
-③ **AWS — "AI‑Driven Development Life Cycle (AI‑DLC)"** + companions — https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/ · [Building with AI‑DLC using Amazon Q](https://aws.amazon.com/blogs/devops/building-with-ai-dlc-using-amazon-q-developer/) · [open‑sourced adaptive workflows](https://aws.amazon.com/blogs/devops/open-sourcing-adaptive-workflows-for-ai-driven-development-life-cycle-ai-dlc/) · [sample repo](https://github.com/aws-samples/sample-ai-driven-development-lifecycle-platform/)
-   *Methodology inspiration.* Named primitives: Inception, Mob Elaboration, ask‑don't‑assume rule, persistent context as repo artifacts. Caveat: the flagship blog is conceptual and omits limitations (vendor methodology) — the repo and the Amazon Q walkthrough hold the substance.
-
-*Also referenced across the series:* GitHub Spec Kit (github/spec-kit), AWS Kiro docs (kiro.dev), Alistair Mavin's EARS guide (alistairmavin.com/ears).
+*Cross‑references: [Business Benchmark](../analysis/01_business_benchmark.md) · [Technical Architecture](../analysis/02_technical_architecture.md) · [Implementation Planning](../analysis/03_implementation_planning.md) · next phase → [Design & Architecture](02_design.md).*
