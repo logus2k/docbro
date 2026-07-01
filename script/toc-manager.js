@@ -116,6 +116,24 @@ export class TocManager {
                     this.onActivateDocument(docIndex, undefined, undefined, false, isDoubleClick);
                     return false;
                 }
+            },
+
+            // Keyboard navigation (arrow keys / Enter) activates the focused
+            // node so its content renders. Only reacts to keyboard events —
+            // mouse clicks are fully handled by click: above, and our own
+            // programmatic setActive() calls pass { noEvents: true }.
+            activate: (e) => {
+                const evt = e.event;
+                if (!evt || evt.type !== 'keydown') return;
+                const key = (e.node && e.node.key) || '';
+                const headerMatch = key.match(/^doc-(\d+)-header-/);
+                if (headerMatch) {
+                    this.onActivateDocument(parseInt(headerMatch[1], 10), key, undefined, false, false);
+                } else if (key.startsWith('cat-')) {
+                    this.onActivateDocument(null, null, key.replace('cat-', ''), false, false);
+                } else if (key.match(/^doc-\d+$/)) {
+                    this.onActivateDocument(parseInt(key.replace('doc-', ''), 10), undefined, undefined, false, false);
+                }
             }
         });
     }
