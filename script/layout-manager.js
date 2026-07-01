@@ -6,10 +6,11 @@ export class LayoutManager {
         this.onZoomApplied = onZoomApplied;
         this.onStateChanged = onStateChanged;
 
-        // PDF view state. `columns` = pages per row (1–4). Page sizing is
-        // computed in pixels (pageWidthPx) and pushed to CSS; `pdfZoom` is a
-        // derived readout where 1 == fit-width. `fitMode` drives how the size
-        // recomputes on resize / rotation.
+        // PDF view state. `columns` = pages per row (1..MAX_COLUMNS). Page
+        // sizing is computed in pixels (pageWidthPx) and pushed to CSS; `pdfZoom`
+        // is a derived readout where 1 == fit-width. `fitMode` drives how the
+        // size recomputes on resize / rotation.
+        this.MAX_COLUMNS = 16;
         this.columns = 1;
         this.pdfZoom = 1;
         this.pageWidthPx = 0;
@@ -131,16 +132,20 @@ export class LayoutManager {
         return Math.max(20, Math.min(m.slot, Math.floor(m.availH * m.aspect)));
     }
 
-    // Called when a PDF is first shown: one column, whole first page visible.
+    // Called when a PDF is first shown. Default to a two-page spread when the
+    // rendering area is wide enough to fit two full-height pages side by side;
+    // otherwise a single page. Either way, fit the whole page(s) in view.
     initForDocument() {
-        this.columns = 1;
+        const m = this._metrics();
+        const twoUpFits = m && (2 * (m.availH * m.aspect) + this.GAP <= m.availW);
+        this.columns = twoUpFits ? 2 : 1;
         this.applyColumns();
         this.fitPage();
         this._setupLayoutResizeObserver();
     }
 
     setColumns(n) {
-        this.columns = Math.min(4, Math.max(1, Math.round(n)));
+        this.columns = Math.min(this.MAX_COLUMNS, Math.max(1, Math.round(n)));
         this.applyColumns();
         this.fitPage(); // each column count defaults to whole-page-visible
     }
