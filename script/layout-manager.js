@@ -16,6 +16,8 @@ export class LayoutManager {
         this.pageWidthPx = 0;
         this.fitMode = 'page'; // 'width' | 'page' | 'custom'
         this.GAP = 6;          // px gap between pages in a row (matches CSS grid gap)
+        this.EDGE_RESERVE = 28; // px reserved beside the pages row for the ~10px
+                                // gap + the scrollbar (container is narrowed to fit)
 
         this._layoutResizeObserver = null;
         this._zoomRefreshTimer = null;
@@ -87,9 +89,13 @@ export class LayoutManager {
         const pdfContent = this._pdfContent();
         if (!pdfContent) return null;
         const style = getComputedStyle(pdfContent);
-        const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
         const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
-        const availW = Math.max(1, pdfContent.clientWidth - padX);
+        // Size pages against the STABLE pane width (the parent), not the scroll
+        // container's own width — the container gets narrowed to fit the pages
+        // (so the scrollbar hugs the page), which would otherwise feed back.
+        const parent = pdfContent.parentElement;
+        const paneW = parent ? parent.clientWidth : pdfContent.clientWidth;
+        const availW = Math.max(1, paneW - this.EDGE_RESERVE);
         const availH = Math.max(1, pdfContent.clientHeight - padY);
 
         let aspect = 900 / 1165; // width / height fallback
@@ -115,6 +121,10 @@ export class LayoutManager {
         this.pdfZoom = pw / Math.max(1, m.slot);
 
         pdfContent.style.setProperty('--pdf-page-width', pw + 'px');
+        // Narrow the scroll container to the pages row + a small gutter so the
+        // vertical scrollbar sits ~10px from the page's right border.
+        const rowWidth = this.columns * pw + (this.columns - 1) * this.GAP;
+        pdfContent.style.setProperty('--pdf-content-maxw', (rowWidth + this.EDGE_RESERVE) + 'px');
 
         if (this.onZoomApplied) {
             clearTimeout(this._zoomRefreshTimer);
