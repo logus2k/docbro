@@ -102,6 +102,10 @@ export class TabManager {
 
         const renderList = [...activeCategoryVisible, ...otherVisible];
 
+        // At least one tab must stay open — only offer close buttons when there
+        // is more than one tab (the intro tab counts toward the total).
+        const totalTabs = (introInfo ? 1 : 0) + renderList.length;
+
         renderList.forEach((doc) => {
             const label = doc.category !== activeCategory
                 ? `${doc.category} · ${doc.name}`
@@ -115,15 +119,17 @@ export class TabManager {
                 tab.classList.add('sticky');
             }
 
-            // Close button
-            const closeBtn = document.createElement('span');
-            closeBtn.className = 'tab-close-btn';
-            closeBtn.textContent = '\u00d7';
-            closeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.closeTab(doc.globalIndex, documents, activeCategory);
-            });
-            tab.appendChild(closeBtn);
+            // Close button (omitted for the last remaining tab)
+            if (totalTabs > 1) {
+                const closeBtn = document.createElement('span');
+                closeBtn.className = 'tab-close-btn';
+                closeBtn.textContent = '\u00d7';
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.closeTab(doc.globalIndex, documents, activeCategory);
+                });
+                tab.appendChild(closeBtn);
+            }
 
             this.tabsContainer.appendChild(tab);
         });
@@ -164,6 +170,10 @@ export class TabManager {
     }
 
     closeTab(globalIndex, documents, activeCategory) {
+        // Never close the last remaining tab (intro tab counts toward the total).
+        const totalTabs = this._visibleTabs.size + (this._introTab ? 1 : 0);
+        if (totalTabs <= 1) return;
+
         const doc = documents[globalIndex];
         this.state.close(globalIndex, doc);
         this._visibleTabs.delete(globalIndex);
