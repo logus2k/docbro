@@ -332,6 +332,43 @@ export class TocManager {
         return this.treeInstance.findKey(`doc-${globalIndex}`);
     }
 
+    // Insert a now-permanent (published) document into the tree under its real
+    // category (created + expanded if missing), then scroll it into view.
+    // Returns the new doc node.
+    addCatalogNode(globalIndex, name, category) {
+        if (!this.treeInstance) return null;
+        const catKey = 'cat-' + category;
+        const docData = { title: name, key: `doc-${globalIndex}`, folder: true, expanded: false, children: [] };
+        let catNode = this.treeInstance.findKey(catKey);
+        if (!catNode) {
+            this.treeInstance.root.addChildren({ title: category, key: catKey, folder: true, expanded: true, children: [] });
+            catNode = this.treeInstance.findKey(catKey);
+        }
+        if (catNode) {
+            if (!catNode.isExpanded()) catNode.setExpanded(true);
+            catNode.addChildren(docData);
+        }
+        const node = this.treeInstance.findKey(`doc-${globalIndex}`);
+        if (node && node.makeVisible) {
+            try { node.makeVisible(); } catch (e) { /* ignore */ }
+        }
+        return node;
+    }
+
+    // Remove a node by key; also drop the "Local files" category if it becomes
+    // empty (used when a dropped file is published and its temp entry is gone).
+    removeNode(key) {
+        if (!this.treeInstance) return;
+        const node = this.treeInstance.findKey(key);
+        if (!node) return;
+        const parent = node.parent;
+        try { node.remove(); } catch (e) { /* ignore */ }
+        if (parent && parent.key === 'cat-Local files' &&
+            (!parent.children || parent.children.length === 0)) {
+            try { parent.remove(); } catch (e) { /* ignore */ }
+        }
+    }
+
     setNodeActive(key) {
         const node = this.treeInstance.findKey(key);
         if (node) {

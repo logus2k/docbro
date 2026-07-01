@@ -19,9 +19,36 @@ services:
     networks:
       logus2k_network:
         ipv4_address: 172.20.0.110
-    #volumes:
-      #- ./documents.json:/usr/share/caddy/documents.json:ro
-      #- ./categories:/usr/share/caddy/categories:ro
+    # Live content: Caddy serves the host files directly so anything the API
+    # publishes appears immediately, without an image rebuild.
+    volumes:
+      - ./documents.json:/usr/share/caddy/documents.json:ro
+      - ./categories:/usr/share/caddy/categories:ro
+
+  docbro-api:
+    profiles:
+      - default
+      - full
+    restart: unless-stopped
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: logus2k/docbro-api
+    container_name: docbro-api
+    hostname: docbro-api
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "8766:8766"
+    networks:
+      logus2k_network:
+        ipv4_address: 172.20.0.111
+    # Read-write mounts of the same source Caddy serves, so /publish persists.
+    volumes:
+      - ./documents.json:/content/documents.json
+      - ./categories:/content/categories
 
 networks:
   logus2k_network:

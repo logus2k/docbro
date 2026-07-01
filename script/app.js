@@ -137,6 +137,11 @@ class DocumentBrowser {
                 onFiles: (files) => this.openLocalFiles(files)
             });
             this.dropHandler.attach();
+
+            const makeDefBtn = document.getElementById('makeDefinitiveBtn');
+            if (makeDefBtn) {
+                makeDefBtn.addEventListener('click', () => this.makeDefinitive(this.activeDocumentIndex));
+            }
             // Chat panel disabled (pending rework)
             // this.chatPanel = new ChatPanel(document.getElementById('rightPane'));
             // this.chatService = new ChatService(this.chatPanel);
@@ -215,6 +220,121 @@ class DocumentBrowser {
         const doc = this.loader.registerLocalDocument({ name, type, blobUrl, mime });
         this.tocManager.addLocalDocument(doc.globalIndex, name);
         return doc.globalIndex;
+    }
+
+    // --- Make definitive (publish a dropped file permanently) ---
+
+    _publishUrl() {
+        return window.DOCBRO_PUBLISH_URL
+            || `${window.location.protocol}//${window.location.hostname}:8766/publish`;
+    }
+
+    async makeDefinitive(globalIndex) {
+        const doc = this.documents[globalIndex];
+        if (!doc || !doc.isLocal) return;
+
+        const meta = await this._openPublishModal(doc.name, this.categories);
+        if (!meta) return;
+
+        try {
+            const resp = await fetch(doc.location); // the in-memory blob
+            if (!resp.ok) throw new Error('could not read the dropped file');
+            const blob = await resp.blob();
+
+            const form = new FormData();
+            form.append('file', blob, doc.name);
+            form.append('name', meta.name);
+            form.append('category', meta.category);
+
+            const res = await fetch(this._publishUrl(), { method: 'POST', body: form });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+
+            await this._onPublished(data.entry, globalIndex);
+        } catch (e) {
+            console.error('Make definitive failed:', e);
+            this._toast('Could not make definitive: ' + e.message, true);
+        }
+    }
+
+    // Add the newly-published entry to the live catalog + tree, reveal & open it,
+    // and drop the temporary (dropped) entry it was published from.
+    async _onPublished(entry, sourceLocalIndex) {
+        const newIndex = this.documents.length;
+        this.documents.push({
+            name: entry.name,
+            category: entry.category,
+            location: entry.location,
+            globalIndex: newIndex,
+            loaded: false,
+            content: '',
+            error: false,
+            headers: null,
+            configHeaders: null,
+            openByDefault: false,
+            pdfDoc: null,
+        });
+        if (!this.categories.includes(entry.category)) this.categories.push(entry.category);
+
+        this.tocManager.addCatalogNode(newIndex, entry.name, entry.category);
+        if (sourceLocalIndex !== null && sourceLocalIndex !== undefined) {
+            this.tocManager.removeNode(`doc-${sourceLocalIndex}`);
+        }
+
+        // Open the now-permanent document (this also selects its tree node).
+        await this.activateDocument(newIndex);
+        this._toast(`Published to “${entry.category}”.`);
+    }
+
+    // Small transient notification (bottom-centre), auto-dismisses.
+    _toast(message, isError = false) {
+        const t = document.createElement('div');
+        t.className = 'docbro-toast' + (isError ? ' error' : '');
+        t.textContent = message;
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.classList.add('visible'));
+        setTimeout(() => {
+            t.classList.remove('visible');
+            setTimeout(() => t.remove(), 300);
+        }, 2800);
+    }
+
+    // Minimal name/category dialog. Resolves to {name, category} or null.
+    _openPublishModal(defaultName, categories) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'publish-modal-overlay';
+            const opts = (categories || [])
+                .filter(c => c && c !== 'Local files')
+                .map(c => `<option value="${c.replace(/"/g, '&quot;')}"></option>`)
+                .join('');
+            overlay.innerHTML = `
+                <div class="publish-modal">
+                    <div class="publish-modal-title">Make definitive</div>
+                    <label>Name<input type="text" id="pubName"></label>
+                    <label>Category<input type="text" id="pubCategory" list="pubCatList" placeholder="e.g. My Notes"><datalist id="pubCatList">${opts}</datalist></label>
+                    <div class="publish-modal-actions">
+                        <button type="button" class="pub-cancel">Cancel</button>
+                        <button type="button" class="pub-save">Save</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+
+            const nameInput = overlay.querySelector('#pubName');
+            const catInput = overlay.querySelector('#pubCategory');
+            nameInput.value = defaultName || '';
+
+            const close = (result) => { overlay.remove(); resolve(result); };
+            overlay.querySelector('.pub-cancel').addEventListener('click', () => close(null));
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+            overlay.querySelector('.pub-save').addEventListener('click', () => {
+                const name = nameInput.value.trim();
+                const category = catInput.value.trim();
+                if (!name || !category) return;
+                close({ name, category });
+            });
+            setTimeout(() => nameInput.focus(), 0);
+        });
     }
 
     // --- Navigation ---
@@ -355,6 +475,9 @@ class DocumentBrowser {
         this._showingIntro = true;
         this.activeDocumentIndex = null;
 
+        const makeDefBtn = document.getElementById('makeDefinitiveBtn');
+        if (makeDefBtn) makeDefBtn.style.display = 'none';
+
         const introInfo = await this._getIntroInfo(category);
         this.tabManager.renderTabs(this.documents, category, null, introInfo);
 
@@ -405,6 +528,10 @@ class DocumentBrowser {
 
     async renderDocument(globalIndex) {
         const doc = this.documents[globalIndex];
+
+        // The "Make definitive" affordance is only for dropped/local documents.
+        const makeDefBtn = document.getElementById('makeDefinitiveBtn');
+        if (makeDefBtn) makeDefBtn.style.display = (doc && doc.isLocal) ? '' : 'none';
 
         if (this.selectionMode) {
             this.selectionMode.reset();
