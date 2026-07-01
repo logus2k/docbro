@@ -10,6 +10,7 @@ import { LayoutManager } from './layout-manager.js';
 import { PdfRenderer } from './pdf-renderer.js';
 import { PdfControls } from './pdf-controls.js';
 import { TocManager } from './toc-manager.js';
+import { DropHandler } from './drop-handler.js';
 
 GlobalWorkerOptions.workerSrc = './libraries/pdf.js/pdf.worker.min.mjs';
 
@@ -129,6 +130,13 @@ class DocumentBrowser {
 
             this.layoutManager.initSplitPane();
             this.tocManager.buildTree(this.categories, this.documents);
+
+            // Drag & drop local files (PDF / Markdown / video) to view them.
+            this.dropHandler = new DropHandler({
+                overlay: document.getElementById('dropOverlay'),
+                onFiles: (files) => this.openLocalFiles(files)
+            });
+            this.dropHandler.attach();
             // Chat panel disabled (pending rework)
             // this.chatPanel = new ChatPanel(document.getElementById('rightPane'));
             // this.chatService = new ChatService(this.chatPanel);
@@ -171,6 +179,42 @@ class DocumentBrowser {
         if (this.contentPanel) {
             this.contentPanel.appendText(text);
         }
+    }
+
+    // --- Local (dropped) files ---
+
+    async openLocalFiles(files) {
+        let firstIndex = null;
+        for (const file of files) {
+            const idx = this.registerLocalFile(file);
+            if (idx !== null && firstIndex === null) firstIndex = idx;
+        }
+        if (firstIndex !== null) {
+            await this.activateDocument(firstIndex);
+        }
+    }
+
+    // Classify a dropped file, wrap it as a temporary document + TOC node.
+    // Returns its globalIndex, or null if the type is unsupported.
+    registerLocalFile(file) {
+        const name = file.name || 'Untitled';
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        const mime = file.type || '';
+
+        let type = null;
+        if (ext === 'pdf' || mime === 'application/pdf') type = 'pdf';
+        else if (['md', 'markdown', 'txt'].includes(ext) || mime === 'text/markdown' || mime === 'text/plain') type = 'md';
+        else if (['mp4', 'webm', 'ogg', 'ogv', 'mov', 'm4v'].includes(ext) || mime.startsWith('video/')) type = 'video';
+
+        if (!type) {
+            console.warn('Unsupported dropped file:', name, mime);
+            return null;
+        }
+
+        const blobUrl = URL.createObjectURL(file);
+        const doc = this.loader.registerLocalDocument({ name, type, blobUrl, mime });
+        this.tocManager.addLocalDocument(doc.globalIndex, name);
+        return doc.globalIndex;
     }
 
     // --- Navigation ---
@@ -267,7 +311,9 @@ class DocumentBrowser {
                 await this.renderDocument(globalIndex);
                 if (this._activationVersion !== activationVersion) return;
                 this._isRendering = false;
-                this.updateHash(doc.category, doc.name);
+                // Local (dropped) docs aren't in the catalog, so don't write a
+                // deep-link hash that would 404 on reload.
+                if (!doc.isLocal) this.updateHash(doc.category, doc.name);
                 await this.tocManager.extractAndUpdateHeaders(globalIndex, doc);
                 if (this._activationVersion !== activationVersion) return;
                 this.tocManager.setupScrollSync(doc, () => this.documents[this.activeDocumentIndex]);

@@ -306,6 +306,32 @@ export class TocManager {
         scrollContainer.addEventListener('scroll', this._scrollHandler);
     }
 
+    // Insert a dropped/local document into the tree under a "Local files"
+    // category (created at the top on first use). Returns the new doc node.
+    addLocalDocument(globalIndex, name) {
+        if (!this.treeInstance) return null;
+        const catKey = 'cat-Local files';
+        const docData = { title: name, key: `doc-${globalIndex}`, folder: true, expanded: false, children: [] };
+
+        let catNode = this.treeInstance.findKey(catKey);
+        if (!catNode) {
+            const root = this.treeInstance.root;
+            const firstChild = (root.children && root.children.length) ? root.children[0] : null;
+            const catData = { title: 'Local files', key: catKey, folder: true, expanded: true, children: [] };
+            try {
+                root.addChildren(catData, firstChild ? { before: firstChild } : undefined);
+            } catch (e) {
+                root.addChildren(catData);
+            }
+            catNode = this.treeInstance.findKey(catKey);
+        }
+        if (catNode) {
+            catNode.addChildren(docData);
+            catNode.setExpanded(true);
+        }
+        return this.treeInstance.findKey(`doc-${globalIndex}`);
+    }
+
     setNodeActive(key) {
         const node = this.treeInstance.findKey(key);
         if (node) {

@@ -11,7 +11,39 @@ export class DocumentLoader {
     }
 
     isPdf(doc) {
+        if (doc.type) return doc.type === 'pdf';
         return doc.location.toLowerCase().endsWith('.pdf');
+    }
+
+    // Register an in-memory (dropped) file as a temporary document backed by a
+    // blob URL. PDFs and Markdown load lazily via the blob URL (so switching
+    // away/back re-reads it); video content is prebuilt. Returns the new doc.
+    registerLocalDocument({ name, type, blobUrl, mime }) {
+        const CATEGORY = 'Local files';
+        if (!this.categories.includes(CATEGORY)) this.categories.push(CATEGORY);
+        // Avoid a 404 probe for a non-existent category intro.
+        if (!(CATEGORY in this._introCache)) this._introCache[CATEGORY] = null;
+
+        const isVideo = type === 'video';
+        const doc = {
+            name,
+            category: CATEGORY,
+            location: blobUrl,
+            type,
+            globalIndex: this.documents.length,
+            loaded: isVideo,   // video content is ready immediately; pdf/md load lazily
+            content: isVideo
+                ? `<div class="embedded-video"><video controls><source src="${blobUrl}" type="${mime || 'video/mp4'}"></video></div>`
+                : '',
+            error: false,
+            headers: null,
+            configHeaders: null,
+            openByDefault: false,
+            pdfDoc: null,
+            isLocal: true,
+        };
+        this.documents.push(doc);
+        return doc;
     }
 
     async loadConfiguration() {
