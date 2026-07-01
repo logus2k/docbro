@@ -44,6 +44,21 @@ def safe_filename(name: str) -> str:
     return name or "file"
 
 
+def sanitize_rel_path(p: str) -> str:
+    """Turn a user-supplied folder path (possibly nested, e.g. 'sdlc/articles')
+    into a safe relative path under categories/. Slugifies each segment and
+    drops empty / '.' / '..' segments (no traversal)."""
+    segments = []
+    for seg in (p or "").replace("\\", "/").split("/"):
+        seg = seg.strip()
+        if not seg or seg in (".", ".."):
+            continue
+        slug = slugify(seg)
+        if slug:
+            segments.append(slug)
+    return "/".join(segments)
+
+
 def _append_entry_preserving_layout(text: str, entry: dict) -> str:
     """Insert a new document entry just before the closing ] of the documents
     array, keeping the rest of the file (tabs, blank-line grouping) intact.
@@ -76,6 +91,7 @@ async def publish(
     file: UploadFile = File(...),
     name: str = Form(...),
     category: str = Form(...),
+    path: str = Form(""),
 ):
     name = name.strip()
     category = category.strip()
@@ -90,7 +106,10 @@ async def publish(
     if not DOCS_JSON.exists():
         raise HTTPException(status_code=500, detail="documents.json not found (volume not mounted?)")
 
-    folder = slugify(category)
+    # Folder path is independent of the (display) category, and may be nested
+    # (e.g. "sdlc/articles"). If omitted, fall back to a slugged, nested path
+    # derived from the (possibly nested, e.g. "SDLC/Articles") category.
+    folder = sanitize_rel_path(path) or sanitize_rel_path(category) or "misc"
     dest_dir = CATEGORIES_DIR / folder
     dest_dir.mkdir(parents=True, exist_ok=True)
 

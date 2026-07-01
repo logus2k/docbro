@@ -225,8 +225,13 @@ class DocumentBrowser {
     // --- Make definitive (publish a dropped file permanently) ---
 
     _publishUrl() {
-        return window.DOCBRO_PUBLISH_URL
-            || `${window.location.protocol}//${window.location.hostname}:8766/publish`;
+        if (window.DOCBRO_PUBLISH_URL) return window.DOCBRO_PUBLISH_URL;
+        // Served under a path prefix (e.g. /docbro/ behind the proxy)? Call the
+        // API same-origin at <prefix>api/publish so it works over HTTPS and the
+        // proxy carries the auth cookie. Direct/local access hits the API port.
+        const m = window.location.pathname.match(/^(\/[^/]+\/)/);
+        if (m) return window.location.origin + m[1] + 'api/publish';
+        return `${window.location.protocol}//${window.location.hostname}:8766/publish`;
     }
 
     async makeDefinitive(globalIndex) {
@@ -245,6 +250,7 @@ class DocumentBrowser {
             form.append('file', blob, doc.name);
             form.append('name', meta.name);
             form.append('category', meta.category);
+            form.append('path', meta.path || '');
 
             const res = await fetch(this._publishUrl(), { method: 'POST', body: form });
             const data = await res.json().catch(() => ({}));
@@ -299,20 +305,22 @@ class DocumentBrowser {
         }, 2800);
     }
 
-    // Minimal name/category dialog. Resolves to {name, category} or null.
-    _openPublishModal(defaultName, categories) {
+    // Publish dialog. The TOC path is the nested tree location whose LAST
+    // segment is the document title (e.g. "SDLC/Articles/SDLC Executive
+    // Briefing"); the physical path is the (independent) folder on disk.
+    // Resolves to { name, category, path } or null.
+    _openPublishModal(defaultName) {
         return new Promise((resolve) => {
             const overlay = document.createElement('div');
             overlay.className = 'publish-modal-overlay';
-            const opts = (categories || [])
-                .filter(c => c && c !== 'Local files')
-                .map(c => `<option value="${c.replace(/"/g, '&quot;')}"></option>`)
-                .join('');
             overlay.innerHTML = `
                 <div class="publish-modal">
                     <div class="publish-modal-title">Make definitive</div>
-                    <label>Name<input type="text" id="pubName"></label>
-                    <label>Category<input type="text" id="pubCategory" list="pubCatList" placeholder="e.g. My Notes"><datalist id="pubCatList">${opts}</datalist></label>
+                    <label>TOC path <span class="pub-hint">folders / title</span>
+                        <input type="text" id="pubTocPath" placeholder="e.g. SDLC/Articles/SDLC Executive Briefing"></label>
+                    <label>Physical path <span class="pub-hint">folder on disk</span>
+                        <input type="text" id="pubPath" placeholder="e.g. sdlc/articles (defaults to TOC folders)"></label>
+                    <div class="publish-modal-error" id="pubError"></div>
                     <div class="publish-modal-actions">
                         <button type="button" class="pub-cancel">Cancel</button>
                         <button type="button" class="pub-save">Save</button>
@@ -320,20 +328,24 @@ class DocumentBrowser {
                 </div>`;
             document.body.appendChild(overlay);
 
-            const nameInput = overlay.querySelector('#pubName');
-            const catInput = overlay.querySelector('#pubCategory');
-            nameInput.value = defaultName || '';
+            const tocInput = overlay.querySelector('#pubTocPath');
+            const pathInput = overlay.querySelector('#pubPath');
+            const errEl = overlay.querySelector('#pubError');
 
             const close = (result) => { overlay.remove(); resolve(result); };
             overlay.querySelector('.pub-cancel').addEventListener('click', () => close(null));
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
             overlay.querySelector('.pub-save').addEventListener('click', () => {
-                const name = nameInput.value.trim();
-                const category = catInput.value.trim();
-                if (!name || !category) return;
-                close({ name, category });
+                const segs = tocInput.value.split('/').map(s => s.trim()).filter(Boolean);
+                if (segs.length < 2) {
+                    errEl.textContent = 'Enter at least Folder/Title, e.g. SDLC/Articles/My Title';
+                    return;
+                }
+                const name = segs[segs.length - 1];
+                const category = segs.slice(0, -1).join('/');
+                close({ name, category, path: pathInput.value.trim() });
             });
-            setTimeout(() => nameInput.focus(), 0);
+            setTimeout(() => tocInput.focus(), 0);
         });
     }
 

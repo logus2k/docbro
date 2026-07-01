@@ -395,7 +395,7 @@ export class PdfRenderer {
         // downscale sharpens text/line edges — pdf.js draws with grayscale AA,
         // and oversampling closes much of the gap to a native PDF viewer.
         // SUPERSAMPLE is trimmed on already-dense (HiDPI) screens to bound memory.
-        const SUPERSAMPLE = dpr >= 2 ? 1.5 : 2;
+        const SUPERSAMPLE = dpr >= 2 ? 1.5 : 1.8;
         let scale = (cssWidth / baseWidth) * dpr * SUPERSAMPLE;
 
         const MAX_CANVAS_PIXELS = 24_000_000; // memory guard (~96 MB/canvas)

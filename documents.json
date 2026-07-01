@@ -628,6 +628,11 @@
 			"name": "Project Report",
 			"category": "ISCTE - Topics in Intelligent Robotics",
 			"location": "categories/reports/tri/final_project_technical_report.pdf"
-		}		
+		},
+		{
+			"name": "SDLC Executive Briefing",
+			"category": "SDLC/Articles",
+			"location": "categories/sdlc/articles/sdlc-ai-executive-slides-final.pdf"
+		}
 	]
 }

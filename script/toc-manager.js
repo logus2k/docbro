@@ -14,22 +14,43 @@ export class TocManager {
     }
 
     buildTree(categories, documents) {
-        const treeData = categories.map(category => {
-            const categoryDocs = documents.filter(d => d.category === category);
-            return {
-                title: category,
-                key: `cat-${category}`,
-                folder: true,
-                expanded: false,
-                children: categoryDocs.map(doc => ({
+        // Build a nested folder tree from "/"-separated category paths (e.g.
+        // "SDLC/Articles"), reusing shared prefixes. Documents hang off the
+        // deepest folder of their category path. Flat categories (no "/") stay
+        // single-level, exactly as before.
+        const treeData = [];
+        const folderByPath = new Map();
+        const ensureFolder = (categoryPath) => {
+            const parts = String(categoryPath).split('/').map(s => s.trim()).filter(Boolean);
+            let cumulative = '';
+            let siblings = treeData;
+            let node = null;
+            for (const part of parts) {
+                cumulative = cumulative ? `${cumulative}/${part}` : part;
+                node = folderByPath.get(cumulative);
+                if (!node) {
+                    node = { title: part, key: `cat-${cumulative}`, folder: true, expanded: false, children: [] };
+                    siblings.push(node);
+                    folderByPath.set(cumulative, node);
+                }
+                siblings = node.children;
+            }
+            return node;
+        };
+
+        for (const category of categories) {
+            const folder = ensureFolder(category);
+            if (!folder) continue;
+            for (const doc of documents.filter(d => d.category === category)) {
+                folder.children.push({
                     title: doc.name,
                     key: `doc-${doc.globalIndex}`,
                     folder: true,
                     expanded: false,
                     children: []
-                }))
-            };
-        });
+                });
+            }
+        }
 
         this.treeInstance = new mar10.Wunderbaum({
             element: document.getElementById('tocTree'),
@@ -355,22 +376,31 @@ export class TocManager {
     // Returns the new doc node.
     addCatalogNode(globalIndex, name, category) {
         if (!this.treeInstance) return null;
-        const catKey = 'cat-' + category;
-        const docData = { title: name, key: `doc-${globalIndex}`, folder: true, expanded: false, children: [] };
-        let catNode = this.treeInstance.findKey(catKey);
-        if (!catNode) {
-            this.treeInstance.root.addChildren({ title: category, key: catKey, folder: true, expanded: true, children: [] });
-            catNode = this.treeInstance.findKey(catKey);
+        // Walk/create the nested folder chain for the (possibly "/"-separated)
+        // category path, then hang the document off the deepest folder.
+        const parts = String(category).split('/').map(s => s.trim()).filter(Boolean);
+        let cumulative = '';
+        let parentNode = this.treeInstance.root;
+        for (const part of parts) {
+            cumulative = cumulative ? `${cumulative}/${part}` : part;
+            const key = `cat-${cumulative}`;
+            let node = this.treeInstance.findKey(key);
+            if (!node) {
+                parentNode.addChildren({ title: part, key, folder: true, expanded: true, children: [] });
+                node = this.treeInstance.findKey(key);
+            } else if (!node.isExpanded()) {
+                node.setExpanded(true);
+            }
+            parentNode = node;
         }
-        if (catNode) {
-            if (!catNode.isExpanded()) catNode.setExpanded(true);
-            catNode.addChildren(docData);
+        if (parentNode) {
+            parentNode.addChildren({ title: name, key: `doc-${globalIndex}`, folder: true, expanded: false, children: [] });
         }
-        const node = this.treeInstance.findKey(`doc-${globalIndex}`);
-        if (node && node.makeVisible) {
-            try { node.makeVisible(); } catch (e) { /* ignore */ }
+        const docNode = this.treeInstance.findKey(`doc-${globalIndex}`);
+        if (docNode && docNode.makeVisible) {
+            try { docNode.makeVisible(); } catch (e) { /* ignore */ }
         }
-        return node;
+        return docNode;
     }
 
     // Remove a node by key; also drop the "Local files" category if it becomes
