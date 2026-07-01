@@ -20,6 +20,45 @@ export class PdfRenderer {
         this._activeRenders = 0;
         this._maxConcurrentRenders = 2;
         this._intersectingIndices = new Set();
+
+        this._dprRefreshTimer = null;
+        this._watchDevicePixelRatio();
+    }
+
+    // Re-render currently rendered pages when devicePixelRatio changes (browser
+    // zoom / moving the window between monitors) so canvases match the new
+    // pixel density instead of being up/down-scaled and blurry.
+    _watchDevicePixelRatio() {
+        if (typeof window === 'undefined' || !window.matchMedia) return;
+        const arm = () => {
+            const dpr = window.devicePixelRatio || 1;
+            const mq = window.matchMedia(`(resolution: ${dpr}dppx)`);
+            const onChange = () => {
+                clearTimeout(this._dprRefreshTimer);
+                this._dprRefreshTimer = setTimeout(() => this._rerenderRenderedPages(), 200);
+                arm(); // re-arm for the new ratio (the query is value-specific)
+            };
+            mq.addEventListener('change', onChange, { once: true });
+        };
+        arm();
+    }
+
+    // Force a re-raster of every currently-rendered page (DPR change).
+    _rerenderRenderedPages() {
+        if (!this._pdfDoc || !this._pdfContainer) return;
+        const renderVersion = this._renderVersion;
+        let queued = false;
+        for (const pageDiv of this._pdfPageDivs) {
+            if (pageDiv._renderState === 'rendered') {
+                pageDiv._renderState = 'idle';
+                pageDiv._renderedCssWidth = 0;
+                this._enqueueRender(pageDiv);
+                queued = true;
+            }
+        }
+        if (queued) {
+            this._processRenderQueue(this._pdfDoc, this._pdfContainer, renderVersion);
+        }
     }
 
     get pdfPageDivs() {
@@ -228,10 +267,11 @@ export class PdfRenderer {
         // refresh re-rasterizes an already-rendered page in place).
         this._clearPageContent(pageDiv);
         pageDiv.appendChild(canvas);
-        // Keep a deterministic box aspect-ratio so the page's height is fixed
-        // by its width (never collapses if the canvas reports no intrinsic
-        // height, e.g. inside a CSS grid row in some browsers).
-        pageDiv.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+        // Fix the box aspect-ratio to the canvas's exact backing-store ratio so
+        // the page height is deterministic (never collapses inside a CSS grid
+        // row in some browsers) AND the canvas is displayed with no
+        // non-proportional stretch (which would soften the image).
+        pageDiv.style.aspectRatio = `${canvas.width} / ${canvas.height}`;
         pageDiv._renderedCssWidth = cssWidth;
 
         // --- Text layer ---
@@ -350,9 +390,15 @@ export class PdfRenderer {
         const baseWidth = page.getViewport({ scale: 1, rotation }).width;
         const fallbackWidth = pageDiv._pdfViewport ? pageDiv._pdfViewport.width : baseWidth;
         const cssWidth = pageDiv.clientWidth || fallbackWidth;
-        let scale = (cssWidth / baseWidth) * dpr;
 
-        const MAX_CANVAS_PIXELS = 16_777_216; // ~16M px memory guard
+        // Rasterize ABOVE device resolution (super-sampling) so the browser's
+        // downscale sharpens text/line edges — pdf.js draws with grayscale AA,
+        // and oversampling closes much of the gap to a native PDF viewer.
+        // SUPERSAMPLE is trimmed on already-dense (HiDPI) screens to bound memory.
+        const SUPERSAMPLE = dpr >= 2 ? 1.5 : 2;
+        let scale = (cssWidth / baseWidth) * dpr * SUPERSAMPLE;
+
+        const MAX_CANVAS_PIXELS = 24_000_000; // memory guard (~96 MB/canvas)
         let vp = page.getViewport({ scale, rotation });
         if (vp.width * vp.height > MAX_CANVAS_PIXELS) {
             scale *= Math.sqrt(MAX_CANVAS_PIXELS / (vp.width * vp.height));
