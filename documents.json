@@ -663,6 +663,26 @@
 			"name": "Phase 6",
 			"category": "SDLC/Phases",
 			"location": "categories/sdlc/phases/06_operate.md"
+		},
+		{
+			"name": "INCOSE",
+			"category": "Requirements",
+			"location": "categories/requirements/incose/INCOSE_RWG_Guide_to_Writing_Requirements_V3.1_041822.pdf"
+		},
+		{
+			"name": "INCOSE Summary Sheet",
+			"category": "Requirements",
+			"location": "categories/requirements/incose/incose_rwg_gtwr_v4_summary_sheet.pdf"
+		},
+		{
+			"name": "Master Plan",
+			"category": "SDLC",
+			"location": "categories/sdlc/master_plan/master_plan.md"
+		},
+		{
+			"name": "Computing Optimization",
+			"category": "ISCTE",
+			"location": "categories/reports/co/nerf_tutorial2_v6_AC.pdf"
 		}
 	]
 }
