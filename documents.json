@@ -630,6 +630,17 @@
 		},
 
 		{
+			"name": "ANIA Assessment Report",
+			"category": "ISCTE - Society and Artificial Intelligence",
+			"location": "categories/reports/ias/pt_ai_agenda_report_v3.pdf"
+		},
+		{
+			"name": "ANIA Assessment Report - Annex 1",
+			"category": "ISCTE - Society and Artificial Intelligence",
+			"location": "categories/reports/ias/annex1_analytical_foundations.pdf"
+		},		
+
+		{
 			"name": "Project Report",
 			"category": "ISCTE - Topics in Intelligent Robotics",
 			"location": "categories/reports/tri/final_project_technical_report.pdf"
