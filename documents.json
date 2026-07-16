@@ -564,6 +564,11 @@
 			"location": "categories/reports/atlm/job2cool_the_movie.md"
 		},
 
+		{
+			"name": "Optimization for 3D Scene Reconstruction",
+			"category": "ISCTE - Computational Optimization",
+			"location": "categories/reports/co/nerf_tutorial2_v6_AC.pdf"
+		},		
 
 		{
 			"name": "MNIST Digits",
@@ -678,11 +683,6 @@
 			"name": "Master Plan",
 			"category": "SDLC",
 			"location": "categories/sdlc/master_plan/master_plan.md"
-		},
-		{
-			"name": "Computing Optimization",
-			"category": "ISCTE",
-			"location": "categories/reports/co/nerf_tutorial2_v6_AC.pdf"
 		}
 	]
 }
