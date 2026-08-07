@@ -694,6 +694,11 @@
 			"name": "Master Plan",
 			"category": "SDLC",
 			"location": "categories/sdlc/master_plan/master_plan.md"
+		},
+		{
+			"name": "Pipeline",
+			"category": "SDLC",
+			"location": "categories/sdlc/pipeline/sdlc_designed_upon_claude_code.md"
 		}
 	]
 }
