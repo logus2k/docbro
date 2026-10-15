@@ -183,9 +183,45 @@ export class DocumentLoader {
         this.categories = Array.from(categorySet);
     }
 
+    // Azure DevOps wikis fence Mermaid as ":::mermaid ... :::"; marked only knows
+    // ``` fences, so those blocks are rewritten before parsing. Wiki pages also
+    // close a block with a second "::: mermaid", or never close it, so inside a
+    // block the next line starting with ":::" closes it, and a block still open
+    // at the end of the page closes there. Lines inside ``` or ~~~ code blocks
+    // (a page showing the syntax as an example) are left alone.
+    rewriteMermaidFences(markdown) {
+        const out = [];
+        let inMermaid = false;
+        let codeFence = null;                    // '```' or '~~~' while inside a code block
+        for (const line of markdown.split('\n')) {
+            const t = line.trimEnd();
+            if (!inMermaid) {
+                const fence = t.trimStart().slice(0, 3);
+                if (fence === '```' || fence === '~~~') {
+                    if (codeFence === null) codeFence = fence;
+                    else if (fence === codeFence) codeFence = null;
+                } else if (codeFence === null && t.startsWith(':::')
+                           && t.slice(3).trim().toLowerCase() === 'mermaid') {
+                    out.push('```mermaid');
+                    inMermaid = true;
+                    continue;
+                }
+            } else if (t.startsWith(':::')) {
+                out.push('```');
+                inMermaid = false;
+                continue;
+            }
+            out.push(line);
+        }
+        if (inMermaid) out.push('```');
+        return out.join('\n');
+    }
+
     renderMarkdown(markdown) {
         const mathExpressions = [];
         let mathIndex = 0;
+
+        markdown = this.rewriteMermaidFences(markdown);
 
         markdown = markdown.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
             const placeholder = `MATH_DISPLAY_${mathIndex}`;

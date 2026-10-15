@@ -614,6 +614,14 @@ body {
     line-height: 1.6;
 }
 
+/* Mermaid sizes each label box with its own line height; the rule above
+   reaches the <p> inside its labels and made the text taller than the box,
+   cutting off the last line. */
+.document-content .mermaid p {
+    margin: 0;
+    line-height: inherit;
+}
+
 .document-content code {
     background-color: #f4f4f4;
     padding: 2px 6px;

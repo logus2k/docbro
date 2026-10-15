@@ -699,6 +699,26 @@
 			"name": "Pipeline",
 			"category": "SDLC",
 			"location": "categories/sdlc/pipeline/sdlc_designed_upon_claude_code.md"
+		},
+		{
+			"name": "Figma and Agents",
+			"category": "Figma",
+			"location": "categories/figma/figma_and_agents.md"
+		},
+		{
+			"name": "Reports",
+			"category": "Decision Patterns",
+			"location": "categories/decision_patterns/reports/Decision_Patterns_Research_Report.md"
+		},
+		{
+			"name": "Books",
+			"category": "Decision Patterns",
+			"location": "categories/decision_patterns/books/978-3-658-44593-5.pdf"
+		},
+		{
+			"name": "IAM",
+			"category": "Agents",
+			"location": "categories/agents/iam/agentic-identity-and-accountability.md"
 		}
 	]
 }

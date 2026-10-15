@@ -639,15 +639,38 @@ class DocumentBrowser {
         const mermaidBlocks = container.querySelectorAll('pre code.language-mermaid');
         if (mermaidBlocks.length === 0 || typeof mermaid === 'undefined') return;
 
+        const divs = [];
         mermaidBlocks.forEach((codeBlock) => {
             const pre = codeBlock.parentElement;
             const div = document.createElement('div');
             div.className = 'mermaid';
             div.textContent = codeBlock.textContent;
             pre.replaceWith(div);
+            divs.push(div);
         });
 
-        mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
+        // One mermaid.render() per diagram rather than one mermaid.run() for all:
+        // mermaid 11.12's run() fails "No diagram type detected" on any diagram whose
+        // %%{init}%% directive holds a number (e.g. "nodeSpacing": 28) while render()
+        // handles the same text, and run() stops at the first failure, so one such
+        // diagram left every later one as source. A diagram that still fails keeps
+        // its source on screen.
+        this._mermaidSeq = this._mermaidSeq || 0;
+        (async () => {
+            for (const div of divs) {
+                const id = `mermaid-${++this._mermaidSeq}`;
+                try {
+                    const { svg, bindFunctions } = await mermaid.render(id, div.textContent);
+                    div.innerHTML = svg;
+                    div.setAttribute('data-processed', 'true');
+                    if (bindFunctions) bindFunctions(div);
+                } catch (e) {
+                    document.getElementById('d' + id)?.remove();   // mermaid's leftover error element
+                    div.classList.add('mermaid-error');
+                    console.warn('Mermaid could not render a diagram:', e?.message || e);
+                }
+            }
+        })();
     }
 
     setupCodeCopyButtons() {
