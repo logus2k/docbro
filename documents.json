@@ -719,6 +719,11 @@
 			"name": "IAM",
 			"category": "Agents",
 			"location": "categories/agents/iam/agentic-identity-and-accountability.md"
+		},
+		{
+			"name": "Fusion Retrieval",
+			"category": "SDLC/Articles",
+			"location": "categories/sdlc/articles/arcadedb_fusion_retrieval_graphrag_study.md"
 		}
 	]
 }
